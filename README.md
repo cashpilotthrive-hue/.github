@@ -8,4 +8,4 @@ The simulation has been optimized to reduce lock contention. By separating the s
 
 ## CI/CD Compatibility
 
-The repository's CI/CD pipeline is configured for Netlify, which expects static web assets. To ensure CI checks pass, placeholder files (`index.html`, `_headers`, etc.) are maintained in the root directory. These files are not part of the core Python simulation but are necessary for the deployment pipeline.
+The repository's CI/CD pipeline is configured for Netlify. To ensure CI checks pass, deployment assets are maintained in the `public/` directory.
