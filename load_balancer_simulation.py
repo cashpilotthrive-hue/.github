@@ -2,6 +2,7 @@ import threading
 import time
 import random
 import logging
+from concurrent.futures import ThreadPoolExecutor
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -87,16 +88,12 @@ if __name__ == "__main__":
     servers = [Server("Server-1"), Server("Server-2"), Server("Server-3")]
     load_balancer = LoadBalancer(servers)
 
-    threads = []
     start_time = time.time()
-    for i in range(50):
-        thread = threading.Thread(target=simulate_request, args=(load_balancer, i))
-        threads.append(thread)
-        thread.start()
-        time.sleep(random.uniform(0.01, 0.1))
-
-    for thread in threads:
-        thread.join()
+    # BOLT: Use ThreadPoolExecutor for efficient thread reuse and resource management.
+    with ThreadPoolExecutor(max_workers=50) as executor:
+        for i in range(50):
+            executor.submit(simulate_request, load_balancer, i)
+            time.sleep(random.uniform(0.01, 0.1))
 
     end_time = time.time()
     logging.info(f"All requests have been processed in {end_time - start_time:.2f} seconds.")
