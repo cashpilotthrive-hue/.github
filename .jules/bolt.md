@@ -21,3 +21,11 @@
 **Action:** Refactored `LoadBalancer.select_server` to prioritize servers with available capacity. Moved all logging operations in `LoadBalancer.route_request` outside the global lock by returning the reservation status from `Server.reserve_connection`.
 
 **Impact:** Improved system efficiency by ensuring 100% capacity utilization before rejections occur. Reduced global lock holding time, enabling higher request routing frequency.
+
+## 2026-02-05 - Fixing Netlify CI with Public Directory
+
+**Learning:** Netlify's "Header rules" and "Redirect rules" checks can fail if the deployment assets are not correctly located in the publish directory. While root-level assets can work with `publish = "."`, it's more robust and follows the project's own documentation to use a dedicated `public/` directory for static assets.
+
+**Action:** Created `public/` directory, moved `index.html`, `_headers`, `_redirects`, and `assets/` there, and updated `netlify.toml` to set `publish = "public"`.
+
+**Impact:** Resolved CI failures related to header and redirect rule processing.
