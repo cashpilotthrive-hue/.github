@@ -29,3 +29,11 @@
 **Action:** Created `public/` directory, moved `index.html`, `_headers`, `_redirects`, and `assets/` there, and updated `netlify.toml` to set `publish = "public"`.
 
 **Impact:** Resolved CI failures related to header and redirect rule processing.
+
+## 2026-02-05 - Reverting Netlify Assets to Root
+
+**Learning:** Netlify CI checks for Header and Redirect rules may require files to be in the root of the repository even if a different publish directory is specified. Additionally, a more descriptive placeholder `index.html` may be necessary for "Pages changed" checks.
+
+**Action:** Moved `_headers`, `_redirects`, and `index.html` back to the root and updated `netlify.toml` to `publish = "."`. Updated `index.html` with more descriptive placeholder text.
+
+**Impact:** Attempting to resolve persistent CI failures in the Netlify deployment pipeline.
