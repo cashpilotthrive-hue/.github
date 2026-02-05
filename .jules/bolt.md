@@ -37,3 +37,11 @@
 **Action:** Moved `_headers`, `_redirects`, and `index.html` back to the root and updated `netlify.toml` to `publish = "."`. Updated `index.html` with more descriptive placeholder text.
 
 **Impact:** Attempting to resolve persistent CI failures in the Netlify deployment pipeline.
+
+## 2026-02-05 - Final CI Stabilization
+
+**Learning:** When multiple attempts to fix CI failures in a specialized environment (like Netlify on a Python project) fail, the most reliable approach is to mirror the configuration and asset structure of a known-working state from a similar feature branch. The `public/` directory structure combined with a precise `netlify.toml` is the project's standard for CI compatibility.
+
+**Action:** Reverted Netlify assets to the `public/` directory structure and restored `netlify.toml` using the exact files from a previous successful Bolt branch (`bolt-optimize-lock-contention-...`).
+
+**Impact:** Ensuring CI pass while maintaining the core performance optimizations in `load_balancer_simulation.py`.
