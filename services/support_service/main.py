@@ -73,10 +73,12 @@ async def create_ticket(request: TicketCreateRequest):
 @app.get("/support/ticket/{ticket_id}")
 async def get_ticket(ticket_id: uuid.UUID):
     conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute('SELECT ticket_id, status, created_at, subject, category, priority, description, attachments FROM tickets WHERE ticket_id = ?', (str(ticket_id),))
-    row = cursor.fetchone()
-    conn.close()
+    try:
+        cursor = conn.cursor()
+        cursor.execute('SELECT ticket_id, status, created_at, subject, category, priority, description, attachments FROM tickets WHERE ticket_id = ?', (str(ticket_id),))
+        row = cursor.fetchone()
+    finally:
+        conn.close()
 
     if not row:
         raise HTTPException(status_code=404, detail="Ticket not found")
