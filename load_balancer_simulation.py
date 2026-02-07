@@ -15,33 +15,13 @@ class Server:
         self.active_connections = 0
         self.lock = threading.Lock()
 
-    def reserve_connection(self, request_id):
+    def reserve_connection(self):
         """Atomically check capacity and increment active connections."""
-        success = False
-        current_connections = 0
-        cpu_load = 0.0
-
         with self.lock:
             if self.active_connections < self.capacity:
                 self.active_connections += 1
-                current_connections = self.active_connections
-                cpu_load = current_connections / self.capacity
-                success = True
-
-        if success:
-            logging.info(
-                f"Request {request_id} assigned to {self.name}. Active connections: {current_connections}/{self.capacity} (CPU load: {cpu_load:.2%})"
-            )
-            if cpu_load >= 0.8:
-                logging.warning(
-                    f"ALERT: Server {self.name} is approaching high CPU load: {cpu_load:.2%}"
-                )
-        else:
-            logging.warning(
-                f"Server {self.name} is at full capacity. Request {request_id} rejected."
-            )
-
-        return success
+                return True, self.active_connections
+            return False, self.active_connections
 
     def process_request(self, request_id, processing_time):
         """Simulate request processing and decrement connections on completion."""
@@ -61,32 +41,30 @@ class LoadBalancer:
         self.servers = servers
         self.lock = threading.Lock()
 
-    def select_server(self):
-        """Select the server with the fewest active connections."""
-        best_server = None
-        min_connections = float("inf")
-
-        for server in self.servers:
-            if server.active_connections < min_connections:
-                min_connections = server.active_connections
-                best_server = server
-
-        return best_server
-
     def route_request(self, request_id, processing_time):
         """Route request to the least busy server without holding the global lock during processing."""
-        server = None
+        selected_server = None
+        current_load = 0
         with self.lock:
-            server = self.select_server()
-            if server:
-                # BOLT: Atomically reserve connection inside LB lock to avoid race conditions
-                # where multiple threads pick the same server before its load is incremented.
-                if not server.reserve_connection(request_id):
-                    server = None
+            # Heuristic: try servers in order of current load to find the best available one.
+            # This ensures we don't reject a request if any server has capacity.
+            for server in sorted(self.servers, key=lambda s: s.active_connections):
+                success, load = server.reserve_connection()
+                if success:
+                    selected_server = server
+                    current_load = load
+                    break
 
-        if server:
-            # BOLT: Process the request outside the LB lock to allow other requests to be routed concurrently.
-            server.process_request(request_id, processing_time)
+        if selected_server:
+            cpu_load = current_load / selected_server.capacity
+            logging.info(
+                f"Request {request_id} assigned to {selected_server.name}. Active connections: {current_load}/{selected_server.capacity} (CPU load: {cpu_load:.2%})"
+            )
+            if cpu_load >= 0.8:
+                logging.warning(
+                    f"ALERT: Server {selected_server.name} is approaching high CPU load: {cpu_load:.2%}"
+                )
+            selected_server.process_request(request_id, processing_time)
         else:
             logging.error(f"No servers available for request {request_id}.")
 
