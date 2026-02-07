@@ -1,23 +1,11 @@
-# Load Balancer Simulation ⚡
+# Load Balancer Simulation
 
-A high-performance Python simulation of a 'Least Connections' load balancer.
+This repository contains a Python script, `load_balancer_simulation.py`, which simulates a 'Least Connections' load balancer.
 
-## 🚀 Recent Optimizations
+## Performance Optimization
 
-We've significantly reduced global lock contention by implementing an atomic selection-reservation pattern. This allows the simulation to process requests concurrently, resulting in a **19.5x speedup** (from ~98s down to ~5s for 50 requests).
+The simulation has been optimized to reduce lock contention. By separating the server selection and connection reservation from the actual request processing, the load balancer can route multiple requests concurrently across different servers.
 
-## 🛠️ Usage
+## CI/CD Compatibility
 
-```bash
-python3 load_balancer_simulation.py
-```
-
-## 🏗️ Architecture
-
-- **Server**: Atomic connection management with capacity tracking.
-- **LoadBalancer**: Thread-safe server selection using the Least Connections algorithm.
-- **Simulation**: Concurrent request handling using `ThreadPoolExecutor`.
-
-## 🌐 CI/CD
-
-This project is configured for deployment on Netlify. Static assets are located in the `public/` directory.
+The repository's CI/CD pipeline is configured for Netlify. To ensure CI checks pass, deployment assets are maintained in the `public/` directory.
