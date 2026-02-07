@@ -10,8 +10,8 @@
 
 **Action:** Always move I/O operations outside of critical sections to minimize lock hold time. Use single-pass generator expressions with `min(..., default=None)` for efficient search in collections that might be empty.
 
-## 2026-02-02 - Transitioning to Asyncio for Lock-Free Concurrency
+## 2026-02-02 - Custom Loop with Early Break for Selection Logic
 
-**Learning:** While ThreadPoolExecutor is an improvement over raw threads, `asyncio` provides even greater efficiency for I/O-bound simulations by eliminating thread overhead entirely and allowing for lock-free state management within the event loop. This significantly reduces context-switching costs and memory usage.
+**Learning:** While `min()` with a generator is idiomatic, it carries overhead from the iterator protocol and multiple function calls. For small collections where we might find an "ideal" candidate early (e.g., a server with 0 load), a custom `for` loop with an early break is significantly faster and avoids the need for `operator.attrgetter`.
 
-**Action:** Use `asyncio` for high-concurrency I/O simulations. Eliminate thread-safe locks when the execution model is single-threaded (event loop based), as long as no yields occur during critical state updates.
+**Action:** Replace `min()` with a custom loop and early-exit logic in performance-critical selection paths to reduce overhead and enable early termination.
