@@ -53,13 +53,15 @@ async def submit_gdpr_request(request: GdprRequest):
     status_str = "submitted"
 
     conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute('''
-        INSERT INTO gdpr_requests (request_id, status, due_date, request_type, request_details, submitted_at)
-        VALUES (?, ?, ?, ?, ?, ?)
-    ''', (request_id, status_str, due_date.isoformat(), request.request_type, request.request_details, submitted_at.isoformat()))
-    conn.commit()
-    conn.close()
+    try:
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO gdpr_requests (request_id, status, due_date, request_type, request_details, submitted_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (request_id, status_str, due_date.isoformat(), request.request_type, request.request_details, submitted_at.isoformat()))
+        conn.commit()
+    finally:
+        conn.close()
 
     log_audit("gdpr_request_submitted", {"request_id": request_id, "type": request.request_type})
 
