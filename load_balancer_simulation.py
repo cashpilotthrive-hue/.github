@@ -1,0 +1,110 @@
+import asyncio
+import random
+import time
+from typing import List, Optional
+
+
+class Server:
+    """Represents a backend server in the load balancer simulation."""
+
+    def __init__(self, name: str, capacity: int):
+        self.name = name
+        self.capacity = capacity
+        self.current_load = 0
+        # BOLT: Pre-calculate threshold to avoid division in hot path
+        self.alert_threshold = capacity * 0.9
+
+    async def process_request(self, request_id: int, processing_time: float) -> bool:
+        """Simulates processing a request on this server."""
+        # Note: current_load is now incremented by LoadBalancer before this task is scheduled.
+        load = self.current_load
+        alert = load >= self.alert_threshold
+
+        print(
+            f"Request {request_id} assigned to Server {self.name}. Current load: {load}/{self.capacity}"
+        )
+        if alert:
+            print(f"ALERT: Server {self.name} is approaching 100% CPU load!")
+
+        try:
+            # Simulate I/O bound processing time
+            await asyncio.sleep(processing_time)
+        finally:
+            self.current_load -= 1
+            print(
+                f"Request {request_id} finished on Server {self.name}. Current load: {self.current_load}/{self.capacity}"
+            )
+
+        return True
+
+
+class LoadBalancer:
+    """Least Connections Load Balancer simulation."""
+
+    def __init__(self, servers: List[Server]):
+        self.servers = servers
+
+    def get_least_busy_server(self) -> Optional[Server]:
+        """Finds the server with the fewest active connections and available capacity."""
+        # BOLT: Replacing min() with a manual loop for O(N) selection with early exit.
+        # This avoids generator expression overhead and function call overhead.
+        best_server = None
+        min_load = float("inf")
+
+        for server in self.servers:
+            load = server.current_load
+            if load < server.capacity:
+                # Early exit: if we find an empty server, it's the best possible choice.
+                if load == 0:
+                    return server
+                if load < min_load:
+                    min_load = load
+                    best_server = server
+        return best_server
+
+    def route_request(self, request_id: int, processing_time: float):
+        """Routes an incoming request to the best available server."""
+        # BOLT: Changed from 'async def' to 'def' as it contains no await points,
+        # reducing coroutine creation overhead.
+        server = self.get_least_busy_server()
+        if server:
+            # BUG FIX: Increment load IMMEDIATELY after selection to reserve capacity
+            # This prevents race conditions where multiple requests are assigned to
+            # the same server before its load is updated in the task.
+            server.current_load += 1
+            return asyncio.create_task(
+                server.process_request(request_id, processing_time)
+            )
+        else:
+            print(f"No servers available to handle Request {request_id}.")
+            return None
+
+
+async def main():
+    """Main simulation loop."""
+    servers = [Server("Server-1", 10), Server("Server-2", 10), Server("Server-3", 10)]
+
+    load_balancer = LoadBalancer(servers)
+
+    tasks = []
+    for i in range(50):
+        processing_time = random.uniform(0.1, 1.0)
+        # BOLT: Removed 'await' as route_request is now a synchronous function.
+        task = load_balancer.route_request(i + 1, processing_time)
+        if task:
+            tasks.append(task)
+        # Simulate request arrival interval
+        await asyncio.sleep(random.uniform(0.01, 0.1))
+
+    # Wait for all scheduled requests to complete
+    if tasks:
+        await asyncio.gather(*tasks)
+
+    print("All requests have been processed.")
+
+
+if __name__ == "__main__":
+    start_time = time.perf_counter()
+    asyncio.run(main())
+    end_time = time.perf_counter()
+    print(f"Simulation completed in {end_time - start_time:.2f} seconds.")
