@@ -1,0 +1,2 @@
+fbchat==1.9.7
+schedule==1.2.2

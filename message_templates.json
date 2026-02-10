@@ -1,0 +1,10 @@
+{
+  "Greeting": {
+    "hello": "Hi {name}, hope you are doing well!",
+    "purpose": "I just wanted to reach out and say {custom_input}."
+  },
+  "Meeting": {
+    "header": "Meeting Request for {name}",
+    "body": "Hi, I'd like to schedule a meeting about {custom_input}. Are you available?"
+  }
+}
