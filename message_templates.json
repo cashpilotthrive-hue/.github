@@ -1,0 +1,10 @@
+{
+    "Birthday Greeting": {
+        "greeting": "Happy Birthday, {name}!",
+        "message": "Hope you have a fantastic day! {custom_input}"
+    },
+    "Meeting Reminder": {
+        "reminder": "Hey {name}, just a reminder about our meeting.",
+        "details": "It's at {custom_input}."
+    }
+}
