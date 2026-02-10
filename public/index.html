@@ -3,25 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Load Balancer Simulation</title>
+    <title>Load Balancer Simulation v2</title>
     <link rel="stylesheet" href="assets/style.css">
     <style>
-        body { font-family: sans-serif; line-height: 1.6; padding: 2rem; }
-        header { border-bottom: 2px solid #333; margin-bottom: 1rem; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; padding: 2rem; color: #333; }
+        header { border-bottom: 3px solid #007bff; margin-bottom: 2rem; padding-bottom: 1rem; }
+        .badge { background: #28a745; color: white; padding: 0.3rem 0.6rem; border-radius: 50px; font-size: 0.8rem; vertical-align: middle; }
     </style>
 </head>
 <body>
     <header>
-        <h1>Load Balancer Simulation</h1>
+        <h1>Load Balancer Simulation <span class="badge">Optimized</span></h1>
     </header>
     <main>
-        <!-- Build Timestamp: 2026-02-10T05:15:22Z -->
-        <p>This repository contains a high-performance load balancer simulation.</p>
-        <p>Optimized for low lock contention and efficient server selection using min-heaps.</p>
-        <p>Build ID: de305d54-75b4-431b-adb2-eb6b9e546014</p>
+        <!-- Deployment Timestamp: 2026-02-10T05:25:00Z -->
+        <section>
+            <h2>Overview</h2>
+            <p>This is a high-performance simulation of a least-connections load balancer implemented in Python.</p>
+            <p>Key features include:</p>
+            <ul>
+                <li>Min-heap based server selection ($O(1)$ selection)</li>
+                <li>Reduced lock contention for high throughput</li>
+                <li>Lazy logging to minimize I/O overhead</li>
+            </ul>
+        </section>
+        <p>Build Reference: bolt-sim-v2-5555</p>
     </main>
     <footer>
-        <p>Optimized by Bolt ⚡ at 2026-02-10 05:15:22 UTC</p>
+        <hr>
+        <p>Optimized by Bolt ⚡ | Last Updated: 2026-02-10 05:25:00 UTC</p>
     </footer>
 </body>
 </html>
