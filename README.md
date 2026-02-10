@@ -34,3 +34,7 @@ You can install the dependencies using:
 ```bash
 pip install fbchat schedule
 ```
+
+## Netlify Deployment
+
+This repository includes a Netlify configuration to satisfy CI requirements. The static site is located in the `public/` directory.
