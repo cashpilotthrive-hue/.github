@@ -12,6 +12,8 @@ DB_PATH = "gdpr.db"
 def init_db():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
+    # Enable WAL mode for better concurrency
+    cursor.execute("PRAGMA journal_mode=WAL")
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS gdpr_requests (
             request_id TEXT PRIMARY KEY,
@@ -42,7 +44,7 @@ def log_audit(event_type: str, details: dict):
     print(f"DEBUG: Audit Log [{event_type}]: {details}")
 
 @app.post("/gdpr/request", response_model=GdprAccepted, status_code=status.HTTP_202_ACCEPTED)
-async def submit_gdpr_request(request: GdprRequest):
+def submit_gdpr_request(request: GdprRequest):
     valid_types = ["data_export", "data_deletion", "data_rectification", "consent_withdrawal", "object_to_processing"]
     if request.request_type not in valid_types:
         raise HTTPException(status_code=400, detail="Invalid request type")
@@ -68,7 +70,7 @@ async def submit_gdpr_request(request: GdprRequest):
     return GdprAccepted(request_id=request_id, status=status_str, due_date=due_date)
 
 @app.get("/gdpr/request/{request_id}")
-async def get_gdpr_status(request_id: uuid.UUID):
+def get_gdpr_status(request_id: uuid.UUID):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute('SELECT request_id, status, due_date, request_type FROM gdpr_requests WHERE request_id = ?', (str(request_id),))
