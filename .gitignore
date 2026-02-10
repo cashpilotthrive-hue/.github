@@ -1,8 +1,5 @@
 __pycache__/
 *.py[cod]
 *$py.class
-.env
-message_templates.json
-# Wait, I want to keep message_templates.json as an example,
-# but maybe the user wants to keep their own private.
-# For now, I'll keep it as it's part of the task.
+.pytest_cache/
+*.db
