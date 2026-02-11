@@ -1,0 +1,27 @@
+@startuml
+actor User
+participant "Frontend" as FE
+participant "Auth Service" as Auth
+participant "Verification Service" as Verify
+participant "Notification Service" as Notif
+participant "Audit Log" as Audit
+database "PostgreSQL" as DB
+
+User -> FE : Fill registration form
+FE -> Auth : POST /auth/register
+Auth -> DB : INSERT users (status=pending)
+Auth -> Verify : createToken()
+Verify -> DB : INSERT verification_tokens
+Auth -> Notif : sendWelcomeEmail(token)
+Notif -> User : Email with verification link
+Auth -> Audit : log(user.registered)
+Auth --> FE : 201 Created (verification_pending)
+
+User -> FE : Click link in email
+FE -> Auth : POST /auth/verify (token)
+Auth -> Verify : validateToken(token)
+Verify -> DB : SELECT/UPDATE token
+Auth -> DB : UPDATE users (status=active)
+Auth -> Audit : log(user.activated)
+Auth --> FE : 200 OK (Success)
+@enduml
