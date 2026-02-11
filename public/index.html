@@ -1,0 +1,48 @@
+<!-- Build Trigger: 2026-02-11 05:45:00 UTC -->
+<!-- CI FIX: Ensuring content change is detected by Netlify -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Betting Platform Social Workflows</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <style>
+        body { font-family: sans-serif; line-height: 1.6; padding: 2rem; }
+        header { border-bottom: 2px solid #333; margin-bottom: 1rem; }
+        .perf-box { background: #f4f4f4; padding: 1rem; border-radius: 4px; margin-top: 2rem; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Betting Platform Social Workflows</h1>
+        <p style="font-size: 0.8rem; color: #666;">Deployment: 2026-02-11 05:45:00 UTC</p>
+    </header>
+    <main>
+        <p>This repository contains the implementation of social-user-facing workflows for the betting platform.</p>
+        <p>Implementation includes Support, GDPR, Auth, KYC, and more.</p>
+
+        <div class="perf-box">
+            <h2>⚡ Performance Optimizations</h2>
+            <ul>
+                <li>Refactored blocking I/O handlers to standard <code>def</code> to improve concurrency.</li>
+                <li>Enabled SQLite Write-Ahead Logging (WAL) and NORMAL synchronous for faster database access.</li>
+                <li>Offloaded non-critical I/O (events/audit logs) to FastAPI <code>BackgroundTasks</code> to minimize response latency.</li>
+            </ul>
+        </div>
+
+        <p>This update includes further refinements to the Support and GDPR services, ensuring high availability and low latency for all users. We have successfully offloaded audit logging and event emission to background tasks.</p>
+
+        <section class="perf-box">
+            <h2>🚀 Latest Performance Wins</h2>
+            <p>Background tasks offloading is live! This significantly reduces the time users wait for a response after submitting tickets or GDPR requests.</p>
+        </section>
+
+        <p>Build ID: aae48400-e29b-41d4-a716-446655440005 | Last Updated: 2026-02-11 05:40:00 UTC</p>
+    </main>
+    <footer>
+        <!-- Build Timestamp: 2026-02-11 05:40:00 UTC -->
+        <p>Optimized by Bolt ⚡ at 2026-02-11 05:40:00 UTC</p>
+    </footer>
+</body>
+</html>
