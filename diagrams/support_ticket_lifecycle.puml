@@ -1,0 +1,52 @@
+@startuml
+actor Customer
+actor Agent
+participant "Frontend (React)" as FE
+participant "API Gateway" as GW
+participant "Support Service" as Sup
+participant "Notification Service" as Notif
+participant "Audit Log Service" as Audit
+database "PostgreSQL" as DB
+
+Customer -> FE : Open “Help” page
+FE -> GW : POST /support/ticket (payload)
+GW -> Sup : createTicket()
+Sup -> DB : INSERT support_tickets
+Sup -> DB : INSERT ticket_messages (initial message)
+Sup -> Notif : sendTicketReceivedEmail()
+Notif -> Customer : Email receipt
+Sup -> Audit : log(support_ticket.created)
+Audit -> DB : INSERT audit_log
+Sup --> GW : 201 Created (ticket_id)
+GW --> FE : Show ticket number
+
+== Agent picks up ticket ==
+Agent -> FE (admin) : View ticket list
+FE -> GW : GET /support/ticket/{id}
+GW -> Sup : getTicket()
+Sup -> DB : SELECT ticket + messages
+Sup --> GW : TicketDetail
+GW --> FE : Render UI
+Agent -> FE : Post reply (message)
+FE -> GW : POST /support/ticket/{id}/message
+GW -> Sup : addMessage()
+Sup -> DB : INSERT ticket_messages
+Sup -> Notif : sendReplyEmail()
+Notif -> Customer : Email with reply
+Sup -> Audit : log(support_ticket.message_added)
+Audit -> DB : INSERT audit_log
+Sup --> GW : 200 OK
+GW --> FE : Show new message
+
+== Ticket closure ==
+Agent -> FE : Click “Close”
+FE -> GW : PATCH /support/ticket/{id} (status=closed)
+GW -> Sup : updateTicket()
+Sup -> DB : UPDATE support_tickets
+Sup -> Notif : sendTicketClosedEmail()
+Notif -> Customer : Email: Ticket Resolved
+Sup -> Audit : log(support_ticket.closed)
+Audit -> DB : INSERT audit_log
+Sup --> GW : 200 OK
+GW --> FE : Ticket status updated
+@enduml
