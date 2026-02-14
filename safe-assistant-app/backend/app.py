@@ -170,11 +170,17 @@ def chat(payload: ChatRequest, background_tasks: BackgroundTasks) -> ChatRespons
     return _chat_logic(payload, background_tasks)
 
 
-@app.post("/memory")
-def upsert_memory(payload: MemoryUpsertRequest, background_tasks: BackgroundTasks) -> dict[str, Any]:
+def _upsert_memory_logic(
+    payload: MemoryUpsertRequest, background_tasks: BackgroundTasks
+) -> dict[str, Any]:
     MEMORIES.setdefault(payload.user_id, []).append(payload.note)
     background_tasks.add_task(append_audit, "memory.upserted", payload.model_dump())
     return {"ok": True, "count": len(MEMORIES[payload.user_id])}
+
+
+@app.post("/memory")
+def upsert_memory(payload: MemoryUpsertRequest, background_tasks: BackgroundTasks) -> dict[str, Any]:
+    return _upsert_memory_logic(payload, background_tasks)
 
 
 @app.get("/memory/{user_id}")
@@ -199,8 +205,7 @@ def get_audit() -> list[dict[str, Any]]:
     return AUDIT_LOG
 
 
-@app.post("/tools/run")
-def run_tool(payload: ToolRunRequest, background_tasks: BackgroundTasks) -> dict[str, Any]:
+def _run_tool_logic(payload: ToolRunRequest, background_tasks: BackgroundTasks) -> dict[str, Any]:
     if payload.name == "get_current_time":
         result = {"timestamp": datetime.now(timezone.utc).isoformat()}
     elif payload.name == "summarize_text":
@@ -214,6 +219,11 @@ def run_tool(payload: ToolRunRequest, background_tasks: BackgroundTasks) -> dict
 
     background_tasks.add_task(append_audit, "tool.ran", {"name": payload.name})
     return {"tool": payload.name, "result": result}
+
+
+@app.post("/tools/run")
+def run_tool(payload: ToolRunRequest, background_tasks: BackgroundTasks) -> dict[str, Any]:
+    return _run_tool_logic(payload, background_tasks)
 
 
 @app.post("/features/respond")
@@ -231,7 +241,7 @@ def call_all_features_response(
 
     saved_memory = None
     if payload.note.strip():
-        saved_memory = upsert_memory(
+        saved_memory = _upsert_memory_logic(
             MemoryUpsertRequest(user_id=payload.user_id, note=payload.note.strip()),
             background_tasks=background_tasks,
         )
@@ -249,7 +259,7 @@ def call_all_features_response(
         pre_moderation=moderation,
     )
 
-    tool_result = run_tool(
+    tool_result = _run_tool_logic(
         ToolRunRequest(name="summarize_text", args={"text": payload.message}),
         background_tasks=background_tasks,
     )
