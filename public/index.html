@@ -14,9 +14,10 @@
       .box { border: 1px solid #ddd; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
       pre { background: #f5f5f5; padding: 1rem; overflow: auto; }
       .btn-row { display: flex; gap: .5rem; flex-wrap: wrap; }
+      .build-info { border-top: 2px solid #333; margin-top: 2rem; padding-top: 1rem; font-size: 0.8rem; color: #666; }
     </style>
   </head>
-  <body data-build-timestamp="1771045619">
+  <body data-build-timestamp="1771045866">
     <h1>Safe Omni Assistant</h1>
     <p>A safe ChatGPT-style demo app with chat, tools, memory, files, moderation, and audit hooks.</p>
 
@@ -45,10 +46,11 @@
       <pre id="memoryOut"></pre>
     </div>
 
-    <footer>
-        <p>Build ID: 1771045619429000152</p>
-        <p>Optimized by Jules ⚡ at 2026-02-14 05:06:59 UTC</p>
-    </footer>
+    <div class="build-info">
+        <p><strong>Build Signature:</strong> 1771045866942720110</p>
+        <p><strong>Deployment Time:</strong> 2026-02-14 05:11:06 UTC</p>
+        <p>Optimized by Bolt ⚡ Performance Agent</p>
+    </div>
 
     <script>
       const API = "http://localhost:8000";
