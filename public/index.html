@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Safe Omni Assistant</title>
+    <link rel="stylesheet" href="assets/style.css">
     <style>
       body { font-family: Arial, sans-serif; margin: 2rem; max-width: 900px; }
       textarea, input { width: 100%; margin: .5rem 0; }
@@ -15,7 +16,7 @@
       .btn-row { display: flex; gap: .5rem; flex-wrap: wrap; }
     </style>
   </head>
-  <body data-build-timestamp="1771045216">
+  <body data-build-timestamp="1771045619">
     <h1>Safe Omni Assistant</h1>
     <p>A safe ChatGPT-style demo app with chat, tools, memory, files, moderation, and audit hooks.</p>
 
@@ -43,6 +44,11 @@
       <button onclick="loadMemory()">Load memory</button>
       <pre id="memoryOut"></pre>
     </div>
+
+    <footer>
+        <p>Build ID: 1771045619429000152</p>
+        <p>Optimized by Jules ⚡ at 2026-02-14 05:06:59 UTC</p>
+    </footer>
 
     <script>
       const API = "http://localhost:8000";
@@ -99,7 +105,5 @@
         document.getElementById("memoryOut").textContent = JSON.stringify(data, null, 2);
       }
     </script>
-<p style="display:none">Build ID: </p>
-<p style="display:none">Build ID: 833209564</p>
   </body>
 </html>
