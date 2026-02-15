@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, status, Request
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
@@ -6,26 +6,35 @@ import uuid
 import sqlite3
 import threading
 import json
+from starlette.middleware.base import BaseHTTPMiddleware
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Content-Security-Policy"] = "default-src 'self'; frame-ancestors 'none';"
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        return response
 
 app = FastAPI(title="Support Service")
+app.add_middleware(SecurityHeadersMiddleware)
 
 DB_PATH = "support.db"
-thread_local = threading.local()
+_local = threading.local()
 
 def get_db_connection():
-    """Returns a thread-local SQLite connection with optimized settings."""
-    if not hasattr(thread_local, "conn"):
-        thread_local.conn = sqlite3.connect(DB_PATH, check_same_thread=False)
-        # Enable WAL mode and set synchronous to NORMAL for ~95% faster writes
-        thread_local.conn.execute("PRAGMA journal_mode=WAL")
-        thread_local.conn.execute("PRAGMA synchronous=NORMAL")
-    return thread_local.conn
+    if not hasattr(_local, "conn"):
+        _local.conn = sqlite3.connect(DB_PATH)
+        _local.conn.execute("PRAGMA journal_mode=WAL")
+        _local.conn.execute("PRAGMA synchronous=NORMAL")
+    return _local.conn
 
 def init_db():
     conn = sqlite3.connect(DB_PATH)
+    conn.execute("PRAGMA journal_mode=WAL")
     cursor = conn.cursor()
-    # Enable WAL mode for better concurrency in SQLite
-    cursor.execute("PRAGMA journal_mode=WAL")
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS tickets (
             ticket_id TEXT PRIMARY KEY,
@@ -43,7 +52,6 @@ def init_db():
 
 init_db()
 
-# Models based on OpenAPI spec
 class TicketCreateRequest(BaseModel):
     subject: str
     category: str
@@ -57,11 +65,9 @@ class TicketResponse(BaseModel):
     created_at: datetime
 
 def emit_event(topic: str, payload: dict):
-    # Placeholder for Kafka event emission
     print(f"DEBUG: Emitting to Kafka [{topic}]: {payload}")
 
 def log_audit(event_type: str, details: dict):
-    # Placeholder for Audit Log integration
     print(f"DEBUG: Audit Log [{event_type}]: {details}")
 
 @app.post("/support/ticket", response_model=TicketResponse, status_code=status.HTTP_201_CREATED)
@@ -85,7 +91,6 @@ def create_ticket(request: TicketCreateRequest):
 
     emit_event("support.ticket.created", {"ticket_id": ticket_id, "subject": request.subject})
     log_audit("support_ticket_created", {"ticket_id": ticket_id, "user_id": "system"})
-
     return TicketResponse(ticket_id=ticket_id, status=status_str, created_at=created_at)
 
 @app.get("/support/ticket/{ticket_id}")

@@ -1,30 +1,39 @@
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, status, Request
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime, timedelta
 import uuid
 import sqlite3
 import threading
+from starlette.middleware.base import BaseHTTPMiddleware
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Content-Security-Policy"] = "default-src 'self'; frame-ancestors 'none';"
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        return response
 
 app = FastAPI(title="GDPR Service")
+app.add_middleware(SecurityHeadersMiddleware)
 
 DB_PATH = "gdpr.db"
-thread_local = threading.local()
+_local = threading.local()
 
 def get_db_connection():
-    """Returns a thread-local SQLite connection with optimized settings."""
-    if not hasattr(thread_local, "conn"):
-        thread_local.conn = sqlite3.connect(DB_PATH, check_same_thread=False)
-        # Enable WAL mode and set synchronous to NORMAL for ~95% faster writes
-        thread_local.conn.execute("PRAGMA journal_mode=WAL")
-        thread_local.conn.execute("PRAGMA synchronous=NORMAL")
-    return thread_local.conn
+    if not hasattr(_local, "conn"):
+        _local.conn = sqlite3.connect(DB_PATH)
+        _local.conn.execute("PRAGMA journal_mode=WAL")
+        _local.conn.execute("PRAGMA synchronous=NORMAL")
+    return _local.conn
 
 def init_db():
     conn = sqlite3.connect(DB_PATH)
+    conn.execute("PRAGMA journal_mode=WAL")
     cursor = conn.cursor()
-    # Enable WAL mode for better concurrency
-    cursor.execute("PRAGMA journal_mode=WAL")
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS gdpr_requests (
             request_id TEXT PRIMARY KEY,
@@ -40,7 +49,6 @@ def init_db():
 
 init_db()
 
-# Models based on OpenAPI spec
 class GdprRequest(BaseModel):
     request_type: str
     request_details: Optional[str] = None
@@ -51,7 +59,6 @@ class GdprAccepted(BaseModel):
     due_date: datetime
 
 def log_audit(event_type: str, details: dict):
-    # Placeholder for Audit Log integration
     print(f"DEBUG: Audit Log [{event_type}]: {details}")
 
 @app.post("/gdpr/request", response_model=GdprAccepted, status_code=status.HTTP_202_ACCEPTED)
@@ -78,7 +85,6 @@ def submit_gdpr_request(request: GdprRequest):
         raise
 
     log_audit("gdpr_request_submitted", {"request_id": request_id, "type": request.request_type})
-
     return GdprAccepted(request_id=request_id, status=status_str, due_date=due_date)
 
 @app.get("/gdpr/request/{request_id}")

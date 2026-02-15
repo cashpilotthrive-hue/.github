@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from functools import lru_cache
 from typing import Any
 import uuid
 
@@ -83,14 +82,6 @@ SAFE_BLOCKLIST = {
 }
 
 
-@lru_cache(maxsize=1024)
-def _moderate_content(content_lower: str) -> list[str]:
-    """
-    Cached moderation logic for performance.
-    """
-    return [term for term in SAFE_BLOCKLIST if term in content_lower]
-
-
 def append_audit(event: str, detail: dict[str, Any]) -> None:
     AUDIT_LOG.append(
         {
@@ -108,11 +99,9 @@ def health() -> dict[str, str]:
 
 
 @app.post("/moderate", response_model=ModerationResponse)
-def moderate(
-    payload: ModerationRequest, content_lower: str | None = None
-) -> ModerationResponse:
-    lowered = content_lower or payload.content.lower()
-    hits = _moderate_content(lowered)
+def moderate(payload: ModerationRequest) -> ModerationResponse:
+    lowered = payload.content.lower()
+    hits = [term for term in SAFE_BLOCKLIST if term in lowered]
     return ModerationResponse(flagged=bool(hits), categories=hits)
 
 
@@ -127,14 +116,9 @@ def _chat_logic(
     latest_user_message = next(
         (m.content for m in reversed(payload.messages) if m.role == "user"), ""
     )
-    # Pre-calculate lowered version to avoid redundant operations in moderate and tool checks.
-    latest_user_message_lower = latest_user_message.lower()
 
     # Use pre-calculated moderation if provided (e.g., from call_all_features_response)
-    moderation = pre_moderation or moderate(
-        ModerationRequest(content=latest_user_message),
-        content_lower=latest_user_message_lower,
-    )
+    moderation = pre_moderation or moderate(ModerationRequest(content=latest_user_message))
 
     if moderation.flagged:
         background_tasks.add_task(
@@ -152,7 +136,7 @@ def _chat_logic(
         memory_snippet = f"\nMemory context: {' | '.join(MEMORIES[payload.user_id][-3:])}"
 
     tool_calls: list[dict[str, Any]] = []
-    if payload.tools_enabled and "time" in latest_user_message_lower:
+    if payload.tools_enabled and "time" in latest_user_message.lower():
         tool_calls.append(
             {
                 "tool": "get_current_time",
