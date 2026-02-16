@@ -1,0 +1,14 @@
+{
+  "name": "Python CI Workflow",
+  "description": "A comprehensive CI workflow for Python projects with linting, type checking, and testing",
+  "iconName": "example-icon",
+  "categories": [
+    "Continuous Integration",
+    "Python"
+  ],
+  "filePatterns": [
+    "requirements.txt$",
+    "setup.py$",
+    "pyproject.toml$"
+  ]
+}

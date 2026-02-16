@@ -1,1 +1,15 @@
-* @actions/maintainers
+# Default owner for everything in the repo
+* @cashpilotthrive-hue
+
+# Specific owners for documentation
+*.md @cashpilotthrive-hue
+/docs/ @cashpilotthrive-hue
+
+# Workflow owners
+/.github/workflows/ @cashpilotthrive-hue
+/workflow-templates/ @cashpilotthrive-hue
+
+# Configuration files
+*.yml @cashpilotthrive-hue
+*.yaml @cashpilotthrive-hue
+*.json @cashpilotthrive-hue
