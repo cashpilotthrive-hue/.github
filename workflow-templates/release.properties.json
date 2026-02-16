@@ -1,0 +1,11 @@
+{
+  "name": "Release Workflow",
+  "description": "Automated release workflow that creates GitHub releases and publishes packages",
+  "iconName": "example-icon",
+  "categories": [
+    "Deployment"
+  ],
+  "filePatterns": [
+    "package.json$"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "name": "Continuous Integration Workflow",
+  "description": "A basic CI workflow for Node.js projects with linting, testing, and building",
+  "iconName": "example-icon",
+  "categories": [
+    "Continuous Integration"
+  ],
+  "filePatterns": [
+    "package.json$",
+    "package-lock.json$"
+  ]
+}
