@@ -13,3 +13,7 @@
 ## 2026-02-15 - [BackgroundTasks Overhead]
 **Learning:** While BackgroundTasks are useful for offloading side effects, they introduce a measurable orchestration overhead. For extremely fast operations (like simple prints), calling them synchronously may be faster than scheduling them as background tasks.
 **Action:** Benchmark before adding BackgroundTasks to high-throughput paths if the tasks themselves are trivial.
+
+## 2026-02-16 - [Netlify CI Configuration Consistency]
+**Learning:** Netlify CI validation for 'Header rules' and 'Redirect rules' requires strict consistency between `netlify.toml` and standalone `_headers`/`_redirects` files in the publish directory. Standalone files must use specific indentation (2 spaces) and mirror all security headers (CSP, HSTS) exactly.
+**Action:** Always synchronize `netlify.toml` and `public/_headers`/`public/_redirects` when modifying security or routing configurations.
