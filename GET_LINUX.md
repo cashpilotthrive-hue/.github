@@ -4,6 +4,8 @@ The fastest way to get your personal Linux development environment set up.
 
 ## Quick Install (One Command)
 
+> **⚠️ Security Note**: Review the [install.sh](https://github.com/cashpilotthrive-hue/.github/blob/main/install.sh) script before running to understand what it does. For maximum security, use the manual installation method below.
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/cashpilotthrive-hue/.github/main/install.sh | bash && cd ~/.personal-linux-setup && ./setup.sh
 ```
@@ -12,12 +14,12 @@ That's it! This single command will:
 - ✅ Download the entire setup
 - ✅ Install essential packages
 - ✅ Set up development tools (Node.js, Python, Docker, Git)
-- ✅ Configure dotfiles (.bashrc, .gitconfig, .vimrc, .tmux)
+- ✅ Configure dotfiles (.bashrc, .gitconfig, .vimrc, .tmux.conf)
 - ✅ Apply system configurations
 
 ## Manual Install (More Control)
 
-If you prefer to review before installing:
+If you prefer to review before installing (recommended):
 
 ```bash
 # 1. Download
@@ -33,6 +35,8 @@ ls dotfiles/
 # 3. Run setup when ready
 ./setup.sh
 ```
+
+> **Note**: The quick install clones to `~/.personal-linux-setup` as defined in install.sh. Manual installation allows you to choose any directory.
 
 ## What You Get
 
