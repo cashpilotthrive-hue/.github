@@ -34,7 +34,7 @@ chmod +x setup.sh
 - Node.js & npm
 - Python 3 & pip
 - Docker & Docker Compose
-- VS Code / Code-OSS
+- GitHub CLI (gh)
 
 ### Optional Tools
 - GitHub CLI (gh)

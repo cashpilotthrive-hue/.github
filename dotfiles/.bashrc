@@ -59,11 +59,23 @@ alias di='docker images'
 alias dex='docker exec -it'
 alias dlog='docker logs'
 
-# System aliases
-alias update='sudo apt update && sudo apt upgrade -y'
-alias install='sudo apt install'
-alias remove='sudo apt remove'
-alias search='apt search'
+# System aliases (detect package manager)
+if command -v apt &> /dev/null; then
+    alias update='sudo apt update && sudo apt upgrade -y'
+    alias install='sudo apt install'
+    alias remove='sudo apt remove'
+    alias search='apt search'
+elif command -v dnf &> /dev/null; then
+    alias update='sudo dnf upgrade -y'
+    alias install='sudo dnf install'
+    alias remove='sudo dnf remove'
+    alias search='dnf search'
+elif command -v pacman &> /dev/null; then
+    alias update='sudo pacman -Syu'
+    alias install='sudo pacman -S'
+    alias remove='sudo pacman -R'
+    alias search='pacman -Ss'
+fi
 alias ports='netstat -tulanp'
 
 # Add local bin to PATH
