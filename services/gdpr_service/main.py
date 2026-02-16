@@ -1,33 +1,39 @@
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, status, Request
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime, timedelta
 import uuid
 import sqlite3
 import threading
+from starlette.middleware.base import BaseHTTPMiddleware
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Content-Security-Policy"] = "default-src 'self'; frame-ancestors 'none';"
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        return response
 
 app = FastAPI(title="GDPR Service")
+app.add_middleware(SecurityHeadersMiddleware)
 
 DB_PATH = "gdpr.db"
+_local = threading.local()
 
-_thread_local = threading.local()
-
-def get_db_conn():
-    """Returns a thread-local SQLite connection with optimized PRAGMAs."""
-    if not hasattr(_thread_local, "conn"):
-        # We use a thread-local connection to avoid the overhead of opening/closing
-        # a new connection for every request.
-        _thread_local.conn = sqlite3.connect(DB_PATH, check_same_thread=False)
-        # WAL mode is persistent in the DB file, but synchronous=NORMAL is not.
-        # synchronous=NORMAL is safe with WAL and provides significant performance gains.
-        _thread_local.conn.execute("PRAGMA synchronous=NORMAL")
-    return _thread_local.conn
+def get_db_connection():
+    if not hasattr(_local, "conn"):
+        _local.conn = sqlite3.connect(DB_PATH)
+        _local.conn.execute("PRAGMA journal_mode=WAL")
+        _local.conn.execute("PRAGMA synchronous=NORMAL")
+    return _local.conn
 
 def init_db():
     conn = sqlite3.connect(DB_PATH)
+    conn.execute("PRAGMA journal_mode=WAL")
     cursor = conn.cursor()
-    # Enable WAL mode for better concurrency
-    cursor.execute("PRAGMA journal_mode=WAL")
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS gdpr_requests (
             request_id TEXT PRIMARY KEY,
@@ -43,7 +49,6 @@ def init_db():
 
 init_db()
 
-# Models based on OpenAPI spec
 class GdprRequest(BaseModel):
     request_type: str
     request_details: Optional[str] = None
@@ -54,7 +59,6 @@ class GdprAccepted(BaseModel):
     due_date: datetime
 
 def log_audit(event_type: str, details: dict):
-    # Placeholder for Audit Log integration
     print(f"DEBUG: Audit Log [{event_type}]: {details}")
 
 @app.post("/gdpr/request", response_model=GdprAccepted, status_code=status.HTTP_202_ACCEPTED)
@@ -68,7 +72,7 @@ def submit_gdpr_request(request: GdprRequest):
     submitted_at = datetime.now()
     status_str = "submitted"
 
-    conn = get_db_conn()
+    conn = get_db_connection()
     try:
         cursor = conn.cursor()
         cursor.execute('''
@@ -81,12 +85,11 @@ def submit_gdpr_request(request: GdprRequest):
         raise
 
     log_audit("gdpr_request_submitted", {"request_id": request_id, "type": request.request_type})
-
     return GdprAccepted(request_id=request_id, status=status_str, due_date=due_date)
 
 @app.get("/gdpr/request/{request_id}")
 def get_gdpr_status(request_id: uuid.UUID):
-    conn = get_db_conn()
+    conn = get_db_connection()
     try:
         cursor = conn.cursor()
         cursor.execute('SELECT request_id, status, due_date, request_type FROM gdpr_requests WHERE request_id = ?', (str(request_id),))

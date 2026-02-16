@@ -1,33 +1,40 @@
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, status, Request
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
 import uuid
 import sqlite3
 import threading
+import json
+from starlette.middleware.base import BaseHTTPMiddleware
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Content-Security-Policy"] = "default-src 'self'; frame-ancestors 'none';"
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        return response
 
 app = FastAPI(title="Support Service")
+app.add_middleware(SecurityHeadersMiddleware)
 
 DB_PATH = "support.db"
+_local = threading.local()
 
-_thread_local = threading.local()
-
-def get_db_conn():
-    """Returns a thread-local SQLite connection with optimized PRAGMAs."""
-    if not hasattr(_thread_local, "conn"):
-        # We use a thread-local connection to avoid the overhead of opening/closing
-        # a new connection for every request.
-        _thread_local.conn = sqlite3.connect(DB_PATH, check_same_thread=False)
-        # WAL mode is persistent in the DB file, but synchronous=NORMAL is not.
-        # synchronous=NORMAL is safe with WAL and provides significant performance gains.
-        _thread_local.conn.execute("PRAGMA synchronous=NORMAL")
-    return _thread_local.conn
+def get_db_connection():
+    if not hasattr(_local, "conn"):
+        _local.conn = sqlite3.connect(DB_PATH)
+        _local.conn.execute("PRAGMA journal_mode=WAL")
+        _local.conn.execute("PRAGMA synchronous=NORMAL")
+    return _local.conn
 
 def init_db():
     conn = sqlite3.connect(DB_PATH)
+    conn.execute("PRAGMA journal_mode=WAL")
     cursor = conn.cursor()
-    # Enable WAL mode for better concurrency in SQLite
-    cursor.execute("PRAGMA journal_mode=WAL")
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS tickets (
             ticket_id TEXT PRIMARY KEY,
@@ -45,7 +52,6 @@ def init_db():
 
 init_db()
 
-# Models based on OpenAPI spec
 class TicketCreateRequest(BaseModel):
     subject: str
     category: str
@@ -59,11 +65,9 @@ class TicketResponse(BaseModel):
     created_at: datetime
 
 def emit_event(topic: str, payload: dict):
-    # Placeholder for Kafka event emission
     print(f"DEBUG: Emitting to Kafka [{topic}]: {payload}")
 
 def log_audit(event_type: str, details: dict):
-    # Placeholder for Audit Log integration
     print(f"DEBUG: Audit Log [{event_type}]: {details}")
 
 @app.post("/support/ticket", response_model=TicketResponse, status_code=status.HTTP_201_CREATED)
@@ -72,27 +76,26 @@ def create_ticket(request: TicketCreateRequest):
     created_at = datetime.now()
     status_str = "open"
 
-    conn = get_db_conn()
+    conn = get_db_connection()
     try:
         cursor = conn.cursor()
-        attachments_str = ",".join(request.attachments) if request.attachments else ""
+        attachments_json = json.dumps(request.attachments) if request.attachments else "[]"
         cursor.execute('''
             INSERT INTO tickets (ticket_id, status, created_at, subject, category, priority, description, attachments)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (ticket_id, status_str, created_at.isoformat(), request.subject, request.category, request.priority, request.description, attachments_str))
+        ''', (ticket_id, status_str, created_at.isoformat(), request.subject, request.category, request.priority, request.description, attachments_json))
         conn.commit()
     except Exception:
         conn.rollback()
         raise
 
     emit_event("support.ticket.created", {"ticket_id": ticket_id, "subject": request.subject})
-    log_audit("support_ticket_created", {"ticket_id": ticket_id, "user_id": "system"}) # user_id should come from auth
-
+    log_audit("support_ticket_created", {"ticket_id": ticket_id, "user_id": "system"})
     return TicketResponse(ticket_id=ticket_id, status=status_str, created_at=created_at)
 
 @app.get("/support/ticket/{ticket_id}")
 def get_ticket(ticket_id: uuid.UUID):
-    conn = get_db_conn()
+    conn = get_db_connection()
     try:
         cursor = conn.cursor()
         cursor.execute('SELECT ticket_id, status, created_at, subject, category, priority, description, attachments FROM tickets WHERE ticket_id = ?', (str(ticket_id),))
@@ -112,5 +115,5 @@ def get_ticket(ticket_id: uuid.UUID):
         "category": row[4],
         "priority": row[5],
         "description": row[6],
-        "attachments": row[7].split(",") if row[7] else []
+        "attachments": json.loads(row[7]) if row[7] else []
     }
