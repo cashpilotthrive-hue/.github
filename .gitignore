@@ -1,0 +1,13 @@
+# Ignore environment files with tokens
+.env
+.env.local
+
+# Ignore local configuration overrides
+mcp.local.json
+
+# Ignore log files
+*.log
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
