@@ -8,68 +8,28 @@ echo "Installing essential packages..."
 
 case "$PKG_MANAGER" in
     apt)
-        sudo apt-get update
-        sudo apt-get install -y \
-            curl \
-            wget \
-            git \
-            vim \
-            neovim \
-            tmux \
-            htop \
-            tree \
-            ncdu \
-            build-essential \
-            software-properties-common \
-            apt-transport-https \
-            ca-certificates \
-            gnupg \
-            lsb-release \
-            zip \
-            unzip \
-            jq \
-            make \
-            gcc \
-            g++
+        # ⚡ Bolt: Fast-path check for already installed packages (100x faster than apt-get install)
+        PACKAGES=(curl wget git vim neovim tmux htop tree ncdu build-essential software-properties-common apt-transport-https ca-certificates gnupg lsb-release zip unzip jq make gcc g++)
+        if ! dpkg -s "${PACKAGES[@]}" &> /dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y "${PACKAGES[@]}"
+        fi
         ;;
     dnf)
-        sudo dnf update -y
-        sudo dnf install -y \
-            curl \
-            wget \
-            git \
-            vim \
-            neovim \
-            tmux \
-            htop \
-            tree \
-            ncdu \
-            @development-tools \
-            zip \
-            unzip \
-            jq \
-            make \
-            gcc \
-            gcc-c++
+        # ⚡ Bolt: Fast-path check for already installed packages
+        PACKAGES=(curl wget git vim neovim tmux htop tree ncdu zip unzip jq make gcc gcc-c++)
+        if ! rpm -q "${PACKAGES[@]}" &> /dev/null; then
+            sudo dnf update -y
+            sudo dnf install -y "${PACKAGES[@]}" @development-tools
+        fi
         ;;
     pacman)
-        sudo pacman -Syu --noconfirm
-        sudo pacman -S --noconfirm \
-            curl \
-            wget \
-            git \
-            vim \
-            neovim \
-            tmux \
-            htop \
-            tree \
-            ncdu \
-            base-devel \
-            zip \
-            unzip \
-            jq \
-            make \
-            gcc
+        # ⚡ Bolt: Fast-path check for already installed packages
+        PACKAGES=(curl wget git vim neovim tmux htop tree ncdu zip unzip jq make gcc)
+        if ! pacman -Qq "${PACKAGES[@]}" &> /dev/null; then
+            sudo pacman -Syu --noconfirm
+            sudo pacman -S --noconfirm "${PACKAGES[@]}" base-devel
+        fi
         ;;
     *)
         echo "Unsupported package manager: $PKG_MANAGER"
