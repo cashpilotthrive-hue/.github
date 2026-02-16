@@ -28,7 +28,8 @@ updates:
       include: "scope"
     open-pull-requests-limit: 10
     ignore:
-      # Ignore major version updates
+      # Ignore major version updates to prevent automatic breaking changes
+      # Major updates should be reviewed manually before upgrading
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
 
