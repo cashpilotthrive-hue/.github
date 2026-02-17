@@ -4,7 +4,7 @@ set -e
 echo "Running OpenAI Codex..."
 
 # Check if Codex is installed
-if ! command -v codex &> /dev/null && ! npm list -g @openai/codex &> /dev/null; then
+if ! command -v codex &> /dev/null && ! npm list -g @openai/codex &> /dev/null 2>&1; then
     echo "Error: OpenAI Codex is not installed."
     echo "Please run: sudo npm install -g @openai/codex"
     exit 1
