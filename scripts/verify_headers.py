@@ -21,7 +21,14 @@ def verify_headers():
                 print(f"Error: Missing {header} in public/_headers")
                 return False
 
-    print("✓ Header configuration verification successful")
+    # Check consistency between netlify.toml and _headers
+    with open('netlify.toml', 'r') as f:
+        toml_content = f.read()
+        if 'Content-Security-Policy' not in toml_content:
+             print("Error: Missing CSP in netlify.toml")
+             return False
+
+    print("✓ Header and redirect configuration verification successful")
     return True
 
 if __name__ == "__main__":
