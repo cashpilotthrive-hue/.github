@@ -103,4 +103,13 @@ else
     echo "GitHub CLI already installed: $(gh --version | head -n1)"
 fi
 
+# Install OpenAI Codex
+if command -v npm &> /dev/null; then
+    echo "Installing OpenAI Codex..."
+    sudo npm install -g @openai/codex
+    echo "✓ OpenAI Codex installed successfully"
+else
+    echo "Warning: npm not found, skipping OpenAI Codex installation"
+fi
+
 echo "✓ Development tools installed successfully"
