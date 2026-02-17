@@ -8,68 +8,90 @@ echo "Installing essential packages..."
 
 case "$PKG_MANAGER" in
     apt)
-        sudo apt-get update
-        sudo apt-get install -y \
-            curl \
-            wget \
-            git \
-            vim \
-            neovim \
-            tmux \
-            htop \
-            tree \
-            ncdu \
-            build-essential \
-            software-properties-common \
-            apt-transport-https \
-            ca-certificates \
-            gnupg \
-            lsb-release \
-            zip \
-            unzip \
-            jq \
-            make \
-            gcc \
+        PACKAGES=(
+            curl
+            wget
+            git
+            vim
+            neovim
+            tmux
+            htop
+            tree
+            ncdu
+            build-essential
+            software-properties-common
+            apt-transport-https
+            ca-certificates
+            gnupg
+            lsb-release
+            zip
+            unzip
+            jq
+            make
+            gcc
             g++
+        )
+        if dpkg -s "${PACKAGES[@]}" >/dev/null 2>&1; then
+            echo "✓ Essential packages already installed (skipped)"
+        else
+            sudo apt-get update
+            sudo apt-get install -y "${PACKAGES[@]}"
+        fi
         ;;
     dnf)
-        sudo dnf update -y
-        sudo dnf install -y \
-            curl \
-            wget \
-            git \
-            vim \
-            neovim \
-            tmux \
-            htop \
-            tree \
-            ncdu \
-            @development-tools \
-            zip \
-            unzip \
-            jq \
-            make \
-            gcc \
+        PACKAGES=(
+            curl
+            wget
+            git
+            vim
+            neovim
+            tmux
+            htop
+            tree
+            ncdu
+            @development-tools
+            zip
+            unzip
+            jq
+            make
+            gcc
             gcc-c++
+        )
+        # Use a subset of packages for the low-level check as rpm -q doesn't support groups (@)
+        CHECK_PACKAGES=(curl wget git vim neovim tmux htop tree ncdu zip unzip jq make gcc gcc-c++)
+        if rpm -q "${CHECK_PACKAGES[@]}" >/dev/null 2>&1; then
+            echo "✓ Essential packages already installed (skipped)"
+        else
+            sudo dnf update -y
+            sudo dnf install -y "${PACKAGES[@]}"
+        fi
         ;;
     pacman)
-        sudo pacman -Syu --noconfirm
-        sudo pacman -S --noconfirm \
-            curl \
-            wget \
-            git \
-            vim \
-            neovim \
-            tmux \
-            htop \
-            tree \
-            ncdu \
-            base-devel \
-            zip \
-            unzip \
-            jq \
-            make \
+        PACKAGES=(
+            curl
+            wget
+            git
+            vim
+            neovim
+            tmux
+            htop
+            tree
+            ncdu
+            base-devel
+            zip
+            unzip
+            jq
+            make
             gcc
+        )
+        # Use a subset of packages for the low-level check as pacman -Qq doesn't support groups
+        CHECK_PACKAGES=(curl wget git vim neovim tmux htop tree ncdu zip unzip jq make gcc)
+        if pacman -Qq "${CHECK_PACKAGES[@]}" >/dev/null 2>&1; then
+            echo "✓ Essential packages already installed (skipped)"
+        else
+            sudo pacman -Syu --noconfirm
+            sudo pacman -S --noconfirm "${PACKAGES[@]}"
+        fi
         ;;
     *)
         echo "Unsupported package manager: $PKG_MANAGER"
