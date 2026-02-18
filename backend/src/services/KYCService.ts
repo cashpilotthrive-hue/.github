@@ -1,4 +1,5 @@
 import { KYCDocument, KYCVerification, RiskScore, User, AuditLog } from '../models';
+import { Op } from 'sequelize';
 import config from '../config';
 import axios from 'axios';
 import logger from '../config/logger';
@@ -14,11 +15,11 @@ export interface KYCSubmissionData {
   selfieUrl: string;
   fullName: string;
   dateOfBirth: Date;
-  address: string;
-  city: string;
+  address?: string;
+  city?: string;
   state?: string;
   country: string;
-  postalCode: string;
+  postalCode?: string;
 }
 
 export interface VerificationResult {
@@ -405,7 +406,7 @@ class KYCService {
       const highRiskUsers = await RiskScore.findAll({
         where: {
           requiresReview: true,
-          nextReviewDate: { $lte: today },
+          nextReviewDate: { [Op.lte]: today },
         },
         include: [
           {

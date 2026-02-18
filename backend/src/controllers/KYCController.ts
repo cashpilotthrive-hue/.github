@@ -30,7 +30,7 @@ class KYCController {
       if (!documentType || !documentFrontUrl || !selfieUrl || !fullName || !dateOfBirth || !country) {
         res.status(400).json({
           success: false,
-          message: 'Missing required fields',
+          message: 'Missing required fields: documentType, documentFrontUrl, selfieUrl, fullName, dateOfBirth, country',
         });
         return;
       }
