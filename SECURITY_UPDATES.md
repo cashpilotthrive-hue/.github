@@ -22,14 +22,21 @@ All identified vulnerable dependencies have been updated to their patched versio
 
 **Impact:** These vulnerabilities could allow attackers to smuggle requests through the web server, potentially bypassing security controls and accessing restricted endpoints.
 
-#### 2. Pillow: 10.2.0 → 10.3.0
+#### 2. Pillow: 10.2.0 → 12.1.1
 **Vulnerabilities Fixed:**
 - **Buffer overflow vulnerability**
   - Severity: High
   - Affected versions: < 10.3.0
   - Patched version: 10.3.0
 
-**Impact:** Buffer overflow could lead to arbitrary code execution when processing malicious image files.
+- **Out-of-bounds write when loading PSD images**
+  - Severity: High
+  - Affected versions: >= 10.3.0, < 12.1.1
+  - Patched version: 12.1.1
+
+**Impact:** 
+- Buffer overflow could lead to arbitrary code execution when processing malicious image files
+- Out-of-bounds write when loading PSD images could lead to memory corruption and potential code execution
 
 ### Node.js Dependencies (backend/package.json)
 
@@ -79,20 +86,20 @@ All identified vulnerable dependencies have been updated to their patched versio
 ```bash
 # Python dependencies with vulnerabilities
 gunicorn==21.2.0  # 2 CVEs
-pillow==10.2.0    # 1 CVE
+pillow==10.2.0    # 2 CVEs
 
 # Node.js dependencies with vulnerabilities
 multer@1.4.5-lts.1     # 4 CVEs
 nodemailer@6.9.7       # 2 CVEs
 
-Total: 9 vulnerabilities
+Total: 10 vulnerabilities
 ```
 
 ### After Updates
 ```bash
 # Python dependencies - patched
 gunicorn==22.0.0  # ✅ Secure
-pillow==10.3.0    # ✅ Secure
+pillow==12.1.1    # ✅ Secure
 
 # Node.js dependencies - patched
 multer@2.0.2          # ✅ Secure
@@ -191,10 +198,11 @@ gunicorn -w 4 -b 0.0.0.0:5002 src.app:app
 - Configuration file format unchanged
 - Security improvements for request handling
 
-### Pillow 10.3 Changes
+### Pillow 12.1 Changes
 - Image processing API remains compatible
 - Performance improvements
-- Security fixes for buffer handling
+- Security fixes for buffer handling and PSD image loading
+- **Note:** Major version jump (10.x → 12.x) - test thoroughly
 
 ## Security Best Practices
 
@@ -236,8 +244,8 @@ Going forward, ensure:
 ## Status
 
 ✅ **All security vulnerabilities addressed**
-- Python: 3 CVEs fixed
-- Node.js: 6 CVEs fixed
-- Total: 9 vulnerabilities eliminated
+- Python: 4 CVEs fixed (gunicorn: 2, pillow: 2)
+- Node.js: 6 CVEs fixed (multer: 4, nodemailer: 2)
+- Total: 10 vulnerabilities eliminated
 
 Last Updated: February 18, 2024
