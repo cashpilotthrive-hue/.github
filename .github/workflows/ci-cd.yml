@@ -1,0 +1,107 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, copilot/*]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  # Backend Lint and Test
+  backend-lint:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Build backend
+        run: npm run build
+
+  # Frontend Lint and Build
+  frontend-lint:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Build frontend
+        run: npm run build
+
+  # Docker Build Test
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: [backend-lint, frontend-lint]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build backend Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./Dockerfile.backend
+          push: false
+          tags: crypto-mining-backend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build frontend Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./Dockerfile.frontend
+          push: false
+          tags: crypto-mining-frontend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # Validation Complete
+  validate:
+    runs-on: ubuntu-latest
+    needs: [backend-lint, frontend-lint, docker-build]
+    steps:
+      - name: Validation successful
+        run: |
+          echo "✓ All checks passed successfully"
+          echo "✓ Backend linting and build completed"
+          echo "✓ Frontend linting and build completed"
+          echo "✓ Docker images built successfully"
