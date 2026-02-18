@@ -6,7 +6,7 @@ import logger from './config/logger';
 import config from './config';
 import sequelize from './config/database';
 import { errorHandler } from './middleware/errorHandler';
-import { rateLimiter } from './middleware/rateLimiter';
+import { apiLimiter } from './middleware/rateLimiter';
 
 // Import routes
 import kycRoutes from './routes/kyc';
@@ -22,7 +22,7 @@ app.use(helmet()); // Security headers
 app.use(cors()); // Enable CORS
 app.use(express.json()); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
-app.use(rateLimiter); // Rate limiting
+app.use(apiLimiter); // Rate limiting
 
 // API Routes
 app.use('/api/kyc', kycRoutes);

@@ -48,3 +48,31 @@ export const customRateLimit = (windowMs: number, max: number) => {
     legacyHeaders: false,
   });
 };
+
+// Stricter rate limiter for KYC submissions
+export const kycSubmissionLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5, // Limit each IP to 5 KYC submissions per hour
+  message: 'Too many KYC submissions from this IP, please try again after an hour.',
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: false,
+});
+
+// Rate limiter for KYC status checks
+export const kycStatusLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 20, // Limit each IP to 20 status checks per minute
+  message: 'Too many status check requests, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Rate limiter for admin operations
+export const adminLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 30, // Limit each IP to 30 admin operations per minute
+  message: 'Too many admin requests, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
