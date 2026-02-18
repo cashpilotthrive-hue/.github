@@ -1,5 +1,7 @@
 import User from './User';
 import KYCDocument from './KYCDocument';
+import KYCVerification from './KYCVerification';
+import RiskScore from './RiskScore';
 import MiningContract from './MiningContract';
 import Wallet from './Wallet';
 import Transaction from './Transaction';
@@ -33,9 +35,17 @@ Notification.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 User.hasMany(AuditLog, { foreignKey: 'userId', as: 'auditLogs' });
 AuditLog.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
+KYCDocument.hasMany(KYCVerification, { foreignKey: 'kycDocumentId', as: 'verifications' });
+KYCVerification.belongsTo(KYCDocument, { foreignKey: 'kycDocumentId', as: 'kycDocument' });
+
+User.hasOne(RiskScore, { foreignKey: 'userId', as: 'riskScore' });
+RiskScore.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
 export {
   User,
   KYCDocument,
+  KYCVerification,
+  RiskScore,
   MiningContract,
   Wallet,
   Transaction,

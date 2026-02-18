@@ -16,10 +16,14 @@ export interface KYCDocumentAttributes {
   state?: string;
   country?: string;
   postalCode?: string;
-  status: 'pending' | 'approved' | 'rejected';
+  status: 'pending' | 'approved' | 'rejected' | 'processing';
   rejectionReason?: string;
   reviewedBy?: number;
   reviewedAt?: Date;
+  aiVerified: boolean;
+  aiConfidence?: number;
+  aiProcessedAt?: Date;
+  requiresManualReview: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -39,10 +43,14 @@ class KYCDocument extends Model<KYCDocumentAttributes> implements KYCDocumentAtt
   public state?: string;
   public country?: string;
   public postalCode?: string;
-  public status!: 'pending' | 'approved' | 'rejected';
+  public status!: 'pending' | 'approved' | 'rejected' | 'processing';
   public rejectionReason?: string;
   public reviewedBy?: number;
   public reviewedAt?: Date;
+  public aiVerified!: boolean;
+  public aiConfidence?: number;
+  public aiProcessedAt?: Date;
+  public requiresManualReview!: boolean;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 }
@@ -111,7 +119,7 @@ KYCDocument.init(
       allowNull: true,
     },
     status: {
-      type: DataTypes.ENUM('pending', 'approved', 'rejected'),
+      type: DataTypes.ENUM('pending', 'approved', 'rejected', 'processing'),
       defaultValue: 'pending',
       allowNull: false,
     },
@@ -130,6 +138,28 @@ KYCDocument.init(
     reviewedAt: {
       type: DataTypes.DATE,
       allowNull: true,
+    },
+    aiVerified: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      allowNull: false,
+    },
+    aiConfidence: {
+      type: DataTypes.DECIMAL(5, 4),
+      allowNull: true,
+      validate: {
+        min: 0,
+        max: 1,
+      },
+    },
+    aiProcessedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    requiresManualReview: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      allowNull: false,
     },
   },
   {
