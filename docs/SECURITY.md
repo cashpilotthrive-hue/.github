@@ -310,6 +310,27 @@ Security issues: security@cryptomining.com
 - Update incident response plan
 - Security training for team
 
+## Security Updates Log
+
+### 2026-02-18: Critical Dependency Updates
+
+**Fixed Vulnerabilities:**
+- **Multer**: Updated from 1.4.5-lts.1 to 2.0.2
+  - Fixed multiple DoS vulnerabilities
+  - Fixed memory leak issues
+  - Improved error handling
+  
+- **Nodemailer**: Updated from 6.9.7 to 7.0.11
+  - Fixed DoS via recursive calls
+  - Fixed email routing issues
+  - Improved address parsing
+
+**Action Taken**: All vulnerable dependencies updated to patched versions.
+
+**Verification**: Run `npm audit` to verify all vulnerabilities are resolved.
+
+See [SECURITY-FIXES-2026-02-18.md](SECURITY-FIXES-2026-02-18.md) for detailed information.
+
 ## Resources
 
 - [OWASP Top 10](https://owasp.org/www-project-top-ten/)
