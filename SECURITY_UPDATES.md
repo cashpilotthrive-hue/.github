@@ -237,7 +237,7 @@ Going forward, ensure:
 ## References
 
 - [Gunicorn 22.0.0 Release Notes](https://docs.gunicorn.org/en/stable/news.html)
-- [Pillow 10.3.0 Release Notes](https://pillow.readthedocs.io/en/stable/releasenotes/10.3.0.html)
+- [Pillow 12.1.1 Release Notes](https://pillow.readthedocs.io/en/stable/releasenotes/12.1.1.html)
 - [Multer 2.0 Release Notes](https://github.com/expressjs/multer/releases/tag/v2.0.0)
 - [Nodemailer 7.0 Release Notes](https://nodemailer.com/changelog/)
 
