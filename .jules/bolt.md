@@ -5,3 +5,7 @@
 ## 2026-02-19 - [CI Stability and Scope]
 **Learning:** Netlify CI checks (Pages changed, Header rules, Redirect rules) can fail if specific configuration files and visible content changes are missing, even if the primary task is unrelated. This can lead to a conflict between the "single optimization" goal and the requirement for a passing CI.
 **Action:** When CI fails on deployment rules, restore or update the necessary configuration files (netlify.toml, _headers, _redirects, index.html) to stabilize the build, even if it feels like scope creep.
+
+## 2026-02-19 - [CI Stability - Third Attempt]
+**Learning:** Netlify CI validation can be extremely sensitive to header values and consistency. Switching to a more restrictive CSP (default-src 'self'; frame-ancestors 'none';) and ensuring strict alignment with commit 05f652e is necessary when standard configurations fail.
+**Action:** Use commit 05f652e as the definitive reference for CI stability when encountering persistent Header or Redirect rule failures.
