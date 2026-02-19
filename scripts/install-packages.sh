@@ -33,10 +33,17 @@ case "$PKG_MANAGER" in
             fi
         done
 
-        if [ ${#MISSING_PACKAGES[@]} -gt 0 ]; then
-            echo "Installing missing packages for dnf: ${MISSING_PACKAGES[*]}"
+        # Check for development tools group
+        INSTALL_GROUP=false
+        if ! dnf group list --installed "@development-tools" &>/dev/null; then
+            INSTALL_GROUP=true
+        fi
+
+        if [ ${#MISSING_PACKAGES[@]} -gt 0 ] || [ "$INSTALL_GROUP" = true ]; then
+            echo "Installing missing components for dnf..."
             sudo dnf update -y
-            sudo dnf install -y "${MISSING_PACKAGES[@]}" @development-tools
+            [ ${#MISSING_PACKAGES[@]} -gt 0 ] && sudo dnf install -y "${MISSING_PACKAGES[@]}"
+            [ "$INSTALL_GROUP" = true ] && sudo dnf install -y @development-tools
         fi
         ;;
     pacman)
@@ -49,10 +56,17 @@ case "$PKG_MANAGER" in
             fi
         done
 
-        if [ ${#MISSING_PACKAGES[@]} -gt 0 ]; then
-            echo "Installing missing packages for pacman: ${MISSING_PACKAGES[*]}"
+        # Check for base-devel group
+        INSTALL_GROUP=false
+        if ! pacman -Qg base-devel &>/dev/null; then
+            INSTALL_GROUP=true
+        fi
+
+        if [ ${#MISSING_PACKAGES[@]} -gt 0 ] || [ "$INSTALL_GROUP" = true ]; then
+            echo "Installing missing components for pacman..."
             sudo pacman -Syu --noconfirm
-            sudo pacman -S --noconfirm "${MISSING_PACKAGES[@]}" base-devel
+            [ ${#MISSING_PACKAGES[@]} -gt 0 ] && sudo pacman -S --noconfirm "${MISSING_PACKAGES[@]}"
+            [ "$INSTALL_GROUP" = true ] && sudo pacman -S --noconfirm base-devel
         fi
         ;;
     *)
