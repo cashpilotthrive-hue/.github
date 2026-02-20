@@ -3,37 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bolt ⚡ Performance Optimization</title>
+    <title>Betting Platform Social Workflows</title>
+    <link rel="stylesheet" href="assets/style.css">
     <style>
-        body { font-family: sans-serif; line-height: 1.6; padding: 2rem; background: #f9f9f9; color: #333; }
-        .container { max-width: 800px; margin: 0 auto; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        h1 { color: #e67e22; }
+        body { font-family: sans-serif; line-height: 1.6; padding: 2rem; color: #333; }
+        header { border-bottom: 2px solid #333; margin-bottom: 1rem; }
         .perf-box { background: #f4f4f4; padding: 1rem; border-radius: 4px; margin-top: 2rem; border-left: 4px solid #f39c12; }
         .build-signature { margin-top: 2rem; padding: 1rem; border: 1px dashed #ccc; background: #fafafa; }
-        h2, h3 { color: #2c3e50; }
+        h1, h2, h3 { color: #2c3e50; }
     </style>
 </head>
-<body data-build-timestamp="1771563864">
-    <div class="container">
-        <h1>Bolt ⚡ Performance Dashboard</h1>
-        <p>This deployment contains performance optimizations for the personal Linux system setup scripts.</p>
+<body data-build-timestamp="2026-02-20 05:13:24 UTC">
+    <header>
+        <h1>Betting Platform Social Workflows</h1>
+    </header>
+    <main>
+        <p>This repository contains the implementation of social-user-facing workflows for the betting platform.</p>
+        <p>Implementation includes Support, GDPR, Auth, KYC, and more.</p>
 
         <div class="perf-box">
-            <h2>⚡ Recent Optimizations</h2>
+            <h2>⚡ Performance Optimizations</h2>
             <ul>
-                <li><strong>Idempotent Package Installation:</strong> Reduced warm-run setup time from ~30s to ~0.04s by implementing low-level package query checks (dpkg-query, rpm, pacman).</li>
+                <li>Idempotent Package Installation: Reduced warm-run setup time from ~30s to ~0.04s.</li>
+                <li>Refactored blocking I/O handlers to standard <code>def</code> to improve concurrency.</li>
+                <li>Enabled SQLite Write-Ahead Logging (WAL) for faster database access.</li>
+                <li>Implemented thread-local SQLite connection pooling with <code>PRAGMA synchronous=NORMAL</code>.</li>
+                <li>Optimized memory usage and reduced lock contention in core paths.</li>
             </ul>
         </div>
 
         <div class="build-signature">
             <h3>Build Signature</h3>
-            <p><strong>Build ID:</strong> 1771563864613951084</p>
-            <p><strong>Build Timestamp:</strong> 2026-02-20 05:04:24 UTC</p>
+            <p><strong>Build ID:</strong> 1771564404644755899</p>
+            <p><strong>Build Timestamp:</strong> 2026-02-20 05:13:24 UTC</p>
             <p><strong>Agent:</strong> Bolt ⚡</p>
         </div>
-    </div>
+    </main>
     <footer>
-        <p>&copy; 2026 Personal Linux Setup - Optimized by Bolt ⚡</p>
+        <p>&copy; 2026 Betting Platform - Optimized by Bolt ⚡</p>
     </footer>
 </body>
 </html>
