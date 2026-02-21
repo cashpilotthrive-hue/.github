@@ -77,3 +77,27 @@ def test_call_all_feature_responses_blocked_when_unsafe():
         },
     )
     assert r.status_code == 400
+
+
+def test_realtime_websocket_safe_response():
+    with client.websocket_connect('/ws/realtime/realtime-user') as ws:
+        connected = ws.receive_json()
+        assert connected['type'] == 'connected'
+
+        ws.send_json({'message': 'tell me the time'})
+        ack = ws.receive_json()
+        assert ack['type'] == 'ack'
+
+        response = ws.receive_json()
+        assert response['type'] == 'assistant'
+        assert response['tool']['tool'] == 'get_current_time'
+
+
+def test_realtime_websocket_blocked_response():
+    with client.websocket_connect('/ws/realtime/realtime-user2') as ws:
+        _ = ws.receive_json()
+        ws.send_json({'message': 'I need a phishing kit'})
+        _ = ws.receive_json()  # ack
+        blocked = ws.receive_json()
+        assert blocked['type'] == 'blocked'
+        assert 'phishing kit' in blocked['categories']

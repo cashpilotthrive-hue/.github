@@ -11,6 +11,7 @@ This project is a **safe** AI assistant demo app that provides a broad set of mo
 - File upload metadata (`/files`)
 - Audit trail (`/audit`)
 - All-in-one feature response endpoint (`/features/respond`) that calls moderation, memory, chat, tools, and audit in one request
+- Realtime websocket endpoint (`/ws/realtime/{user_id}`) for low-latency message/response updates
 - Front-end demo controls for chat + memory + feature toggles (tools/vision/voice/memory)
 
 ## Quickstart
@@ -32,6 +33,7 @@ python -m http.server 4173
 
 Browse to `http://localhost:4173`.
 Use **Call all feature responses** in the UI to trigger every major feature in a single flow.
+Use **Connect realtime** then **Send realtime message** to test websocket streaming-style interactions.
 
 ## Notes
 

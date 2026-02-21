@@ -4,11 +4,11 @@ from datetime import datetime, timezone
 from typing import Any
 import uuid
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, HTTPException, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-app = FastAPI(title="Safe Omni Assistant API", version="0.2.0")
+app = FastAPI(title="Safe Omni Assistant API", version="0.3.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -91,6 +91,39 @@ def append_audit(event: str, detail: dict[str, Any]) -> None:
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
     )
+
+
+def build_realtime_reply(user_id: str, message: str) -> dict[str, Any]:
+    moderation = moderate(ModerationRequest(content=message))
+    if moderation.flagged:
+        append_audit(
+            "realtime.blocked",
+            {"user_id": user_id, "categories": moderation.categories},
+        )
+        return {
+            "type": "blocked",
+            "categories": moderation.categories,
+            "message": "Unsafe content blocked by moderation.",
+        }
+
+    tool_result = None
+    if "time" in message.lower():
+        tool_result = {"tool": "get_current_time", "result": datetime.now(timezone.utc).isoformat()}
+
+    memory_context = MEMORIES.get(user_id, [])[-3:]
+    response_text = (
+        "Realtime assistant response: "
+        f"{message}"
+        + (f" | memory={memory_context}" if memory_context else "")
+    )
+
+    append_audit("realtime.responded", {"user_id": user_id})
+    return {
+        "type": "assistant",
+        "response": response_text,
+        "tool": tool_result,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
 
 
 @app.get("/health")
@@ -239,3 +272,27 @@ def call_all_features_response(payload: AllFeaturesRequest) -> dict[str, Any]:
         "memory": memory_result,
         "audit_tail": audit_snapshot,
     }
+
+
+@app.websocket("/ws/realtime/{user_id}")
+async def realtime_socket(websocket: WebSocket, user_id: str) -> None:
+    await websocket.accept()
+    append_audit("realtime.connected", {"user_id": user_id})
+    await websocket.send_json({
+        "type": "connected",
+        "message": f"Realtime channel connected for {user_id}",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    })
+
+    try:
+        while True:
+            payload = await websocket.receive_json()
+            message = str(payload.get("message", "")).strip()
+            if not message:
+                await websocket.send_json({"type": "error", "message": "message is required"})
+                continue
+
+            await websocket.send_json({"type": "ack", "message": message})
+            await websocket.send_json(build_realtime_reply(user_id, message))
+    except WebSocketDisconnect:
+        append_audit("realtime.disconnected", {"user_id": user_id})

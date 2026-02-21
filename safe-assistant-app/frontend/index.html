@@ -17,7 +17,7 @@
   </head>
   <body>
     <h1>Safe Omni Assistant</h1>
-    <p>A safe ChatGPT-style demo app with chat, tools, memory, files, moderation, and audit hooks.</p>
+    <p>A safe ChatGPT-style demo app with chat, tools, memory, files, moderation, audit hooks, and realtime socket responses.</p>
 
     <div class="box">
       <h2>Chat</h2>
@@ -37,6 +37,15 @@
     </div>
 
     <div class="box">
+      <h2>Realtime</h2>
+      <div class="btn-row">
+        <button onclick="connectRealtime()">Connect realtime</button>
+        <button onclick="sendRealtimeMessage()">Send realtime message</button>
+      </div>
+      <pre id="realtimeOut"></pre>
+    </div>
+
+    <div class="box">
       <h2>Memory</h2>
       <input id="note" placeholder="Remember this note..." />
       <button onclick="saveMemory()">Save memory</button>
@@ -46,6 +55,13 @@
 
     <script>
       const API = "http://localhost:8000";
+      let realtimeSocket = null;
+
+      function appendRealtime(entry) {
+        const out = document.getElementById("realtimeOut");
+        const current = out.textContent ? out.textContent + "\n" : "";
+        out.textContent = current + JSON.stringify(entry, null, 2);
+      }
 
       async function sendChat() {
         const userId = document.getElementById("userId").value;
@@ -78,6 +94,27 @@
         });
         const data = await res.json();
         document.getElementById("chatOut").textContent = JSON.stringify(data, null, 2);
+      }
+
+      function connectRealtime() {
+        const userId = document.getElementById("userId").value;
+        if (realtimeSocket) {
+          realtimeSocket.close();
+        }
+        realtimeSocket = new WebSocket(`ws://localhost:8000/ws/realtime/${encodeURIComponent(userId)}`);
+        realtimeSocket.onopen = () => appendRealtime({ type: "client", event: "opened" });
+        realtimeSocket.onmessage = (event) => appendRealtime(JSON.parse(event.data));
+        realtimeSocket.onerror = () => appendRealtime({ type: "client", event: "error" });
+        realtimeSocket.onclose = () => appendRealtime({ type: "client", event: "closed" });
+      }
+
+      function sendRealtimeMessage() {
+        const message = document.getElementById("message").value;
+        if (!realtimeSocket || realtimeSocket.readyState !== WebSocket.OPEN) {
+          appendRealtime({ type: "client", event: "not_connected" });
+          return;
+        }
+        realtimeSocket.send(JSON.stringify({ message }));
       }
 
       async function saveMemory() {
