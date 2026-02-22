@@ -28,9 +28,10 @@ case "$PKG_MANAGER" in
         # List of packages to install (excluding groups)
         PACKAGES="curl wget git vim neovim tmux htop tree ncdu zip unzip jq make gcc gcc-c++"
 
-        # Check if packages are already installed
-        if rpm -q $PACKAGES >/dev/null 2>&1; then
-            echo "✓ Essential packages are already installed."
+        # Check if all packages and the development tools group are already installed
+        # dnf group list installed returns 0 if the group is installed
+        if rpm -q $PACKAGES >/dev/null 2>&1 && dnf group list installed "Development Tools" >/dev/null 2>&1; then
+            echo "✓ Essential packages and groups are already installed."
         else
             echo "Installing missing packages..."
             sudo dnf update -y
@@ -41,9 +42,22 @@ case "$PKG_MANAGER" in
         # List of packages to install (excluding groups)
         PACKAGES="curl wget git vim neovim tmux htop tree ncdu zip unzip jq make gcc"
 
-        # Check if packages are already installed
-        if pacman -Qq $PACKAGES >/dev/null 2>&1; then
-            echo "✓ Essential packages are already installed."
+        # Check if all packages are installed. pacman -Qq returns 0 only if all listed packages exist.
+        # For the base-devel group, we check if all its members are installed.
+        ALL_INSTALLED=true
+        if ! pacman -Qq $PACKAGES >/dev/null 2>&1; then
+            ALL_INSTALLED=false
+        fi
+
+        if [ "$ALL_INSTALLED" = true ]; then
+            # Check if all packages in base-devel are installed
+            if ! pacman -Qq $(pacman -Sg base-devel | awk '{print $2}') >/dev/null 2>&1; then
+                ALL_INSTALLED=false
+            fi
+        fi
+
+        if [ "$ALL_INSTALLED" = true ]; then
+            echo "✓ Essential packages and groups are already installed."
         else
             echo "Installing missing packages..."
             sudo pacman -Syu --noconfirm
