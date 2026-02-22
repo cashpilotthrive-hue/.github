@@ -1,7 +1,5 @@
-# Mandatory configuration to pass Netlify/Cloudflare CI (Header/Redirect/Pages checks)
 [build]
   publish = "public"
-  command = "true"
 
 [[headers]]
   for = "/*"
