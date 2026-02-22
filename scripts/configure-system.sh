@@ -17,18 +17,20 @@ git config --global credential.helper 'cache --timeout=3600'
 
 # Create useful aliases
 if ! grep -q "# Custom aliases" ~/.bashrc; then
-    echo "" >> ~/.bashrc
-    echo "# Custom aliases" >> ~/.bashrc
-    echo "alias ll='ls -alF'" >> ~/.bashrc
-    echo "alias la='ls -A'" >> ~/.bashrc
-    echo "alias l='ls -CF'" >> ~/.bashrc
-    echo "alias ..='cd ..'" >> ~/.bashrc
-    echo "alias ...='cd ../..'" >> ~/.bashrc
-    echo "alias gs='git status'" >> ~/.bashrc
-    echo "alias ga='git add'" >> ~/.bashrc
-    echo "alias gc='git commit'" >> ~/.bashrc
-    echo "alias gp='git push'" >> ~/.bashrc
-    echo "alias gl='git log --oneline --graph --decorate'" >> ~/.bashrc
+    {
+        echo ""
+        echo "# Custom aliases"
+        echo "alias ll='ls -alF'"
+        echo "alias la='ls -A'"
+        echo "alias l='ls -CF'"
+        echo "alias ..='cd ..'"
+        echo "alias ...='cd ../..'"
+        echo "alias gs='git status'"
+        echo "alias ga='git add'"
+        echo "alias gc='git commit'"
+        echo "alias gp='git push'"
+        echo "alias gl='git log --oneline --graph --decorate'"
+    } >> ~/.bashrc
 fi
 
 # Set up SSH directory with proper permissions

@@ -50,20 +50,20 @@ if ! command -v docker &> /dev/null; then
         apt)
             curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
             sudo sh /tmp/get-docker.sh
-            sudo usermod -aG docker $USER
+            sudo usermod -aG docker "$USER"
             rm /tmp/get-docker.sh
             ;;
         dnf)
             sudo dnf install -y docker
             sudo systemctl start docker
             sudo systemctl enable docker
-            sudo usermod -aG docker $USER
+            sudo usermod -aG docker "$USER"
             ;;
         pacman)
             sudo pacman -S --noconfirm docker
             sudo systemctl start docker
             sudo systemctl enable docker
-            sudo usermod -aG docker $USER
+            sudo usermod -aG docker "$USER"
             ;;
     esac
 else
