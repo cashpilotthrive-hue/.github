@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+httpx
+pytest
+pytest-asyncio
+pydantic
+email-validator
+requests
+python-multipart

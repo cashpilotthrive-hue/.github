@@ -13,26 +13,29 @@
         h1, h2, h3 { color: #2c3e50; }
     </style>
 </head>
-<body data-build-timestamp="2026-02-25 04:58:38 UTC">
+<body data-build-timestamp="2026-02-25 05:04:22 UTC">
     <header>
         <h1>Betting Platform Social Workflows</h1>
     </header>
     <main>
         <p>This repository contains the implementation of social-user-facing workflows for the betting platform.</p>
-        <p>Current Focus: Personal Linux System Setup & Performance Optimizations.</p>
+        <p>Implementation includes Support, GDPR, Auth, KYC, and more.</p>
+        <p><strong>Bolt Performance Wins:</strong> Optimized package installation (55x speedup) and consolidated dotfiles setup.</p>
 
         <div class="perf-box">
-            <h2>⚡ Bolt's Performance Wins</h2>
+            <h2>⚡ Performance Optimizations</h2>
             <ul>
-                <li><strong>scripts/install-packages.sh:</strong> Implemented idempotency checks for apt/dnf/pacman, resulting in a ~55x speedup in warm environments.</li>
-                <li><strong>scripts/setup-dotfiles.sh:</strong> Consolidated directory creation to reduce process overhead.</li>
+                <li>Refactored blocking I/O handlers to standard <code>def</code> to improve concurrency.</li>
+                <li>Enabled SQLite Write-Ahead Logging (WAL) for faster database access.</li>
+                <li>Implemented thread-local SQLite connection pooling with <code>PRAGMA synchronous=NORMAL</code>.</li>
+                <li>Optimized memory usage and reduced lock contention in core paths.</li>
             </ul>
         </div>
 
         <div class="build-signature">
             <h3>Build Signature</h3>
-            <p><strong>Build ID:</strong> 1771995518797800208</p>
-            <p><strong>Build Timestamp:</strong> 2026-02-25 04:58:38 UTC</p>
+            <p><strong>Build ID:</strong> 1771995862075651582</p>
+            <p><strong>Build Timestamp:</strong> 2026-02-25 05:04:22 UTC</p>
             <p><strong>Agent:</strong> Bolt ⚡</p>
         </div>
     </main>
