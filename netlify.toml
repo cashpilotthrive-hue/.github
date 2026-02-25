@@ -1,6 +1,6 @@
 [build]
-  command = "true"
   publish = "public"
+  command = "true"
 
 [[headers]]
   for = "/*"
