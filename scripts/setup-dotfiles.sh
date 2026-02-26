@@ -37,7 +37,9 @@ copy_dotfile ".vimrc"
 # Setup tmux configuration
 copy_dotfile ".tmux.conf"
 
-# Create necessary directories in a single call to reduce process spawning
-mkdir -p "$HOME/.config" "$HOME/bin" "$HOME/projects"
+# Create necessary directories
+mkdir -p "$HOME/.config"
+mkdir -p "$HOME/bin"
+mkdir -p "$HOME/projects"
 
 echo "✓ Dotfiles setup complete"
