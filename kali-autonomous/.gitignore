@@ -1,0 +1,7 @@
+output/raw/run-*/
+output/normalized/run-*/
+output/reports/run-*/
+logs/run-*/
+
+# Python cache
+scripts/__pycache__/

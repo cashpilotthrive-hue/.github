@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Kali Autonomous Security Workflow repeatedly
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=15min
+Unit=kali-autonomous.service
+Persistent=true
+
+[Install]
+WantedBy=timers.target
