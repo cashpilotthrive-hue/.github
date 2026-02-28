@@ -6,70 +6,93 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd .. && pwd)"
 
 echo "Installing essential packages..."
 
+# BOLT OPTIMIZATION: Check if packages are already installed to avoid slow update/install cycles.
+# This makes the script idempotent and significantly faster on repeated runs.
+
 case "$PKG_MANAGER" in
     apt)
-        sudo apt-get update
-        sudo apt-get install -y \
-            curl \
-            wget \
-            git \
-            vim \
-            neovim \
-            tmux \
-            htop \
-            tree \
-            ncdu \
-            build-essential \
-            software-properties-common \
-            apt-transport-https \
-            ca-certificates \
-            gnupg \
-            lsb-release \
-            zip \
-            unzip \
-            jq \
-            make \
-            gcc \
-            g++
+        PACKAGES=(
+            curl wget git vim neovim tmux htop tree ncdu
+            build-essential software-properties-common
+            apt-transport-https ca-certificates gnupg
+            lsb-release zip unzip jq make gcc g++
+        )
+
+        # Check for missing packages using dpkg-query
+        MISSING_PACKAGES=()
+        for pkg in "${PACKAGES[@]}"; do
+            if ! dpkg-query -W "$pkg" &>/dev/null; then
+                MISSING_PACKAGES+=("$pkg")
+            fi
+        done
+
+        if [ ${#MISSING_PACKAGES[@]} -gt 0 ]; then
+            echo "Installing missing packages: ${MISSING_PACKAGES[*]}"
+            sudo apt-get update
+            sudo apt-get install -y "${MISSING_PACKAGES[@]}"
+        else
+            echo "✓ All essential packages are already installed."
+        fi
         ;;
     dnf)
-        sudo dnf update -y
-        sudo dnf install -y \
-            curl \
-            wget \
-            git \
-            vim \
-            neovim \
-            tmux \
-            htop \
-            tree \
-            ncdu \
-            @development-tools \
-            zip \
-            unzip \
-            jq \
-            make \
-            gcc \
-            gcc-c++
+        PACKAGES=(
+            curl wget git vim neovim tmux htop tree ncdu
+            zip unzip jq make gcc gcc-c++
+        )
+        GROUPS=("development-tools")
+
+        MISSING_PACKAGES=()
+        for pkg in "${PACKAGES[@]}"; do
+            if ! rpm -q "$pkg" &>/dev/null; then
+                MISSING_PACKAGES+=("$pkg")
+            fi
+        done
+
+        MISSING_GROUPS=()
+        for group in "${GROUPS[@]}"; do
+            if ! dnf group list --installed "$group" &>/dev/null; then
+                MISSING_GROUPS+=("@$group")
+            fi
+        done
+
+        if [ ${#MISSING_PACKAGES[@]} -gt 0 ] || [ ${#MISSING_GROUPS[@]} -gt 0 ]; then
+            echo "Installing missing packages/groups..."
+            sudo dnf update -y
+            [ ${#MISSING_PACKAGES[@]} -gt 0 ] && sudo dnf install -y "${MISSING_PACKAGES[@]}"
+            [ ${#MISSING_GROUPS[@]} -gt 0 ] && sudo dnf install -y "${MISSING_GROUPS[@]}"
+        else
+            echo "✓ All essential packages are already installed."
+        fi
         ;;
     pacman)
-        sudo pacman -Syu --noconfirm
-        sudo pacman -S --noconfirm \
-            curl \
-            wget \
-            git \
-            vim \
-            neovim \
-            tmux \
-            htop \
-            tree \
-            ncdu \
-            base-devel \
-            zip \
-            unzip \
-            jq \
-            make \
-            gcc
+        PACKAGES=(
+            curl wget git vim neovim tmux htop tree ncdu
+            zip unzip jq make gcc
+        )
+        GROUPS=("base-devel")
+
+        MISSING_PACKAGES=()
+        for pkg in "${PACKAGES[@]}"; do
+            if ! pacman -Qq "$pkg" &>/dev/null; then
+                MISSING_PACKAGES+=("$pkg")
+            fi
+        done
+
+        MISSING_GROUPS=()
+        for group in "${GROUPS[@]}"; do
+            if ! pacman -Qg "$group" &>/dev/null; then
+                MISSING_GROUPS+=("$group")
+            fi
+        done
+
+        if [ ${#MISSING_PACKAGES[@]} -gt 0 ] || [ ${#MISSING_GROUPS[@]} -gt 0 ]; then
+            echo "Installing missing packages/groups..."
+            sudo pacman -Syu --noconfirm
+            [ ${#MISSING_PACKAGES[@]} -gt 0 ] && sudo pacman -S --noconfirm "${MISSING_PACKAGES[@]}"
+            [ ${#MISSING_GROUPS[@]} -gt 0 ] && sudo pacman -S --noconfirm "${MISSING_GROUPS[@]}"
+        else
+            echo "✓ All essential packages are already installed."
+        fi
         ;;
     *)
         echo "Unsupported package manager: $PKG_MANAGER"
