@@ -8,68 +8,45 @@ echo "Installing essential packages..."
 
 case "$PKG_MANAGER" in
     apt)
-        sudo apt-get update
-        sudo apt-get install -y \
-            curl \
-            wget \
-            git \
-            vim \
-            neovim \
-            tmux \
-            htop \
-            tree \
-            ncdu \
-            build-essential \
-            software-properties-common \
-            apt-transport-https \
-            ca-certificates \
-            gnupg \
-            lsb-release \
-            zip \
-            unzip \
-            jq \
-            make \
-            gcc \
-            g++
+        PACKAGES="curl wget git vim neovim tmux htop tree ncdu build-essential software-properties-common apt-transport-https ca-certificates gnupg lsb-release zip unzip jq make gcc g++"
+        # Optimization: Check if packages are already installed to skip update/install
+        if dpkg-query -W $PACKAGES >/dev/null 2>&1; then
+            echo "✓ All essential packages are already installed"
+        else
+            sudo apt-get update
+            sudo apt-get install -y $PACKAGES
+        fi
         ;;
     dnf)
-        sudo dnf update -y
-        sudo dnf install -y \
-            curl \
-            wget \
-            git \
-            vim \
-            neovim \
-            tmux \
-            htop \
-            tree \
-            ncdu \
-            @development-tools \
-            zip \
-            unzip \
-            jq \
-            make \
-            gcc \
-            gcc-c++
+        PACKAGES="curl wget git vim neovim tmux htop tree ncdu zip unzip jq make gcc gcc-c++"
+        GROUP="development-tools"
+        # Optimization: Check if packages and group are already installed
+        MISSING=0
+        for pkg in $PACKAGES; do
+            if ! rpm -q "$pkg" >/dev/null 2>&1; then MISSING=1; break; fi
+        done
+        if [ "$MISSING" -eq 0 ] && sudo dnf group list --installed "$GROUP" >/dev/null 2>&1; then
+            echo "✓ All essential packages are already installed"
+        else
+            sudo dnf update -y
+            sudo dnf install -y $PACKAGES
+            sudo dnf groupinstall -y "$GROUP"
+        fi
         ;;
     pacman)
-        sudo pacman -Syu --noconfirm
-        sudo pacman -S --noconfirm \
-            curl \
-            wget \
-            git \
-            vim \
-            neovim \
-            tmux \
-            htop \
-            tree \
-            ncdu \
-            base-devel \
-            zip \
-            unzip \
-            jq \
-            make \
-            gcc
+        PACKAGES="curl wget git vim neovim tmux htop tree ncdu zip unzip jq make gcc"
+        GROUP="base-devel"
+        # Optimization: Check if packages and group are already installed
+        MISSING=0
+        for pkg in $PACKAGES; do
+            if ! pacman -Qq "$pkg" >/dev/null 2>&1; then MISSING=1; break; fi
+        done
+        if [ "$MISSING" -eq 0 ] && pacman -Qg "$GROUP" >/dev/null 2>&1; then
+            echo "✓ All essential packages are already installed"
+        else
+            sudo pacman -Syu --noconfirm
+            sudo pacman -S --noconfirm $PACKAGES $GROUP
+        fi
         ;;
     *)
         echo "Unsupported package manager: $PKG_MANAGER"
@@ -77,4 +54,4 @@ case "$PKG_MANAGER" in
         ;;
 esac
 
-echo "✓ Essential packages installed successfully"
+echo "✓ Essential packages installation process complete"
