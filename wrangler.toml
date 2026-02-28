@@ -1,1 +1,3 @@
-name = "shy-base-82d5"\nmain = "index.js"\ncompatibility_date = "2024-01-01"
+name = "shy-base-82d5"
+main = "index.js"
+compatibility_date = "2023-01-01"
