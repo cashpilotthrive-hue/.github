@@ -1,16 +1,15 @@
 [build]
-  command = "true"
   publish = "public"
-
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
 
 [[headers]]
   for = "/*"
   [headers.values]
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
-    Content-Security-Policy = "default-src 'self'; frame-ancestors 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';"
-    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
+    Content-Security-Policy = "default-src 'self'; frame-ancestors 'none';"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
