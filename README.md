@@ -70,6 +70,14 @@ Modify dotfiles in the `dotfiles/` directory to customize your environment.
 - sudo privileges
 - Internet connection
 
+## Security
+
+This project includes comprehensive security documentation:
+- [SECURITY.md](SECURITY.md) - Security policy and vulnerability reporting
+- [SECURITY_TESTING.md](SECURITY_TESTING.md) - Penetration testing plans and security tools
+
+For security testing tools and plans, visit [app.pentest-tools.com](https://app.pentest-tools.com/account/plans).
+
 ## License
 
 MIT License - Feel free to use and modify for your personal needs.
