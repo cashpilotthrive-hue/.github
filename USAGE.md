@@ -92,6 +92,19 @@ You can also run individual setup scripts:
 ./scripts/configure-system.sh
 ```
 
+### View System Dashboard
+
+```bash
+./scripts/dashboard.sh
+```
+
+The dashboard shows:
+- System information (OS, kernel, memory, disk)
+- Login-capable and currently logged-in users
+- Users with sudo privileges
+- Installed development tools with versions
+- Status of key services (Docker, SSH, nginx, etc.)
+
 ## Customization
 
 ### Adding More Packages
