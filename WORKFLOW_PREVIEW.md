@@ -1,21 +1,13 @@
 # Workflow Preview
 
-## Current Workflow Status
+## Current Workflow
 
 ### Test Linux Setup Scripts
-- **Workflow ID**: 234835318
-- **Status**: Active
 - **File**: `.github/workflows/test-setup.yml`
-- **Triggers**: 
+- **Triggers**:
   - Push to `main` or `copilot/*` branches
   - Pull requests to `main`
   - Manual workflow dispatch
-
-### Recent Runs
-- **Latest Run ID**: 22060693210
-- **Branch**: copilot/set-up-personal-linux-system
-- **Status**: Completed (action_required)
-- **Commit**: 0245e46 - "Add .gitignore, LICENSE, and quick install script"
 
 ## Workflow Jobs
 
@@ -65,30 +57,24 @@ Runs on: `ubuntu-latest`
 
 ## Workflow Badge
 
-You can add this badge to your README to show build status:
+Add this badge to your README to show build status (replace `<owner>` and `<repo>` with your GitHub username and repository name):
 
 ```markdown
-![Test Linux Setup Scripts](https://github.com/cashpilotthrive-hue/.github/workflows/Test%20Linux%20Setup%20Scripts/badge.svg)
+![Test Linux Setup Scripts](https://github.com/<owner>/<repo>/workflows/Test%20Linux%20Setup%20Scripts/badge.svg)
 ```
 
 ## Manual Trigger
 
 To manually run the workflow:
 
-1. Go to Actions tab in GitHub
-2. Select "Test Linux Setup Scripts"
-3. Click "Run workflow"
-4. Select branch
-5. Click "Run workflow" button
-
-## Viewing Workflow Results
-
-Visit the workflow run at:
-https://github.com/cashpilotthrive-hue/.github/actions/runs/22060693210
+1. Go to the **Actions** tab in GitHub
+2. Select **Test Linux Setup Scripts**
+3. Click **Run workflow**
+4. Select the branch
+5. Click **Run workflow**
 
 ## Notes
 
 - The workflow does NOT perform actual system installation (requires sudo)
 - It validates syntax and structure only
 - Full integration testing requires a real Linux system
-- The "action_required" status may indicate pending approvals for the PR
