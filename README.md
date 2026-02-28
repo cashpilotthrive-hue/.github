@@ -9,6 +9,7 @@ This repository contains scripts and configurations for setting up a personal Li
 - ⚙️ System dotfiles (bash, git, vim)
 - 🔒 Security hardening
 - 📦 Package manager support (apt, dnf, pacman)
+- 📊 System dashboard (users, tools, services)
 
 ## Quick Start
 
@@ -55,7 +56,8 @@ Modify dotfiles in the `dotfiles/` directory to customize your environment.
 │   ├── install-packages.sh
 │   ├── install-devtools.sh
 │   ├── setup-dotfiles.sh
-│   └── configure-system.sh
+│   ├── configure-system.sh
+│   └── dashboard.sh      # System dashboard
 ├── dotfiles/             # Configuration files
 │   ├── .bashrc
 │   ├── .gitconfig
@@ -63,6 +65,21 @@ Modify dotfiles in the `dotfiles/` directory to customize your environment.
 └── config/               # Configuration data
     └── packages.txt
 ```
+
+## Dashboard
+
+Run the dashboard at any time to view system users and installed tools:
+
+```bash
+./scripts/dashboard.sh
+```
+
+The dashboard displays:
+- System information (OS, kernel, uptime, memory, disk)
+- Login-capable and currently logged-in users
+- Users with sudo privileges
+- Installed development tools and versions
+- Status of key running services (Docker, SSH, etc.)
 
 ## Requirements
 
