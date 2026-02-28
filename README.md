@@ -70,6 +70,25 @@ Modify dotfiles in the `dotfiles/` directory to customize your environment.
 - sudo privileges
 - Internet connection
 
+## Additional Guides
+
+### Kali Linux VirtualBox VM Setup
+
+Looking to set up a fully customized Kali Linux VM for penetration testing and security research? Check out our comprehensive guide:
+
+📖 **[Kali Linux VirtualBox VM Setup Guide](KALI_VM_SETUP.md)**
+
+This guide covers:
+- Complete VirtualBox VM configuration
+- Kali Linux installation and setup
+- Tool installation (metapackages, Docker, Python, etc.)
+- Desktop environment customization
+- Network configuration
+- Security hardening and optimization
+- Persistent snapshots and backup strategies
+
+Perfect for security professionals, ethical hackers, and anyone interested in learning cybersecurity tools.
+
 ## License
 
 MIT License - Feel free to use and modify for your personal needs.
