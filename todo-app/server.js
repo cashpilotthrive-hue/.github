@@ -16,6 +16,7 @@ const express = require('express');
 const cors    = require('cors');
 const helmet  = require('helmet');
 const morgan  = require('morgan');
+const rateLimit = require('express-rate-limit');
 const { v4: uuidv4 } = require('uuid');
 const path    = require('path');
 
@@ -109,6 +110,15 @@ app.delete('/api/tasks', (_req, res) => {
 
 /* ── Serve frontend in production ─────────────────────────── */
 if (process.env.NODE_ENV === 'production') {
+  // Rate-limit static file requests to mitigate enumeration/DoS
+  const staticLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    max: 200,
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+
+  app.use(staticLimiter);
   app.use(express.static(path.join(__dirname)));
   // Catch-all: serve index.html for any non-API route
   app.get('*', (_req, res) => {
