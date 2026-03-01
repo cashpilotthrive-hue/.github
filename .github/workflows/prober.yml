@@ -1,0 +1,59 @@
+name: Health Prober
+
+on:
+  schedule:
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Check setup.sh
+        run: |
+          if [ -x setup.sh ]; then
+            echo "✓ setup.sh is executable" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "✗ setup.sh is not executable" >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          if bash -n setup.sh 2>&1; then
+            echo "✓ setup.sh passes syntax check" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "✗ setup.sh failed syntax check" >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+      - name: Check install.sh
+        run: |
+          if [ -x install.sh ]; then
+            echo "✓ install.sh is executable" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "✗ install.sh is not executable" >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          if bash -n install.sh 2>&1; then
+            echo "✓ install.sh passes syntax check" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "✗ install.sh failed syntax check" >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+      - name: Check scripts/
+        run: |
+          fail=0
+          for script in scripts/*.sh; do
+            if bash -n "$script" 2>&1; then
+              echo "✓ $script passes syntax check" >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "✗ $script failed syntax check" >> "$GITHUB_STEP_SUMMARY"
+              fail=1
+            fi
+          done
+          exit "$fail"

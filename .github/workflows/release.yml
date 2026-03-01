@@ -1,0 +1,44 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  id-token: write
+  contents: write
+  attestations: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Build release tarball
+        run: tar -czf release-${{ github.ref_name }}.tar.gz setup.sh install.sh scripts/ dotfiles/ config/
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@c5efebd311e9a809e832398ca2b73bb429ff3508 # v4.1.0
+        with:
+          subject-path: release-${{ github.ref_name }}.tar.gz
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            "release-${{ github.ref_name }}.tar.gz" \
+            --title "Release ${{ github.ref_name }}" \
+            --generate-notes
+
+      - name: Verify attestation
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh attestation verify "release-${{ github.ref_name }}.tar.gz" \
+            --owner "${{ github.repository_owner }}"
