@@ -40,11 +40,8 @@ chmod +x scripts/*.sh
 echo ""
 echo "Repository cloned successfully!"
 echo ""
-echo "To complete the setup, run:"
-echo "  cd $INSTALL_DIR"
-echo "  ./setup.sh"
-echo ""
-echo "Or to review first:"
-echo "  cd $INSTALL_DIR"
-echo "  cat README.md"
-echo "  cat USAGE.md"
+
+# Run setup automatically (hands-off mode)
+echo "Starting automated setup..."
+cd "$INSTALL_DIR"
+./setup.sh
