@@ -1,0 +1,65 @@
+name: Cloud Agent
+
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'Task to delegate to the cloud agent'
+        required: true
+        default: 'validate'
+        type: choice
+        options:
+          - validate
+          - test-scripts
+          - test-dotfiles
+          - test-all
+
+permissions:
+  contents: read
+
+jobs:
+  delegate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Validate scripts syntax
+        if: inputs.task == 'validate' || inputs.task == 'test-scripts' || inputs.task == 'test-all'
+        run: |
+          echo "Cloud agent delegating: script syntax validation"
+          bash -n setup.sh
+          shopt -s nullglob
+          for script in scripts/*.sh; do
+            echo "Checking $script"
+            bash -n "$script"
+          done
+          shopt -u nullglob
+          echo "✓ All scripts passed syntax validation"
+
+      - name: Test dotfiles
+        if: inputs.task == 'test-dotfiles' || inputs.task == 'test-all'
+        run: |
+          echo "Cloud agent delegating: dotfiles verification"
+          test -f dotfiles/.bashrc    || { echo "Missing dotfiles/.bashrc"; exit 1; }
+          test -f dotfiles/.gitconfig || { echo "Missing dotfiles/.gitconfig"; exit 1; }
+          test -f dotfiles/.vimrc     || { echo "Missing dotfiles/.vimrc"; exit 1; }
+          test -f dotfiles/.tmux.conf || { echo "Missing dotfiles/.tmux.conf"; exit 1; }
+          echo "✓ All dotfiles present"
+
+      - name: Validate repository structure
+        if: inputs.task == 'validate' || inputs.task == 'test-all'
+        run: |
+          echo "Cloud agent delegating: repository structure validation"
+          test -d scripts  || { echo "Missing directory: scripts"; exit 1; }
+          test -d dotfiles || { echo "Missing directory: dotfiles"; exit 1; }
+          test -d config   || { echo "Missing directory: config"; exit 1; }
+          test -f setup.sh || { echo "Missing file: setup.sh"; exit 1; }
+          test -f README.md || { echo "Missing file: README.md"; exit 1; }
+          echo "✓ Repository structure is valid"
+
+      - name: Report completion
+        run: |
+          echo "Cloud agent completed task: ${{ inputs.task }}"
