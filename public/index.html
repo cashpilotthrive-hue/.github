@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Principal Credit Alerts</title>
+    <style>
+      :root { color-scheme: dark; font-family: Inter, system-ui, sans-serif; }
+      body { margin: 0; background: #06140f; color: #e9fff4; }
+      .container { max-width: 1080px; margin: 0 auto; padding: 20px; }
+      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+      .panel { border: 1px solid #1f6d54; border-radius: 16px; background: #0c261d; padding: 14px; }
+      .headline { font-size: 26px; margin-bottom: 10px; }
+      .kpi { font-size: 22px; font-weight: 700; }
+      .meta { color: #80ba9e; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+      .event { border-top: 1px solid #1b4f3d; padding: 8px 0; display: flex; justify-content: space-between; gap: 8px; }
+      .event:first-child { border-top: none; }
+      .badge { border-radius: 999px; padding: 2px 8px; font-size: 11px; font-weight: 700; }
+      .dashboard { background: #153c2f; color: #b8ffe0; }
+      .push { background: #2c4f14; color: #dfffba; }
+      .sticky { background: #5a2a00; color: #ffd4a7; }
+      form { display: grid; gap: 8px; }
+      input, select, button { border-radius: 8px; border: 1px solid #2a604d; background: #0b1d16; color: #e9fff4; padding: 8px; }
+      button { cursor: pointer; background: #2a8f6c; font-weight: 700; }
+      .full { grid-column: 1 / -1; }
+      @media (max-width: 900px){ .grid { grid-template-columns: 1fr; } }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="headline">Trillion-Scale Real-Time Credit Alerts</div>
+      <div class="grid">
+        <section class="panel">
+          <div class="meta">Flow metrics</div>
+          <div class="kpi" id="minuteTotal">$0 / minute</div>
+          <div class="kpi" id="hourTotal">$0 / hour</div>
+          <div class="kpi" id="dayTotal">$0 / day</div>
+          <div class="meta" id="flowRate">$0 / second</div>
+        </section>
+
+        <section class="panel">
+          <div class="meta">Inject test credit</div>
+          <form id="creditForm">
+            <input type="number" name="amount" min="1" value="10000000" required />
+            <select name="source_type">
+              <option>BANK</option><option>CRYPTO</option><option>PLATFORM</option>
+              <option>P_AND_L</option><option>YIELD</option><option>INTERNAL</option>
+            </select>
+            <input name="description" value="Manual simulated credit" required />
+            <button type="submit">Create Credit Event</button>
+          </form>
+        </section>
+
+        <section class="panel full">
+          <div class="meta">Live credit ticker</div>
+          <div id="events"></div>
+        </section>
+      </div>
+    </div>
+
+    <script>
+      const fmt = (num) => "$" + Math.round(num).toLocaleString("en-US");
+      const eventsEl = document.getElementById("events");
+      const minuteEl = document.getElementById("minuteTotal");
+      const hourEl = document.getElementById("hourTotal");
+      const dayEl = document.getElementById("dayTotal");
+      const flowRateEl = document.getElementById("flowRate");
+      const form = document.getElementById("creditForm");
+
+      let knownEvents = [];
+
+      function renderEvent(evt) {
+        const row = document.createElement("div");
+        row.className = "event";
+
+        const badgeClass = evt.alert_tier === "sticky" ? "sticky" : evt.alert_tier === "push" ? "push" : "dashboard";
+
+        row.innerHTML = `
+          <div>
+            <div><strong>${fmt(evt.amount)}</strong> · ${evt.description}</div>
+            <div class="meta">${evt.source_type} · ${new Date(evt.timestamp).toLocaleTimeString()}</div>
+          </div>
+          <div><span class="badge ${badgeClass}">${evt.alert_tier.toUpperCase()}</span></div>
+        `;
+
+        eventsEl.prepend(row);
+        while (eventsEl.children.length > 50) {
+          eventsEl.removeChild(eventsEl.lastChild);
+        }
+      }
+
+      function renderTotals(totals) {
+        minuteEl.textContent = `${fmt(totals.minute)} / minute`;
+        hourEl.textContent = `${fmt(totals.hour)} / hour`;
+        dayEl.textContent = `${fmt(totals.day)} / day`;
+        flowRateEl.textContent = `${fmt(totals.minute / 60)} / second`;
+      }
+
+      function connectStream() {
+        const stream = new EventSource(`/credits/stream`);
+        stream.addEventListener("snapshot", (message) => {
+          const data = JSON.parse(message.data);
+          eventsEl.innerHTML = "";
+          knownEvents = data.events;
+          knownEvents.slice().reverse().forEach(renderEvent);
+          renderTotals(data.totals);
+        });
+
+        stream.addEventListener("credit", (message) => {
+          renderEvent(JSON.parse(message.data));
+        });
+
+        stream.addEventListener("totals", (message) => {
+          renderTotals(JSON.parse(message.data));
+        });
+
+        stream.onerror = () => {
+          stream.close();
+          setTimeout(connectStream, 1500);
+        };
+      }
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const formData = new FormData(form);
+        const payload = {
+          amount: Number(formData.get("amount")),
+          source_type: formData.get("source_type"),
+          description: formData.get("description"),
+        };
+
+        const response = await fetch("/api/credits", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          alert("Failed to post credit event.");
+        }
+      });
+
+      connectStream();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "name": "principal-credit-alerts",
+  "version": "1.0.0",
+  "description": "Real-time credit alert engine demo app",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test"
+  }
+}
