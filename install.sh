@@ -26,7 +26,10 @@ fi
 if [ -d "$INSTALL_DIR" ]; then
     echo "Directory $INSTALL_DIR already exists. Updating..."
     cd "$INSTALL_DIR"
-    git pull
+    if ! git pull --ff-only; then
+        echo "Warning: Could not fast-forward update. Local changes may exist."
+        echo "Please manually resolve conflicts or run: git reset --hard origin/main"
+    fi
 else
     echo "Cloning repository to $INSTALL_DIR..."
     git clone "$REPO_URL" "$INSTALL_DIR"
