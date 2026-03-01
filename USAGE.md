@@ -60,7 +60,48 @@ gh --version
 
 # Test Docker (requires logout/login for group changes)
 docker run hello-world
+
+# Verify OpenAI Codex installation
+npx @openai/codex --help
 ```
+
+## Using OpenAI Codex
+
+After setup, OpenAI Codex is available for AI-powered code assistance:
+
+### Quick Start
+
+```bash
+# Use the helper script
+./scripts/run-codex.sh --help
+
+# Or run directly
+npx @openai/codex [command]
+```
+
+### Configuration
+
+You may need to set up your OpenAI API key:
+
+```bash
+# Set your OpenAI API key (if required)
+export OPENAI_API_KEY="your-api-key-here"
+
+# Add to ~/.bashrc to persist
+echo 'export OPENAI_API_KEY="your-api-key-here"' >> ~/.bashrc
+```
+
+### Common Commands
+
+```bash
+# Get help
+npx @openai/codex --help
+
+# Use Codex for code generation or analysis
+npx @openai/codex [specific-command]
+```
+
+Refer to the [@openai/codex documentation](https://www.npmjs.com/package/@openai/codex) for detailed usage instructions.
 
 ## Individual Scripts
 

@@ -35,6 +35,7 @@ chmod +x setup.sh
 - Python 3 & pip
 - Docker & Docker Compose
 - GitHub CLI (gh)
+- OpenAI Codex (AI code assistant)
 
 ### Optional Tools
 - GitHub CLI (gh)
@@ -46,6 +47,20 @@ chmod +x setup.sh
 Edit `config/packages.txt` to add or remove packages.
 Modify dotfiles in the `dotfiles/` directory to customize your environment.
 
+## Using OpenAI Codex
+
+After installation, you can use OpenAI Codex for AI-powered code assistance:
+
+```bash
+# Run Codex with the helper script
+./scripts/run-codex.sh --help
+
+# Or use it directly via npm
+npx @openai/codex [arguments]
+```
+
+Note: You may need to configure your OpenAI API key to use Codex functionality.
+
 ## Structure
 
 ```
@@ -55,7 +70,8 @@ Modify dotfiles in the `dotfiles/` directory to customize your environment.
 │   ├── install-packages.sh
 │   ├── install-devtools.sh
 │   ├── setup-dotfiles.sh
-│   └── configure-system.sh
+│   ├── configure-system.sh
+│   └── run-codex.sh
 ├── dotfiles/             # Configuration files
 │   ├── .bashrc
 │   ├── .gitconfig
