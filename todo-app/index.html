@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>To-Do List</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-container">
+    <header>
+      <h1>✅ To-Do List</h1>
+    </header>
+
+    <div class="card">
+      <!-- Input row -->
+      <div class="input-row">
+        <input
+          type="text"
+          id="task-input"
+          placeholder="What needs to be done?"
+          aria-label="New task text"
+          maxlength="200"
+        />
+        <button id="add-btn" aria-label="Add task">Add</button>
+      </div>
+
+      <!-- Filter tabs -->
+      <nav class="filters" aria-label="Task filters">
+        <button class="filter-btn active" data-filter="all"   aria-label="Show all tasks">All</button>
+        <button class="filter-btn"        data-filter="active"    aria-label="Show active tasks">Active</button>
+        <button class="filter-btn"        data-filter="completed" aria-label="Show completed tasks">Completed</button>
+      </nav>
+
+      <!-- Task list -->
+      <ul id="task-list" aria-label="Task list"></ul>
+
+      <!-- Empty state -->
+      <p id="empty-state" class="empty-state" aria-live="polite">No tasks here 🎉</p>
+
+      <!-- Footer -->
+      <div class="list-footer">
+        <span id="task-counter" aria-live="polite">0 tasks left</span>
+        <button id="clear-completed-btn" aria-label="Clear completed tasks">Clear Completed</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
