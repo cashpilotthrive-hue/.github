@@ -32,6 +32,11 @@ jobs:
             bash -n "$script"
           done
 
+      - name: Run shellcheck on shell scripts
+        run: |
+          sudo apt-get install -y shellcheck
+          shellcheck setup.sh install.sh scripts/*.sh
+
       - name: Verify dotfiles exist
         run: |
           test -f dotfiles/.bashrc

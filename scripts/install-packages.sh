@@ -2,7 +2,6 @@
 set -e
 
 PKG_MANAGER=${1:-apt}
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd .. && pwd)"
 
 echo "Installing essential packages..."
 
