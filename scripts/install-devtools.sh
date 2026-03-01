@@ -73,8 +73,8 @@ fi
 # Install Docker Compose
 if ! command -v docker-compose &> /dev/null; then
     echo "Installing Docker Compose..."
-    DOCKER_COMPOSE_VERSION="v2.24.5"
-    sudo curl -L "https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    DOCKER_COMPOSE_VERSION="v5.1.0"
+    sudo curl -L "https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-$(uname -s | tr '[:upper:]' '[:lower:]')-$(uname -m)" -o /usr/local/bin/docker-compose
     sudo chmod +x /usr/local/bin/docker-compose
 else
     echo "Docker Compose already installed: $(docker-compose --version)"
