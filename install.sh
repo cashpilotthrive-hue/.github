@@ -35,7 +35,17 @@ fi
 
 # Make scripts executable
 chmod +x setup.sh
-chmod +x scripts/*.sh
+
+# Only attempt to chmod scripts if the directory exists and contains .sh files
+if [ -d "scripts" ]; then
+    # Ensure unmatched globs expand to nothing instead of the literal pattern
+    shopt -s nullglob
+    script_files=(scripts/*.sh)
+    if ((${#script_files[@]})); then
+        chmod +x "${script_files[@]}"
+    fi
+    shopt -u nullglob
+fi
 
 echo ""
 echo "Repository cloned successfully!"
