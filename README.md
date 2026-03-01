@@ -1,75 +1,122 @@
-# Personal Linux System Setup
+# Crypto Mining & Fintech Platform
 
-This repository contains scripts and configurations for setting up a personal Linux development environment.
+A comprehensive, full-stack intelligent crypto mining and fintech platform that allows users to manage cloud mining, crypto wallets, fiat wallets, withdrawals with verification, and KYC document verification.
 
-## Features
+## 🚀 Features
 
-- 🚀 Automated package installation
-- 🛠️ Development tools configuration
-- ⚙️ System dotfiles (bash, git, vim)
-- 🔒 Security hardening
-- 📦 Package manager support (apt, dnf, pacman)
+- **Authentication & User Management** - JWT-based auth, 2FA with TOTP, role-based access control
+- **KYC / Document Verification** - Multi-step KYC onboarding with admin review dashboard
+- **Mining Dashboard** - Real-time stats, contract management, simulation engine for BTC/ETH/LTC
+- **Wallet Management** - Multi-currency crypto and fiat wallets with transaction history
+- **Withdrawal System** - Multi-step verification, admin approval workflow, daily limits
+- **Security Features** - Rate limiting, input validation, bcrypt hashing, audit logging
 
-## Quick Start
+## 🛠️ Tech Stack
+
+**Backend**: Node.js 20+ | Express | TypeScript | PostgreSQL | Redis | JWT | Speakeasy
+
+**Frontend**: React 18 | TypeScript | Vite | Tailwind CSS | Zustand | Axios | React Hook Form
+
+**Mobile**: React Native | Expo
+
+**Infrastructure**: Docker | Docker Compose | GitHub Actions | Nginx
+
+## 🚀 Quick Start
+
+### Using Docker (Recommended)
 
 ```bash
-# Clone this repository
 git clone https://github.com/cashpilotthrive-hue/.github.git
 cd .github
-
-# Run the main setup script
-chmod +x setup.sh
-./setup.sh
+docker-compose up -d
 ```
 
-## What Gets Installed
+**Access:**
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:5000
+- Health Check: http://localhost:5000/api/v1/health
 
-### Essential Packages
-- curl, wget, git
-- build-essential / Development Tools
-- vim/neovim, tmux
-- htop, tree, ncdu
+### Manual Setup
 
-### Development Tools
-- Node.js & npm
-- Python 3 & pip
-- Docker & Docker Compose
-- GitHub CLI (gh)
-
-### Optional Tools
-- GitHub CLI (gh)
-- Terraform
-- kubectl
-
-## Customization
-
-Edit `config/packages.txt` to add or remove packages.
-Modify dotfiles in the `dotfiles/` directory to customize your environment.
-
-## Structure
-
-```
-.
-├── setup.sh              # Main setup script
-├── scripts/              # Individual setup scripts
-│   ├── install-packages.sh
-│   ├── install-devtools.sh
-│   ├── setup-dotfiles.sh
-│   └── configure-system.sh
-├── dotfiles/             # Configuration files
-│   ├── .bashrc
-│   ├── .gitconfig
-│   └── .vimrc
-└── config/               # Configuration data
-    └── packages.txt
+**Backend:**
+```bash
+cd backend
+cp .env.example .env
+npm install
+npm run dev
 ```
 
-## Requirements
+**Frontend:**
+```bash
+cd frontend
+cp .env.example .env
+npm install
+npm run dev
+```
 
-- Ubuntu 20.04+ / Debian 11+ / Fedora 35+ / Arch Linux
-- sudo privileges
-- Internet connection
+**Mobile:**
+```bash
+cd mobile
+npm install
+npm start
+```
 
-## License
+## 📚 Documentation
 
-MIT License - Feel free to use and modify for your personal needs.
+- [API Documentation](docs/API.md) - Complete API reference
+- [Architecture Overview](docs/ARCHITECTURE.md) - System architecture
+- [Deployment Guide](docs/DEPLOYMENT.md) - Production deployment
+- [Security Practices](docs/SECURITY.md) - Security guidelines
+
+## 🔐 Key API Endpoints
+
+**Auth:** `/api/v1/auth/register`, `/api/v1/auth/login`, `/api/v1/auth/enable-2fa`
+
+**Wallets:** `/api/v1/wallets`, `/api/v1/wallets/:id/deposit`, `/api/v1/wallets/transfer`
+
+**Mining:** `/api/v1/mining/contracts`, `/api/v1/mining/stats`
+
+**Withdrawals:** `/api/v1/withdrawals`, `/api/v1/withdrawals/:id/verify`
+
+**KYC:** `/api/v1/kyc`
+
+See [docs/API.md](docs/API.md) for complete documentation.
+
+## 🧪 Development
+
+```bash
+# Test
+npm test
+
+# Lint
+npm run lint
+
+# Build
+npm run build
+```
+
+## 🚢 Deployment
+
+```bash
+docker-compose build
+docker-compose up -d
+docker-compose logs -f
+```
+
+See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for production deployment.
+
+## 🔒 Security
+
+- JWT authentication with token rotation
+- Rate limiting & input validation
+- Password hashing with bcrypt
+- 2FA support & audit logging
+- HTTPS & CORS configuration
+
+## 📄 License
+
+MIT License
+
+## 📧 Support
+
+Email: support@cryptomining.com

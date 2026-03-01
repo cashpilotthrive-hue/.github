@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+.expo/
+.expo-shared/
+
+# Build
+dist/
+build/
+
+# Native
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+web-build/
+
+# Environment
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
