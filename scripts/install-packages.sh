@@ -8,68 +8,34 @@ echo "Installing essential packages..."
 
 case "$PKG_MANAGER" in
     apt)
-        sudo apt-get update
-        sudo apt-get install -y \
-            curl \
-            wget \
-            git \
-            vim \
-            neovim \
-            tmux \
-            htop \
-            tree \
-            ncdu \
-            build-essential \
-            software-properties-common \
-            apt-transport-https \
-            ca-certificates \
-            gnupg \
-            lsb-release \
-            zip \
-            unzip \
-            jq \
-            make \
-            gcc \
-            g++
+        PACKAGES="curl wget git vim neovim tmux htop tree ncdu build-essential software-properties-common apt-transport-https ca-certificates gnupg lsb-release zip unzip jq make gcc g++"
+        # Check if all packages are already installed to avoid redundant update and install
+        if dpkg-query -W $PACKAGES >/dev/null 2>&1; then
+            echo "✓ All essential packages are already installed"
+        else
+            sudo apt-get update
+            sudo apt-get install -y $PACKAGES
+        fi
         ;;
     dnf)
-        sudo dnf update -y
-        sudo dnf install -y \
-            curl \
-            wget \
-            git \
-            vim \
-            neovim \
-            tmux \
-            htop \
-            tree \
-            ncdu \
-            @development-tools \
-            zip \
-            unzip \
-            jq \
-            make \
-            gcc \
-            gcc-c++
+        PACKAGES="curl wget git vim neovim tmux htop tree ncdu zip unzip jq make gcc gcc-c++"
+        # Check if packages and development tools group are already installed
+        if rpm -q $PACKAGES >/dev/null 2>&1 && dnf group list --installed "Development Tools" >/dev/null 2>&1; then
+            echo "✓ All essential packages and groups are already installed"
+        else
+            sudo dnf update -y
+            sudo dnf install -y $PACKAGES @development-tools
+        fi
         ;;
     pacman)
-        sudo pacman -Syu --noconfirm
-        sudo pacman -S --noconfirm \
-            curl \
-            wget \
-            git \
-            vim \
-            neovim \
-            tmux \
-            htop \
-            tree \
-            ncdu \
-            base-devel \
-            zip \
-            unzip \
-            jq \
-            make \
-            gcc
+        PACKAGES="curl wget git vim neovim tmux htop tree ncdu zip unzip jq make gcc"
+        # Check if packages and base-devel group are already installed
+        if pacman -Qq $PACKAGES >/dev/null 2>&1 && pacman -Qg base-devel >/dev/null 2>&1; then
+            echo "✓ All essential packages and groups are already installed"
+        else
+            sudo pacman -Syu --noconfirm
+            sudo pacman -S --noconfirm $PACKAGES base-devel
+        fi
         ;;
     *)
         echo "Unsupported package manager: $PKG_MANAGER"
@@ -77,4 +43,4 @@ case "$PKG_MANAGER" in
         ;;
 esac
 
-echo "✓ Essential packages installed successfully"
+echo "✓ Essential packages installation check complete"
