@@ -59,6 +59,7 @@ Modify dotfiles in the `dotfiles/` directory to customize your environment.
 ├── dotfiles/             # Configuration files
 │   ├── .bashrc
 │   ├── .gitconfig
+│   ├── .tmux.conf
 │   └── .vimrc
 └── config/               # Configuration data
     └── packages.txt
@@ -66,7 +67,7 @@ Modify dotfiles in the `dotfiles/` directory to customize your environment.
 
 ## Requirements
 
-- Ubuntu 20.04+ / Debian 11+ / Fedora 35+ / Arch Linux
+- Ubuntu 22.04+ / Debian 12+ / Fedora 40+ / Arch Linux
 - sudo privileges
 - Internet connection
 
