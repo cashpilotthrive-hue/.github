@@ -8,68 +8,43 @@ echo "Installing essential packages..."
 
 case "$PKG_MANAGER" in
     apt)
-        sudo apt-get update
-        sudo apt-get install -y \
-            curl \
-            wget \
-            git \
-            vim \
-            neovim \
-            tmux \
-            htop \
-            tree \
-            ncdu \
-            build-essential \
-            software-properties-common \
-            apt-transport-https \
-            ca-certificates \
-            gnupg \
-            lsb-release \
-            zip \
-            unzip \
-            jq \
-            make \
-            gcc \
-            g++
+        # Define package list
+        PACKAGES="curl wget git vim neovim tmux htop tree ncdu build-essential software-properties-common apt-transport-https ca-certificates gnupg lsb-release zip unzip jq make gcc g++"
+
+        # Optimization: Check if all packages are already installed to skip slow update and install steps.
+        # dpkg-query -W returns non-zero if any package is missing.
+        if dpkg-query -W $PACKAGES >/dev/null 2>&1; then
+            echo "✓ All packages already installed (skipped apt-get update)"
+        else
+            sudo apt-get update
+            sudo apt-get install -y $PACKAGES
+        fi
         ;;
     dnf)
-        sudo dnf update -y
-        sudo dnf install -y \
-            curl \
-            wget \
-            git \
-            vim \
-            neovim \
-            tmux \
-            htop \
-            tree \
-            ncdu \
-            @development-tools \
-            zip \
-            unzip \
-            jq \
-            make \
-            gcc \
-            gcc-c++
+        # Define package list
+        PACKAGES="curl wget git vim neovim tmux htop tree ncdu zip unzip jq make gcc gcc-c++"
+
+        # Optimization: Check if individual packages and development tools group are already installed.
+        # rpm -q returns non-zero if any package is missing.
+        if rpm -q $PACKAGES >/dev/null 2>&1 && dnf group list --installed "Development Tools" >/dev/null 2>&1; then
+            echo "✓ All packages and groups already installed (skipped dnf update)"
+        else
+            sudo dnf update -y
+            sudo dnf install -y $PACKAGES @development-tools
+        fi
         ;;
     pacman)
-        sudo pacman -Syu --noconfirm
-        sudo pacman -S --noconfirm \
-            curl \
-            wget \
-            git \
-            vim \
-            neovim \
-            tmux \
-            htop \
-            tree \
-            ncdu \
-            base-devel \
-            zip \
-            unzip \
-            jq \
-            make \
-            gcc
+        # Define package list
+        PACKAGES="curl wget git vim neovim tmux htop tree ncdu zip unzip jq make gcc"
+
+        # Optimization: Check if individual packages and base-devel group are already installed.
+        # pacman -Q returns non-zero if any package is missing.
+        if pacman -Q $PACKAGES >/dev/null 2>&1 && pacman -Qg base-devel >/dev/null 2>&1; then
+            echo "✓ All packages and groups already installed (skipped pacman -Syu)"
+        else
+            sudo pacman -Syu --noconfirm
+            sudo pacman -S --noconfirm $PACKAGES base-devel
+        fi
         ;;
     *)
         echo "Unsupported package manager: $PKG_MANAGER"
