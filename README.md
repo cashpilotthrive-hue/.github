@@ -1,5 +1,7 @@
 # Personal Linux System Setup — Monorepo
 
+🔗 **[View on GitHub](https://github.com/cashpilotthrive-hue/.github)**
+
 This repository is organised as a production-ready monorepo containing all tooling, automation, and documentation for the Principal development environment.
 
 ## Structure
