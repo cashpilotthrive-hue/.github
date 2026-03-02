@@ -37,9 +37,9 @@ jobs:
         if: inputs.task == 'validate' || inputs.task == 'test-scripts' || inputs.task == 'test-all'
         run: |
           echo "Cloud agent delegating: script syntax validation"
-          bash -n setup.sh
+          bash -n packages/setup/setup.sh
           shopt -s nullglob
-          for script in scripts/*.sh; do
+          for script in packages/setup/scripts/*.sh; do
             echo "Checking $script"
             bash -n "$script"
           done
@@ -50,21 +50,23 @@ jobs:
         if: inputs.task == 'test-dotfiles' || inputs.task == 'test-all'
         run: |
           echo "Cloud agent delegating: dotfiles verification"
-          test -f dotfiles/.bashrc    || { echo "Missing dotfiles/.bashrc"; exit 1; }
-          test -f dotfiles/.gitconfig || { echo "Missing dotfiles/.gitconfig"; exit 1; }
-          test -f dotfiles/.vimrc     || { echo "Missing dotfiles/.vimrc"; exit 1; }
-          test -f dotfiles/.tmux.conf || { echo "Missing dotfiles/.tmux.conf"; exit 1; }
+          test -f packages/setup/dotfiles/.bashrc    || { echo "Missing dotfiles/.bashrc"; exit 1; }
+          test -f packages/setup/dotfiles/.gitconfig || { echo "Missing dotfiles/.gitconfig"; exit 1; }
+          test -f packages/setup/dotfiles/.vimrc     || { echo "Missing dotfiles/.vimrc"; exit 1; }
+          test -f packages/setup/dotfiles/.tmux.conf || { echo "Missing dotfiles/.tmux.conf"; exit 1; }
           echo "✓ All dotfiles present"
 
       - name: Validate repository structure
         if: inputs.task == 'validate' || inputs.task == 'test-all'
         run: |
           echo "Cloud agent delegating: repository structure validation"
-          test -d scripts  || { echo "Missing directory: scripts"; exit 1; }
-          test -d dotfiles || { echo "Missing directory: dotfiles"; exit 1; }
-          test -d config   || { echo "Missing directory: config"; exit 1; }
-          test -f setup.sh || { echo "Missing file: setup.sh"; exit 1; }
-          test -f README.md || { echo "Missing file: README.md"; exit 1; }
+          test -d packages/setup/scripts  || { echo "Missing directory: packages/setup/scripts"; exit 1; }
+          test -d packages/setup/dotfiles || { echo "Missing directory: packages/setup/dotfiles"; exit 1; }
+          test -d packages/setup/config   || { echo "Missing directory: packages/setup/config"; exit 1; }
+          test -f packages/setup/setup.sh || { echo "Missing file: packages/setup/setup.sh"; exit 1; }
+          test -d packages/realtime       || { echo "Missing directory: packages/realtime"; exit 1; }
+          test -d docs                    || { echo "Missing directory: docs"; exit 1; }
+          test -f README.md               || { echo "Missing file: README.md"; exit 1; }
           echo "✓ Repository structure is valid"
 
       - name: Market data ingestion
