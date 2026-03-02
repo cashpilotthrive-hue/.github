@@ -24,17 +24,17 @@ cd .github
 
 Before running the setup, review and customize:
 
-- `config/packages.txt` - List of packages to install
-- `dotfiles/.gitconfig` - Update your name and email
-- `dotfiles/.bashrc` - Customize aliases and environment variables
+- `packages/setup/config/packages.txt` - List of packages to install
+- `packages/setup/dotfiles/.gitconfig` - Update your name and email
+- `packages/setup/dotfiles/.bashrc` - Customize aliases and environment variables
 
 ### 3. Run the Setup
 
 Execute the main setup script:
 
 ```bash
-chmod +x setup.sh
-./setup.sh
+chmod +x packages/setup/setup.sh
+./packages/setup/setup.sh
 ```
 
 The script will:
@@ -69,34 +69,34 @@ You can also run individual setup scripts:
 ### Install Packages Only
 
 ```bash
-./scripts/install-packages.sh apt  # for Ubuntu/Debian
-./scripts/install-packages.sh dnf  # for Fedora
-./scripts/install-packages.sh pacman  # for Arch Linux
+./packages/setup/scripts/install-packages.sh apt  # for Ubuntu/Debian
+./packages/setup/scripts/install-packages.sh dnf  # for Fedora
+./packages/setup/scripts/install-packages.sh pacman  # for Arch Linux
 ```
 
 ### Install Development Tools Only
 
 ```bash
-./scripts/install-devtools.sh apt
+./packages/setup/scripts/install-devtools.sh apt
 ```
 
 ### Setup Dotfiles Only
 
 ```bash
-./scripts/setup-dotfiles.sh
+./packages/setup/scripts/setup-dotfiles.sh
 ```
 
 ### Configure System Settings Only
 
 ```bash
-./scripts/configure-system.sh
+./packages/setup/scripts/configure-system.sh
 ```
 
 ## Customization
 
 ### Adding More Packages
 
-Edit `config/packages.txt` and add one package per line:
+Edit `packages/setup/config/packages.txt` and add one package per line:
 
 ```
 # Your custom packages
@@ -107,7 +107,7 @@ ripgrep
 
 ### Customizing Dotfiles
 
-The dotfiles are located in the `dotfiles/` directory:
+The dotfiles are located in the `packages/setup/dotfiles/` directory:
 
 - `.bashrc` - Bash configuration, aliases, and functions
 - `.gitconfig` - Git configuration and aliases
@@ -118,7 +118,7 @@ Edit these files before running the setup, or edit them in your home directory a
 
 ### Modifying Installation Scripts
 
-Each script in the `scripts/` directory can be modified to suit your needs:
+Each script in the `packages/setup/scripts/` directory can be modified to suit your needs:
 
 - `install-packages.sh` - Core system packages
 - `install-devtools.sh` - Development tools (Node, Python, Docker, etc.)
@@ -171,11 +171,11 @@ cp ~/.bashrc.backup ~/.bashrc
 
 ### Selective Installation
 
-You can comment out sections in the main `setup.sh` script to skip certain steps:
+You can comment out sections in the main `packages/setup/setup.sh` script to skip certain steps:
 
 ```bash
-# Edit setup.sh and comment out unwanted steps
-vim setup.sh
+# Edit packages/setup/setup.sh and comment out unwanted steps
+vim packages/setup/setup.sh
 ```
 
 ### Running on Multiple Machines
@@ -193,7 +193,7 @@ After initial setup, you can update dotfiles by pulling changes:
 ```bash
 cd ~/.github
 git pull
-./scripts/setup-dotfiles.sh
+./packages/setup/scripts/setup-dotfiles.sh
 ```
 
 ## Security Considerations

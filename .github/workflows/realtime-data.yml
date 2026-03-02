@@ -44,7 +44,7 @@ jobs:
           echo "  MARKET_DATA_API_URL  - WebSocket or REST endpoint"
           echo "  MARKET_DATA_API_KEY  - provider API key"
           # Verify configuration stubs are present
-          test -f config/packages.txt || { echo "Missing config/packages.txt"; exit 1; }
+          test -f packages/setup/config/packages.txt || { echo "Missing packages/setup/config/packages.txt"; exit 1; }
           echo "✓ Market data configuration validated"
 
       - name: Simulate price-cache update
@@ -152,7 +152,7 @@ jobs:
       - name: Validate portfolio configuration
         run: |
           echo "Real-time portfolio valuation stage"
-          test -f config/packages.txt || { echo "Missing config/packages.txt"; exit 1; }
+          test -f packages/setup/config/packages.txt || { echo "Missing packages/setup/config/packages.txt"; exit 1; }
           echo "✓ Portfolio configuration validated"
 
       - name: Compute wealth summary
