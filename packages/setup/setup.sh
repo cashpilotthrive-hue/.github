@@ -51,6 +51,39 @@ fi
 echo -e "${GREEN}Detected package manager: ${PKG_MANAGER}${NC}"
 echo ""
 
+# Check if the system is fully ready before launching the setup
+check_readiness() {
+    local ready=true
+
+    # Verify required commands are available
+    for cmd in curl git; do
+        if ! command -v "$cmd" &> /dev/null; then
+            echo -e "${RED}Error: Required command '$cmd' is not installed.${NC}"
+            ready=false
+        fi
+    done
+
+    # Verify internet connectivity
+    if ! curl -fsS --max-time 5 https://github.com > /dev/null 2>&1; then
+        echo -e "${RED}Error: No internet connectivity detected.${NC}"
+        ready=false
+    fi
+
+    if [ "$ready" = false ]; then
+        echo -e "${RED}System is not ready. Please resolve the issues above and try again.${NC}"
+        return 1
+    fi
+
+    echo -e "${GREEN}✓ System readiness check passed${NC}"
+    return 0
+}
+
+echo -e "${GREEN}Checking system readiness...${NC}"
+if ! check_readiness; then
+    exit 1
+fi
+echo ""
+
 # Step 1: Update system
 echo -e "${GREEN}[1/4] Updating system packages...${NC}"
 "${SCRIPT_DIR}/scripts/install-packages.sh" "$PKG_MANAGER"

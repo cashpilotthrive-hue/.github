@@ -21,23 +21,23 @@ jobs:
 
       - name: Verify script permissions
         run: |
-          ls -la setup.sh
-          ls -la scripts/
+          ls -la packages/setup/setup.sh
+          ls -la packages/setup/scripts/
 
       - name: Test syntax of shell scripts
         run: |
-          bash -n setup.sh
-          for script in scripts/*.sh; do
+          bash -n packages/setup/setup.sh
+          for script in packages/setup/scripts/*.sh; do
             echo "Checking $script"
             bash -n "$script"
           done
 
       - name: Verify dotfiles exist
         run: |
-          test -f dotfiles/.bashrc
-          test -f dotfiles/.gitconfig
-          test -f dotfiles/.vimrc
-          test -f dotfiles/.tmux.conf
+          test -f packages/setup/dotfiles/.bashrc
+          test -f packages/setup/dotfiles/.gitconfig
+          test -f packages/setup/dotfiles/.vimrc
+          test -f packages/setup/dotfiles/.tmux.conf
 
       - name: Test script execution (dry-run)
         run: |
@@ -54,11 +54,13 @@ jobs:
 
       - name: Validate repository structure
         run: |
-          echo "Checking directory structure..."
-          test -d scripts
-          test -d dotfiles
-          test -d config
-          test -f setup.sh
+          echo "Checking monorepo directory structure..."
+          test -d packages/setup/scripts
+          test -d packages/setup/dotfiles
+          test -d packages/setup/config
+          test -f packages/setup/setup.sh
+          test -d packages/realtime
+          test -d docs
           test -f README.md
           echo "✓ Directory structure is valid"
 

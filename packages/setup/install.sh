@@ -1,11 +1,12 @@
 #!/bin/bash
 # Quick install script for personal Linux system setup
-# Usage: curl -fsSL https://raw.githubusercontent.com/cashpilotthrive-hue/.github/main/install.sh | bash
+# Usage: curl -fsSL https://raw.githubusercontent.com/cashpilotthrive-hue/.github/main/packages/setup/install.sh | bash
 
 set -e
 
 REPO_URL="https://github.com/cashpilotthrive-hue/.github.git"
 INSTALL_DIR="$HOME/.personal-linux-setup"
+SETUP_PKG="packages/setup"
 
 echo "================================"
 echo "Personal Linux System Setup"
@@ -37,13 +38,13 @@ else
 fi
 
 # Make scripts executable
-chmod +x setup.sh
+chmod +x "$SETUP_PKG/setup.sh"
 
 # Only attempt to chmod scripts if the directory exists and contains .sh files
-if [ -d "scripts" ]; then
+if [ -d "$SETUP_PKG/scripts" ]; then
     # Ensure unmatched globs expand to nothing instead of the literal pattern
     shopt -s nullglob
-    script_files=(scripts/*.sh)
+    script_files=("$SETUP_PKG"/scripts/*.sh)
     if ((${#script_files[@]})); then
         chmod +x "${script_files[@]}"
     fi
@@ -55,9 +56,9 @@ echo "Repository cloned successfully!"
 echo ""
 echo "To complete the setup, run:"
 echo "  cd $INSTALL_DIR"
-echo "  ./setup.sh"
+echo "  ./$SETUP_PKG/setup.sh"
 echo ""
 echo "Or to review first:"
 echo "  cd $INSTALL_DIR"
 echo "  cat README.md"
-echo "  cat USAGE.md"
+echo "  cat docs/USAGE.md"

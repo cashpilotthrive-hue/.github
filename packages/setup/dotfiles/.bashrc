@@ -96,10 +96,18 @@ export PATH="$NPM_CONFIG_PREFIX/bin:$PATH"
 
 # Custom functions
 mkcd() {
-    mkdir -p "$1" && cd "$1"
+    if [[ -z "$1" ]]; then
+        echo "Usage: mkcd <directory>"
+        return 1
+    fi
+    mkdir -p "$1" && cd "$1" && echo "Created and entered directory: $1"
 }
 
 extract() {
+    if [[ -z "$1" ]]; then
+        echo "Usage: extract <archive>"
+        return 1
+    fi
     if [ -f "$1" ] ; then
         case "$1" in
             *.tar.bz2)   tar xjf "$1"     ;;
@@ -113,9 +121,11 @@ extract() {
             *.zip)       unzip "$1"       ;;
             *.Z)         uncompress "$1"  ;;
             *.7z)        7z x "$1"        ;;
-            *)           echo "'$1' cannot be extracted via extract()" ;;
-        esac
+            *)           echo "'$1' cannot be extracted via extract()" ; return 1 ;;
+        esac || return 1
+        echo "Extracted: $1"
     else
         echo "'$1' is not a valid file"
+        return 1
     fi
 }
