@@ -1,0 +1,3 @@
+## 2025-05-14 - Optimize package installation idempotency
+**Learning:** Unconditional package manager updates (e.g., `apt-get update`) and installs in setup scripts create a significant bottleneck for subsequent runs, increasing setup time from <1s to >30s. Additionally, on some distributions like Ubuntu 24.04, `dpkg-query -W` can return a success exit code even for packages that are not fully installed (e.g., in 'unknown ok not-installed' state).
+**Action:** Implement idempotency checks using `${Status}` for `apt` (`dpkg-query -W -f='${Status}' "$pkg" 2>/dev/null | grep -q "ok installed"`), `rpm -q` for `dnf`, and `pacman -Qq` for `pacman`. Always check for both individual packages and distribution-specific groups (like `base-devel` or `@development-tools`).
