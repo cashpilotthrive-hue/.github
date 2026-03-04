@@ -1,9 +1,6 @@
-# NOTE:
-#   Update the following user name and email before using git.
-#   These are placeholders and should be replaced with your actual identity.
 [user]
-	name = CHANGE_ME_NAME
-	email = CHANGE_ME_EMAIL@example.com
+	name = Your Name
+	email = your.email@example.com
 
 [core]
 	editor = vim

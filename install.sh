@@ -26,10 +26,7 @@ fi
 if [ -d "$INSTALL_DIR" ]; then
     echo "Directory $INSTALL_DIR already exists. Updating..."
     cd "$INSTALL_DIR"
-    if ! git pull --ff-only; then
-        echo "Warning: Could not fast-forward update. Local changes may exist."
-        echo "Please manually resolve conflicts or run: git reset --hard origin/main"
-    fi
+    git pull
 else
     echo "Cloning repository to $INSTALL_DIR..."
     git clone "$REPO_URL" "$INSTALL_DIR"
@@ -38,17 +35,7 @@ fi
 
 # Make scripts executable
 chmod +x setup.sh
-
-# Only attempt to chmod scripts if the directory exists and contains .sh files
-if [ -d "scripts" ]; then
-    # Ensure unmatched globs expand to nothing instead of the literal pattern
-    shopt -s nullglob
-    script_files=(scripts/*.sh)
-    if ((${#script_files[@]})); then
-        chmod +x "${script_files[@]}"
-    fi
-    shopt -u nullglob
-fi
+chmod +x scripts/*.sh
 
 echo ""
 echo "Repository cloned successfully!"

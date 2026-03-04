@@ -10,14 +10,8 @@ echo "Setting up dotfiles..."
 backup_file() {
     local file=$1
     if [ -f "$HOME/$file" ]; then
-        local backup_path="$HOME/${file}.backup"
-        if [ -f "$backup_path" ]; then
-            local timestamp
-            timestamp="$(date +%Y%m%d%H%M%S)"
-            backup_path="$HOME/${file}.backup.${timestamp}"
-        fi
-        echo "Backing up existing $file to ${backup_path#$HOME/}"
-        cp "$HOME/$file" "$backup_path"
+        echo "Backing up existing $file to ${file}.backup"
+        cp "$HOME/$file" "$HOME/${file}.backup"
     fi
 }
 

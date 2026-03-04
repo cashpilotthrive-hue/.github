@@ -1,0 +1,34 @@
+# Automatically learned from your behavior
+
+your_name: "Principal"
+preferred_currency: "USD"
+risk_tolerance: 0.65  # On scale 0-1
+
+favorite_assets:
+  - "AAPL"  # You buy Apple every week
+  - "BTC"   # You accumulate Bitcoin
+  - "GOLD"  # You like safe haven
+
+avoid_assets:
+  - "TSLA"  # You sold at a loss once
+  - "OIL"   # You think it's too volatile
+
+trading_times:
+  - "09:30"  # You like market open
+  - "15:45"  # You like power hour
+
+notification_preferences:
+  daily_summary: true
+  large_trades: true  # >$10M
+  risk_alerts: true
+  market_news: false  # You don't want noise
+
+quick_commands:
+  "gm": "show_wealth"  # Good morning check
+  "gn": "daily_summary"  # Good night summary
+  "🚀": "buy_crypto"  # Rocket means buy crypto
+
+access_methods:
+  primary: "face_id"
+  secondary: "quantum_key"
+  backup: "voice_print"

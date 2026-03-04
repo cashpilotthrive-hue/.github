@@ -73,8 +73,7 @@ fi
 # Install Docker Compose
 if ! command -v docker-compose &> /dev/null; then
     echo "Installing Docker Compose..."
-    # Fetch the latest stable version from GitHub API
-    DOCKER_COMPOSE_VERSION=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/' || echo "v2.24.5")
+    DOCKER_COMPOSE_VERSION="v2.24.5"
     sudo curl -L "https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
     sudo chmod +x /usr/local/bin/docker-compose
 else
@@ -105,11 +104,3 @@ else
 fi
 
 echo "✓ Development tools installed successfully"
-
-# Important notice about Docker group
-if command -v docker &> /dev/null; then
-    echo ""
-    echo "NOTE: You were added to the 'docker' group."
-    echo "      To use Docker without sudo, please log out and log back in,"
-    echo "      or run: newgrp docker"
-fi
