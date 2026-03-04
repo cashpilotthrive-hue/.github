@@ -37,6 +37,7 @@ chmod +x setup.sh
 - GitHub CLI (gh)
 
 ### Optional Tools
+- GitHub CLI (gh)
 - Terraform
 - kubectl
 

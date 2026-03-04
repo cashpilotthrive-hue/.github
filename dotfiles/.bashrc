@@ -94,6 +94,9 @@ fi
 export NPM_CONFIG_PREFIX="$HOME/.npm-global"
 export PATH="$NPM_CONFIG_PREFIX/bin:$PATH"
 
+# Python
+export PATH="$HOME/.local/bin:$PATH"
+
 # Custom functions
 mkcd() {
     mkdir -p "$1" && cd "$1"
