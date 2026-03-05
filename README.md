@@ -1,74 +1,22 @@
-# Personal Linux System Setup
+# Betting Platform - Social User-Facing Workflows
 
-This repository contains scripts and configurations for setting up a personal Linux development environment.
+This project implements the social-user-facing workflows for a betting platform, following regulatory requirements and high-performance standards.
 
-## Features
+## Architecture
+The platform is built using an event-driven microservices architecture.
 
-- 🚀 Automated package installation
-- 🛠️ Development tools configuration
-- ⚙️ System dotfiles (bash, git, vim)
-- 🔒 Security hardening
-- 📦 Package manager support (apt, dnf, pacman)
+### Services
+- **Support Service** (`services/support_service`): Manages support tickets and complaints.
+- **GDPR Service** (`services/gdpr_service`): Handles data-subject requests (export, deletion, etc.).
+- **Notification Service**: Sends emails and SMS notifications.
+- **Audit Log Service**: Maintains an immutable audit trail.
+- **API Gateway**: Entry point for all client requests.
 
-## Quick Start
+## Documentation
+- [API Specification](docs/api/openapi.yaml)
+- [Product Kit](docs/kit/)
+- [Architecture Diagrams](diagrams/)
 
-```bash
-# Clone this repository
-git clone https://github.com/cashpilotthrive-hue/.github.git
-cd .github
-
-# Run the main setup script
-chmod +x setup.sh
-./setup.sh
-```
-
-## What Gets Installed
-
-### Essential Packages
-- curl, wget, git
-- build-essential / Development Tools
-- vim/neovim, tmux
-- htop, tree, ncdu
-
-### Development Tools
-- Node.js & npm
-- Python 3 & pip
-- Docker & Docker Compose
-- GitHub CLI (gh)
-
-### Optional Tools
-- Terraform
-- kubectl
-
-## Customization
-
-Edit `config/packages.txt` to add or remove packages.
-Modify dotfiles in the `dotfiles/` directory to customize your environment.
-
-## Structure
-
-```
-.
-├── setup.sh              # Main setup script
-├── scripts/              # Individual setup scripts
-│   ├── install-packages.sh
-│   ├── install-devtools.sh
-│   ├── setup-dotfiles.sh
-│   └── configure-system.sh
-├── dotfiles/             # Configuration files
-│   ├── .bashrc
-│   ├── .gitconfig
-│   └── .vimrc
-└── config/               # Configuration data
-    └── packages.txt
-```
-
-## Requirements
-
-- Ubuntu 20.04+ / Debian 11+ / Fedora 35+ / Arch Linux
-- sudo privileges
-- Internet connection
-
-## License
-
-MIT License - Feel free to use and modify for your personal needs.
+## Getting Started
+Each service is located in the `services/` directory and can be run independently.
+For development, we use FastAPI for services and pytest for testing.
