@@ -1,0 +1,2 @@
+# Authorized targets (replace with your approved scope)
+localhost
