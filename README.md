@@ -54,18 +54,33 @@ Modify dotfiles in the `dotfiles/` directory to customize your environment.
 
 ```
 .
-├── setup.sh              # Main setup script
-├── scripts/              # Individual setup scripts
+├── setup.sh                        # Main setup script
+├── install.sh                      # Quick one-line installer
+├── scripts/                        # Individual setup scripts
 │   ├── install-packages.sh
 │   ├── install-devtools.sh
 │   ├── setup-dotfiles.sh
-│   └── configure-system.sh
-├── dotfiles/             # Configuration files
+│   ├── configure-system.sh
+│   └── configure-revenue-tools.sh
+├── dotfiles/                       # Configuration files
 │   ├── .bashrc
 │   ├── .gitconfig
-│   └── .vimrc
-└── config/               # Configuration data
-    └── packages.txt
+│   ├── .vimrc
+│   └── .tmux.conf
+├── config/                         # Configuration data
+│   └── packages.txt
+└── .github/                        # GitHub configuration
+    ├── workflows/
+    │   ├── test-setup.yml
+    │   └── revenue-ops.yml
+    ├── ISSUE_TEMPLATE/
+    │   ├── bug_report.md
+    │   ├── feature_request.md
+    │   └── config.yml
+    ├── copilot-instructions.md
+    ├── dependabot.yml
+    ├── FUNDING.yml
+    └── pull_request_template.md
 ```
 
 ## Requirements
