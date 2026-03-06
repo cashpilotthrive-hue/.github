@@ -40,6 +40,11 @@ chmod +x setup.sh
 - Terraform
 - kubectl
 
+
+## Revenue Tooling Automation
+
+Use `scripts/configure-revenue-tools.sh` to provision revenue/CRM/analytics secrets and variables in a target GitHub repository, then run `.github/workflows/revenue-ops.yml` for scheduled health checks and reconciliation scaffolding. See `REVENUE_TOOLING_SETUP.md`.
+
 ## Customization
 
 Edit `config/packages.txt` to add or remove packages.
