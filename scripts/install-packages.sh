@@ -84,12 +84,12 @@ case "$PKG_MANAGER" in
 
         if [ ${#MISSING_PACKAGES[@]} -gt 0 ] || [ "$INSTALL_GROUP" = true ]; then
             sudo pacman -Syu --noconfirm
-            if [ ${#MISSING_PACKAGES[@]} -gt 0 ]; then
-                sudo pacman -S --noconfirm "${MISSING_PACKAGES[@]}"
-            fi
+            PACKAGES_TO_INSTALL=("${MISSING_PACKAGES[@]}")
             if [ "$INSTALL_GROUP" = true ]; then
-                sudo pacman -S --noconfirm base-devel
+                PACKAGES_TO_INSTALL+=("base-devel")
             fi
+            echo "Installing missing pacman packages/groups: ${PACKAGES_TO_INSTALL[*]}"
+            sudo pacman -S --noconfirm "${PACKAGES_TO_INSTALL[@]}"
         else
             echo "All essential packages are already installed."
         fi
