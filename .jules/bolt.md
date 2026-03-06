@@ -1,0 +1,3 @@
+## 2025-05-15 - Idempotency in Package Installation
+**Learning:** Running `apt-get update` and `apt-get install` on every setup run is a significant bottleneck (~5s even when everything is installed). Robust idempotency can be achieved by checking package status before invoking the package manager. On Ubuntu 24.04 (Noble), `dpkg-query -W` can return 0 for packages that are not fully installed (e.g., in 'config-files' state), so checking `${Status}` for 'ok installed' is necessary.
+**Action:** Use `dpkg-query -W -f='${Status}' $pkg 2>/dev/null | grep -q 'ok installed'` for apt, and similar specific queries for dnf and pacman to ensure true idempotency.
