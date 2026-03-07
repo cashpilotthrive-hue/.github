@@ -1,5 +1,5 @@
 export default {
   async fetch(request, env, ctx) {
-    return new Response('AAFS Ethics Engine Placeholder');
+    return new Response('Hello World!');
   },
 };
