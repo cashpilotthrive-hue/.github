@@ -49,11 +49,11 @@ Use `scripts/configure-revenue-tools.sh` to provision revenue/CRM/analytics secr
 
 Explore our comprehensive resources for integrating Large Language Models (LLMs) into business operations:
 
-- [LLM Strategic Framework](LLM_STRATEGIC_FRAMEWORK.md) - Strategy for efficiency and customer engagement.
-- [LLM Business Guide](LLM_BUSINESS_GUIDE.md) - How to leverage LLMs effectively and securely.
-- [LLM Industry Use Cases](LLM_INDUSTRY_USE_CASES.md) - Real-world applications across various sectors.
-- [LLM Implementation Plan](LLM_IMPLEMENTATION_PLAN.md) - A phased approach to LLM adoption.
-- [LLM Benefits and Challenges](LLM_BENEFITS_CHALLENGES.md) - Understanding the pros and cons.
+- [LLM Strategic Framework](public/LLM_STRATEGIC_FRAMEWORK.md) - Strategy for efficiency and customer engagement.
+- [LLM Business Guide](public/LLM_BUSINESS_GUIDE.md) - How to leverage LLMs effectively and securely.
+- [LLM Industry Use Cases](public/LLM_INDUSTRY_USE_CASES.md) - Real-world applications across various sectors.
+- [LLM Implementation Plan](public/LLM_IMPLEMENTATION_PLAN.md) - A phased approach to LLM adoption.
+- [LLM Benefits and Challenges](public/LLM_BENEFITS_CHALLENGES.md) - Understanding the pros and cons.
 
 ## Customization
 
