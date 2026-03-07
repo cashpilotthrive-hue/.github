@@ -1,0 +1,6 @@
+name = "shy-base-82d5"
+main = "scripts/aafs_ethics_engine.py"
+compatibility_date = "2024-03-07"
+
+[vars]
+ENVIRONMENT = "production"
