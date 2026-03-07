@@ -1,0 +1,348 @@
+openapi: 3.0.3
+info:
+  title: Betting Platform API
+  description: API for the social-user-facing workflows of the betting platform.
+  version: 1.0.0
+servers:
+  - url: https://api.betting-platform.com/v1
+paths:
+  /support/ticket:
+    post:
+      summary: Create a new support ticket
+      operationId: createTicket
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TicketCreateRequest'
+      responses:
+        '201':
+          description: Ticket created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketResponse'
+        '400':
+          description: Validation error
+  /support/ticket/{ticketId}:
+    get:
+      summary: Retrieve a ticket (agent view)
+      operationId: getTicket
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Ticket details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketDetail'
+  /complaints:
+    post:
+      summary: File a regulated complaint
+      operationId: fileComplaint
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ComplaintCreateRequest'
+      responses:
+        '201':
+          description: Complaint recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComplaintResponse'
+  /gdpr/request:
+    post:
+      summary: Submit a GDPR data‑subject request
+      operationId: submitGdprRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GdprRequest'
+      responses:
+        '202':
+          description: Request accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GdprAccepted'
+        '400':
+          description: Invalid request
+  /gdpr/request/{requestId}:
+    get:
+      summary: Check status of a GDPR request
+      operationId: getGdprStatus
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Current status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GdprStatus'
+  /auth/register:
+    post:
+      summary: Register a new user
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegistration'
+      responses:
+        '201':
+          description: User registered, verification pending
+  /kyc/upload:
+    post:
+      summary: Upload KYC documents
+      operationId: uploadKyc
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/KycUploadRequest'
+      responses:
+        '202':
+          description: Documents uploaded and queued for verification
+  /payment/deposit:
+    post:
+      summary: Deposit funds
+      operationId: depositFunds
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DepositRequest'
+      responses:
+        '200':
+          description: Deposit initiated
+  /betting/place:
+    post:
+      summary: Place a bet
+      operationId: placeBet
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BetPlacementRequest'
+      responses:
+        '201':
+          description: Bet placed successfully
+  /compliance/limits:
+    patch:
+      summary: Update user limits
+      operationId: updateLimits
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserLimitsUpdate'
+      responses:
+        '200':
+          description: Limits updated
+  /reporting/ukgc:
+    post:
+      summary: Generate UKGC regulatory report
+      operationId: generateUkgcReport
+      responses:
+        '202':
+          description: Report generation started
+  /admin/users:
+    get:
+      summary: List users (admin only)
+      operationId: listUsers
+      responses:
+        '200':
+          description: List of users
+components:
+  schemas:
+    TicketCreateRequest:
+      type: object
+      required:
+        - subject
+        - category
+        - description
+      properties:
+        subject:
+          type: string
+        category:
+          type: string
+          enum: [account, payment, betting, technical, responsible_gambling, kyc]
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+        description:
+          type: string
+        attachments:
+          type: array
+          items:
+            type: string   # base64‑encoded or presigned S3 URL
+    TicketResponse:
+      type: object
+      properties:
+        ticket_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [open, in_progress, waiting_customer, waiting_internal, resolved, closed]
+        created_at:
+          type: string
+          format: date-time
+    TicketDetail:
+      allOf:
+        - $ref: '#/components/schemas/TicketResponse'
+        - type: object
+          properties:
+            messages:
+              type: array
+              items:
+                $ref: '#/components/schemas/TicketMessage'
+    TicketMessage:
+      type: object
+      properties:
+        message_id:
+          type: string
+          format: uuid
+        author:
+          type: string   # user_id or "agent"
+        is_staff:
+          type: boolean
+        text:
+          type: string
+        attachments:
+          type: array
+          items:
+            type: string
+        created_at:
+          type: string
+          format: date-time
+    ComplaintCreateRequest:
+      type: object
+      required:
+        - related_ticket_id
+        - complaint_text
+      properties:
+        related_ticket_id:
+          type: string
+          format: uuid
+        complaint_text:
+          type: string
+        escalation_reason:
+          type: string
+    ComplaintResponse:
+      type: object
+      properties:
+        complaint_id:
+          type: string
+          format: uuid
+        response_due_date:
+          type: string
+          format: date
+        status:
+          type: string
+          enum: [pending, in_progress, resolved, escalated]
+    GdprRequest:
+      type: object
+      required:
+        - request_type
+      properties:
+        request_type:
+          type: string
+          enum: [data_export, data_deletion, data_rectification, consent_withdrawal, object_to_processing]
+        request_details:
+          type: string
+          description: Optional free‑form description (e.g., which fields to rectify)
+    GdprAccepted:
+      type: object
+      properties:
+        request_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [submitted, in_progress]
+        due_date:
+          type: string
+          format: date
+    GdprStatus:
+      type: object
+      properties:
+        request_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [submitted, in_progress, completed, rejected]
+        completed_at:
+          type: string
+          format: date-time
+        export_file_path:
+          type: string
+          description: S3 pre‑signed URL (only for data_export)
+        rejection_reason:
+          type: string
+    UserRegistration:
+      type: object
+      required: [email, password, first_name, last_name, dob]
+      properties:
+        email: {type: string, format: email}
+        password: {type: string, format: password}
+        first_name: {type: string}
+        last_name: {type: string}
+        dob: {type: string, format: date}
+    KycUploadRequest:
+      type: object
+      required: [document_type, file]
+      properties:
+        document_type:
+          type: string
+          enum: [passport, driving_license, utility_bill]
+        file: {type: string, format: binary}
+    DepositRequest:
+      type: object
+      required: [amount, currency, payment_method_id]
+      properties:
+        amount: {type: number, minimum: 1}
+        currency: {type: string, default: GBP}
+        payment_method_id: {type: string}
+    BetPlacementRequest:
+      type: object
+      required: [selections, stake]
+      properties:
+        selections:
+          type: array
+          items:
+            type: object
+            properties:
+              selection_id: {type: string}
+              odds: {type: number}
+        stake: {type: number, minimum: 0.1}
+    UserLimitsUpdate:
+      type: object
+      properties:
+        deposit_limit_daily: {type: number}
+        loss_limit_weekly: {type: number}
+        session_timeout_min: {type: integer}
