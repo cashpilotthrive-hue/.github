@@ -8,68 +8,83 @@ echo "Installing essential packages..."
 
 case "$PKG_MANAGER" in
     apt)
-        sudo apt-get update
-        sudo apt-get install -y \
-            curl \
-            wget \
-            git \
-            vim \
-            neovim \
-            tmux \
-            htop \
-            tree \
-            ncdu \
-            build-essential \
-            software-properties-common \
-            apt-transport-https \
-            ca-certificates \
-            gnupg \
-            lsb-release \
-            zip \
-            unzip \
-            jq \
-            make \
-            gcc \
-            g++
+        PACKAGES=(
+            curl wget git vim neovim tmux htop tree ncdu
+            build-essential software-properties-common
+            apt-transport-https ca-certificates gnupg lsb-release
+            zip unzip jq make gcc g++
+        )
+
+        MISSING_PACKAGES=()
+        for pkg in "${PACKAGES[@]}"; do
+            if ! dpkg-query -W -f='${Status}' "$pkg" 2>/dev/null | grep -q "ok installed"; then
+                MISSING_PACKAGES+=("$pkg")
+            fi
+        done
+
+        if [ ${#MISSING_PACKAGES[@]} -gt 0 ]; then
+            echo "Installing missing packages: ${MISSING_PACKAGES[*]}"
+            sudo apt-get update
+            sudo apt-get install -y "${MISSING_PACKAGES[@]}"
+        else
+            echo "All essential packages are already installed."
+        fi
         ;;
     dnf)
-        sudo dnf update -y
-        sudo dnf install -y \
-            curl \
-            wget \
-            git \
-            vim \
-            neovim \
-            tmux \
-            htop \
-            tree \
-            ncdu \
-            @development-tools \
-            zip \
-            unzip \
-            jq \
-            make \
-            gcc \
-            gcc-c++
+        PACKAGES=(
+            curl wget git vim neovim tmux htop tree ncdu
+            zip unzip jq make gcc gcc-c++
+        )
+
+        MISSING_PACKAGES=()
+        for pkg in "${PACKAGES[@]}"; do
+            if ! rpm -q "$pkg" &>/dev/null; then
+                MISSING_PACKAGES+=("$pkg")
+            fi
+        done
+
+        # Check for development tools group
+        GROUP_INSTALLED=$(sudo dnf group list --installed "Development Tools" 2>/dev/null | grep -i "Development Tools" || true)
+
+        if [ ${#MISSING_PACKAGES[@]} -gt 0 ] || [ -z "$GROUP_INSTALLED" ]; then
+            sudo dnf update -y
+            if [ ${#MISSING_PACKAGES[@]} -gt 0 ]; then
+                sudo dnf install -y "${MISSING_PACKAGES[@]}"
+            fi
+            if [ -z "$GROUP_INSTALLED" ]; then
+                sudo dnf group install -y "Development Tools"
+            fi
+        else
+            echo "All essential packages and groups are already installed."
+        fi
         ;;
     pacman)
-        sudo pacman -Syu --noconfirm
-        sudo pacman -S --noconfirm \
-            curl \
-            wget \
-            git \
-            vim \
-            neovim \
-            tmux \
-            htop \
-            tree \
-            ncdu \
-            base-devel \
-            zip \
-            unzip \
-            jq \
-            make \
-            gcc
+        PACKAGES=(
+            curl wget git vim neovim tmux htop tree ncdu
+            zip unzip jq make gcc
+        )
+
+        MISSING_PACKAGES=()
+        for pkg in "${PACKAGES[@]}"; do
+            if ! pacman -Qq "$pkg" &>/dev/null; then
+                MISSING_PACKAGES+=("$pkg")
+            fi
+        done
+
+        # Check for base-devel group
+        GROUP_INSTALLED=$(pacman -Qg base-devel 2>/dev/null || true)
+
+        if [ ${#MISSING_PACKAGES[@]} -gt 0 ] || [ -z "$GROUP_INSTALLED" ]; then
+            sudo pacman -Syu --noconfirm
+            if [ ${#MISSING_PACKAGES[@]} -gt 0 ]; then
+                sudo pacman -S --noconfirm "${MISSING_PACKAGES[@]}"
+            fi
+            if [ -z "$GROUP_INSTALLED" ]; then
+                sudo pacman -S --noconfirm base-devel
+            fi
+        else
+            echo "All essential packages and groups are already installed."
+        fi
         ;;
     *)
         echo "Unsupported package manager: $PKG_MANAGER"
