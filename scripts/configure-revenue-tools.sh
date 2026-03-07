@@ -63,6 +63,8 @@ set_var_if_present CRM_PROVIDER
 set_var_if_present ANALYTICS_PROVIDER
 set_var_if_present DEFAULT_CURRENCY
 set_var_if_present REVENUE_ALERT_THRESHOLD
+set_var_if_present SHOPIFY_STORE_DOMAIN
+set_var_if_present POSTHOG_HOST
 
 echo "Done."
 echo "Next: run the workflow '.github/workflows/revenue-ops.yml' from the Actions tab."

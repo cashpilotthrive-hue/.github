@@ -79,20 +79,210 @@ jobs:
         env:
           PADDLE_API_KEY: ${{ secrets.PADDLE_API_KEY }}
 
+      - name: Gumroad API health check (optional)
+        if: ${{ secrets.GUMROAD_ACCESS_TOKEN != '' }}
+        run: |
+          status_code=$(curl -sS -o /tmp/gumroad-response.json -w "%{http_code}" \
+            -H "Authorization: Bearer ${GUMROAD_ACCESS_TOKEN}" \
+            https://api.gumroad.com/v2/user)
+
+          if [ "$status_code" -lt 200 ] || [ "$status_code" -ge 400 ]; then
+            echo "Gumroad API check failed with status: $status_code"
+            exit 1
+          fi
+
+          echo "Gumroad API responded successfully."
+        env:
+          GUMROAD_ACCESS_TOKEN: ${{ secrets.GUMROAD_ACCESS_TOKEN }}
+
+      - name: Shopify API health check (optional)
+        if: ${{ secrets.SHOPIFY_ADMIN_API_TOKEN != '' && vars.SHOPIFY_STORE_DOMAIN != '' }}
+        run: |
+          status_code=$(curl -sS -o /tmp/shopify-response.json -w "%{http_code}" \
+            -H "X-Shopify-Access-Token: ${SHOPIFY_ADMIN_API_TOKEN}" \
+            "https://${SHOPIFY_STORE_DOMAIN}/admin/api/2024-01/shop.json")
+
+          if [ "$status_code" -lt 200 ] || [ "$status_code" -ge 400 ]; then
+            echo "Shopify API check failed with status: $status_code"
+            exit 1
+          fi
+
+          echo "Shopify API responded successfully."
+        env:
+          SHOPIFY_ADMIN_API_TOKEN: ${{ secrets.SHOPIFY_ADMIN_API_TOKEN }}
+          SHOPIFY_STORE_DOMAIN: ${{ vars.SHOPIFY_STORE_DOMAIN }}
+
+      - name: HubSpot API health check (optional)
+        if: ${{ secrets.HUBSPOT_API_KEY != '' }}
+        run: |
+          status_code=$(curl -sS -o /tmp/hubspot-response.json -w "%{http_code}" \
+            -H "Authorization: Bearer ${HUBSPOT_API_KEY}" \
+            https://api.hubapi.com/crm/v3/objects/contacts?limit=1)
+
+          if [ "$status_code" -lt 200 ] || [ "$status_code" -ge 400 ]; then
+            echo "HubSpot API check failed with status: $status_code"
+            exit 1
+          fi
+
+          echo "HubSpot API responded successfully."
+        env:
+          HUBSPOT_API_KEY: ${{ secrets.HUBSPOT_API_KEY }}
+
+      - name: PostHog API health check (optional)
+        if: ${{ secrets.POSTHOG_API_KEY != '' && vars.POSTHOG_HOST != '' }}
+        run: |
+          status_code=$(curl -sS -o /tmp/posthog-response.json -w "%{http_code}" \
+            -H "Authorization: Bearer ${POSTHOG_API_KEY}" \
+            "${POSTHOG_HOST}/api/projects/@current/")
+
+          if [ "$status_code" -lt 200 ] || [ "$status_code" -ge 400 ]; then
+            echo "PostHog API check failed with status: $status_code"
+            exit 1
+          fi
+
+          echo "PostHog API responded successfully."
+        env:
+          POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY }}
+          POSTHOG_HOST: ${{ vars.POSTHOG_HOST }}
+
+      - name: Send alert if health checks failed
+        if: failure() && secrets.SLACK_WEBHOOK_URL != ''
+        run: |
+          curl -X POST "${SLACK_WEBHOOK_URL}" \
+            -H 'Content-Type: application/json' \
+            -d "{\"text\":\"❌ Revenue Ops Alert: Provider health check failed in ${GITHUB_REPOSITORY}\",\"blocks\":[{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"*Revenue Ops Alert*\n\n❌ One or more provider health checks failed.\n\n*Repository:* ${GITHUB_REPOSITORY}\n*Workflow:* ${GITHUB_WORKFLOW}\n*Run:* <${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}|View Details>\n*Environment:* ${{ github.event.inputs.environment || 'production' }}\"}}]}"
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
   settlement-reconciliation:
     if: ${{ github.event_name == 'schedule' || github.event.inputs.run_settlement_reconciliation == 'true' }}
     needs: provider-health
     runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'production' }}
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Fetch revenue data from Stripe (optional)
+        if: ${{ secrets.STRIPE_API_KEY != '' }}
+        run: |
+          mkdir -p /tmp/revenue-data
+
+          # Get balance
+          curl -sS https://api.stripe.com/v1/balance \
+            -u "${STRIPE_API_KEY}:" > /tmp/revenue-data/stripe-balance.json
+
+          # Get recent charges (last 24 hours)
+          created_after=$(date -u -d '24 hours ago' +%s)
+          curl -sS "https://api.stripe.com/v1/charges?created[gte]=${created_after}&limit=100" \
+            -u "${STRIPE_API_KEY}:" > /tmp/revenue-data/stripe-charges.json
+
+          echo "✓ Stripe data fetched"
+        env:
+          STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
+
+      - name: Fetch revenue data from Paddle (optional)
+        if: ${{ secrets.PADDLE_API_KEY != '' }}
+        run: |
+          mkdir -p /tmp/revenue-data
+
+          # Get transactions (last 24 hours)
+          from_date=$(date -u -d '24 hours ago' +%Y-%m-%d)
+          curl -sS "https://api.paddle.com/transactions?from=${from_date}" \
+            -H "Authorization: Bearer ${PADDLE_API_KEY}" > /tmp/revenue-data/paddle-transactions.json
+
+          echo "✓ Paddle data fetched"
+        env:
+          PADDLE_API_KEY: ${{ secrets.PADDLE_API_KEY }}
+
       - name: Generate reconciliation summary
         run: |
-          echo "Revenue settlement reconciliation stub"
-          echo "Date: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          echo "Billing provider: ${BILLING_PROVIDER}"
-          echo "Default currency: ${DEFAULT_CURRENCY}"
-          echo "Threshold alert: ${REVENUE_ALERT_THRESHOLD:-not-set}"
-          echo "Integrate your finance data pull script here."
+          REPORT_FILE="/tmp/revenue-reconciliation-$(date -u +%Y%m%d-%H%M%S).txt"
+
+          echo "============================================" | tee "$REPORT_FILE"
+          echo "Revenue Settlement Reconciliation Report" | tee -a "$REPORT_FILE"
+          echo "============================================" | tee -a "$REPORT_FILE"
+          echo "" | tee -a "$REPORT_FILE"
+          echo "Generated: $(date -u +%Y-%m-%dT%H:%M:%SZ)" | tee -a "$REPORT_FILE"
+          echo "Environment: ${{ github.event.inputs.environment || 'production' }}" | tee -a "$REPORT_FILE"
+          echo "Billing Provider: ${BILLING_PROVIDER}" | tee -a "$REPORT_FILE"
+          echo "Currency: ${DEFAULT_CURRENCY}" | tee -a "$REPORT_FILE"
+          echo "Alert Threshold: ${REVENUE_ALERT_THRESHOLD:-not-set}" | tee -a "$REPORT_FILE"
+          echo "" | tee -a "$REPORT_FILE"
+
+          # Process Stripe data if available
+          if [ -f /tmp/revenue-data/stripe-balance.json ]; then
+            echo "--- Stripe Balance ---" | tee -a "$REPORT_FILE"
+            cat /tmp/revenue-data/stripe-balance.json | tee -a "$REPORT_FILE"
+            echo "" | tee -a "$REPORT_FILE"
+
+            # Extract and sum charges
+            if [ -f /tmp/revenue-data/stripe-charges.json ]; then
+              echo "--- Stripe Charges (Last 24h) ---" | tee -a "$REPORT_FILE"
+              charge_count=$(cat /tmp/revenue-data/stripe-charges.json | grep -o '"id":' | wc -l)
+              echo "Total charges: $charge_count" | tee -a "$REPORT_FILE"
+              echo "" | tee -a "$REPORT_FILE"
+            fi
+          fi
+
+          # Process Paddle data if available
+          if [ -f /tmp/revenue-data/paddle-transactions.json ]; then
+            echo "--- Paddle Transactions (Last 24h) ---" | tee -a "$REPORT_FILE"
+            cat /tmp/revenue-data/paddle-transactions.json | tee -a "$REPORT_FILE"
+            echo "" | tee -a "$REPORT_FILE"
+          fi
+
+          echo "============================================" | tee -a "$REPORT_FILE"
+          echo "Report saved to: $REPORT_FILE"
+
+          # Store path for artifact upload
+          echo "REPORT_FILE=$REPORT_FILE" >> $GITHUB_ENV
         env:
           BILLING_PROVIDER: ${{ vars.BILLING_PROVIDER }}
           DEFAULT_CURRENCY: ${{ vars.DEFAULT_CURRENCY }}
           REVENUE_ALERT_THRESHOLD: ${{ vars.REVENUE_ALERT_THRESHOLD }}
+
+      - name: Check revenue threshold alert
+        if: ${{ vars.REVENUE_ALERT_THRESHOLD != '' && secrets.STRIPE_API_KEY != '' }}
+        run: |
+          # Extract available balance from Stripe (in cents)
+          if [ -f /tmp/revenue-data/stripe-balance.json ]; then
+            # Try to extract available balance (first currency's amount)
+            available=$(cat /tmp/revenue-data/stripe-balance.json | grep -o '"amount":[0-9]*' | head -1 | cut -d':' -f2)
+
+            if [ -n "$available" ]; then
+              # Convert cents to dollars
+              available_dollars=$((available / 100))
+              threshold=${REVENUE_ALERT_THRESHOLD}
+
+              echo "Available balance: \$${available_dollars}"
+              echo "Alert threshold: \$${threshold}"
+
+              if [ "$available_dollars" -lt "$threshold" ]; then
+                echo "⚠️ WARNING: Available balance (\$${available_dollars}) is below threshold (\$${threshold})"
+                echo "THRESHOLD_EXCEEDED=true" >> $GITHUB_ENV
+              else
+                echo "✓ Balance is above threshold"
+              fi
+            fi
+          fi
+        env:
+          REVENUE_ALERT_THRESHOLD: ${{ vars.REVENUE_ALERT_THRESHOLD }}
+
+      - name: Send threshold alert to Slack
+        if: ${{ env.THRESHOLD_EXCEEDED == 'true' && secrets.SLACK_WEBHOOK_URL != '' }}
+        run: |
+          curl -X POST "${SLACK_WEBHOOK_URL}" \
+            -H 'Content-Type: application/json' \
+            -d "{\"text\":\"⚠️ Revenue Alert: Balance below threshold in ${GITHUB_REPOSITORY}\",\"blocks\":[{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"*Revenue Threshold Alert*\n\n⚠️ Available balance has fallen below the configured threshold.\n\n*Repository:* ${GITHUB_REPOSITORY}\n*Environment:* ${{ github.event.inputs.environment || 'production' }}\n*Threshold:* \$${REVENUE_ALERT_THRESHOLD}\n*Run:* <${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}|View Details>\"}}]}"
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          REVENUE_ALERT_THRESHOLD: ${{ vars.REVENUE_ALERT_THRESHOLD }}
+
+      - name: Upload reconciliation report as artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: revenue-reconciliation-${{ github.event.inputs.environment || 'production' }}-${{ github.run_number }}
+          path: /tmp/revenue-reconciliation-*.txt
+          retention-days: 90
