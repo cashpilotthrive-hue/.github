@@ -45,6 +45,16 @@ chmod +x setup.sh
 
 Use `scripts/configure-revenue-tools.sh` to provision revenue/CRM/analytics secrets and variables in a target GitHub repository, then run `.github/workflows/revenue-ops.yml` for scheduled health checks and reconciliation scaffolding. See `REVENUE_TOOLING_SETUP.md`.
 
+## Business LLM Integration
+
+Explore our comprehensive resources for integrating Large Language Models (LLMs) into business operations:
+
+- [LLM Strategic Framework](public/LLM_STRATEGIC_FRAMEWORK.md) - Strategy for efficiency and customer engagement.
+- [LLM Business Guide](public/LLM_BUSINESS_GUIDE.md) - How to leverage LLMs effectively and securely.
+- [LLM Industry Use Cases](public/LLM_INDUSTRY_USE_CASES.md) - Real-world applications across various sectors.
+- [LLM Implementation Plan](public/LLM_IMPLEMENTATION_PLAN.md) - A phased approach to LLM adoption.
+- [LLM Benefits and Challenges](public/LLM_BENEFITS_CHALLENGES.md) - Understanding the pros and cons.
+
 ## Customization
 
 Edit `config/packages.txt` to add or remove packages.
