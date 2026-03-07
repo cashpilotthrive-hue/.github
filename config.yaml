@@ -1,0 +1,16 @@
+# AFS Configuration
+
+# API keys for trading exchanges
+api_keys:
+  exchange_a: "YOUR_API_KEY_HERE"
+  exchange_b: "YOUR_API_KEY_HERE"
+
+# Trading parameters
+trading:
+  max_risk_per_trade: 0.02
+  default_asset_class: "crypto"
+
+# Server settings
+server:
+  host: "0.0.0.0"
+  port: 8000
