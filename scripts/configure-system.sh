@@ -15,41 +15,22 @@ git config --global core.editor vim
 # Configure git to cache credentials for 1 hour
 git config --global credential.helper 'cache --timeout=3600'
 
-# Create useful aliases
+# Create useful aliases using a consolidated heredoc to minimize I/O
 if ! grep -q "# Custom aliases" ~/.bashrc; then
-    echo "" >> ~/.bashrc
-    echo "# Custom aliases" >> ~/.bashrc
-fi
+    cat << 'EOF' >> ~/.bashrc
 
-if ! grep -qE '^[[:space:]]*alias[[:space:]]+ll=' ~/.bashrc; then
-    echo "alias ll='ls -alF'" >> ~/.bashrc
-fi
-if ! grep -qE '^[[:space:]]*alias[[:space:]]+la=' ~/.bashrc; then
-    echo "alias la='ls -A'" >> ~/.bashrc
-fi
-if ! grep -qE '^[[:space:]]*alias[[:space:]]+l=' ~/.bashrc; then
-    echo "alias l='ls -CF'" >> ~/.bashrc
-fi
-if ! grep -qE '^[[:space:]]*alias[[:space:]]+\.\.=' ~/.bashrc; then
-    echo "alias ..='cd ..'" >> ~/.bashrc
-fi
-if ! grep -qE '^[[:space:]]*alias[[:space:]]+\.\.\.=' ~/.bashrc; then
-    echo "alias ...='cd ../..'" >> ~/.bashrc
-fi
-if ! grep -qE '^[[:space:]]*alias[[:space:]]+gs=' ~/.bashrc; then
-    echo "alias gs='git status'" >> ~/.bashrc
-fi
-if ! grep -qE '^[[:space:]]*alias[[:space:]]+ga=' ~/.bashrc; then
-    echo "alias ga='git add'" >> ~/.bashrc
-fi
-if ! grep -qE '^[[:space:]]*alias[[:space:]]+gc=' ~/.bashrc; then
-    echo "alias gc='git commit'" >> ~/.bashrc
-fi
-if ! grep -qE '^[[:space:]]*alias[[:space:]]+gp=' ~/.bashrc; then
-    echo "alias gp='git push'" >> ~/.bashrc
-fi
-if ! grep -qE '^[[:space:]]*alias[[:space:]]+gl=' ~/.bashrc; then
-    echo "alias gl='git log --oneline --graph --decorate'" >> ~/.bashrc
+# Custom aliases
+alias ll='ls -alF'
+alias la='ls -A'
+alias l='ls -CF'
+alias ..='cd ..'
+alias ...='cd ../..'
+alias gs='git status'
+alias ga='git add'
+alias gc='git commit'
+alias gp='git push'
+alias gl='git log --oneline --graph --decorate'
+EOF
 fi
 
 # Set up SSH directory with proper permissions
