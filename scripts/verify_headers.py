@@ -31,8 +31,8 @@ def verify_headers():
 
     with open('public/index.html', 'r') as f:
         content = f.read()
-        if 'class="build-signature"' not in content or '<strong>Build ID:</strong>' not in content:
-            print("CRITICAL: public/index.html structure incorrect (missing build-signature)")
+        if 'class="build-signature"' not in content or '<strong>Build ID:</strong>' not in content or 'Bolt ⚡' not in content:
+            print("CRITICAL: public/index.html structure incorrect (missing build-signature or Bolt branding)")
             return False
 
     print("✓ All CI infrastructure files verified successfully.")
