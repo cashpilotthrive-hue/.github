@@ -13,7 +13,7 @@
         h1, h2, h3 { color: #2c3e50; }
     </style>
 </head>
-<body data-build-timestamp="2026-03-08 05:10:00 UTC">
+<body data-build-timestamp="2026-02-16 05:22:22 UTC">
     <header>
         <h1>Betting Platform Social Workflows</h1>
     </header>
@@ -24,16 +24,17 @@
         <div class="perf-box">
             <h2>⚡ Performance Optimizations</h2>
             <ul>
-                <li>Implemented robust idempotency in <code>scripts/install-packages.sh</code> for apt, dnf, and pacman.</li>
-                <li>Reduced warm setup run execution time from ~10s to ~0.6s (15x speedup).</li>
-                <li>Optimized CI pipeline by bypassing redundant package updates and installations.</li>
+                <li>Refactored blocking I/O handlers to standard <code>def</code> to improve concurrency.</li>
+                <li>Enabled SQLite Write-Ahead Logging (WAL) for faster database access.</li>
+                <li>Implemented thread-local SQLite connection pooling with <code>PRAGMA synchronous=NORMAL</code>.</li>
+                <li>Optimized memory usage and reduced lock contention in core paths.</li>
             </ul>
         </div>
 
         <div class="build-signature">
             <h3>Build Signature</h3>
             <p><strong>Build ID:</strong> 1771219342564672039</p>
-            <p><strong>Build Timestamp:</strong> 2026-03-08 05:10:00 UTC</p>
+            <p><strong>Build Timestamp:</strong> 2026-02-16 05:22:22 UTC</p>
             <p><strong>Agent:</strong> Bolt ⚡</p>
         </div>
     </main>
