@@ -105,3 +105,24 @@ Each run writes a unique `run-<timestamp>` directory:
 ## Responsible Use
 
 Use only on systems you are explicitly authorized to assess. Unauthorized scanning, testing, or exploitation is illegal and unethical.
+
+## Troubleshooting Automated Agent Runs
+
+If you run this repository from an external task runner/sandbox and see logs about missing or undefined default branches, validate Git metadata before starting:
+
+```bash
+# Show the current branch
+git branch --show-current
+
+# Confirm local + remote heads
+git show-ref --heads --remotes
+
+# Verify default branch from origin (if configured)
+git remote show origin
+```
+
+Common fixes:
+
+- Ensure the remote default branch is set correctly in the hosting provider.
+- Explicitly pass a branch name to your automation runner instead of relying on auto-detection.
+- If the automation produced "No changes made", this usually means the task ran successfully but generated no diff to commit.
