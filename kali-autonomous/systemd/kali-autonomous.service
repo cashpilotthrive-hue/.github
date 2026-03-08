@@ -1,0 +1,14 @@
+[Unit]
+Description=Kali Autonomous Security Workflow (single run)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/workspace/.github
+ExecStart=/workspace/.github/kali-autonomous/scripts/run_once.sh
+User=root
+Group=root
+
+[Install]
+WantedBy=multi-user.target
