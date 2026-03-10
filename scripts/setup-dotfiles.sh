@@ -43,9 +43,7 @@ copy_dotfile ".vimrc"
 # Setup tmux configuration
 copy_dotfile ".tmux.conf"
 
-# Create necessary directories
-mkdir -p "$HOME/.config"
-mkdir -p "$HOME/bin"
-mkdir -p "$HOME/projects"
+# Bolt Optimization: Combine multiple mkdir calls to reduce process spawning overhead
+mkdir -p "$HOME/.config" "$HOME/bin" "$HOME/projects"
 
 echo "✓ Dotfiles setup complete"
