@@ -14,13 +14,23 @@ is_installed() {
             # Check using dpkg-query for robust apt-based detection
             dpkg-query -W -f='${Status}' "$pkg" 2>/dev/null | grep -q 'ok installed'
             ;;
-        dnf|pacman)
-            # Fallback to command -v for individual binaries.
-            # Groups (e.g., @development-tools) will be marked as missing and re-checked by the manager.
-            if [[ "$pkg" == "@"* ]] || [[ "$pkg" == "base-devel" ]]; then
-                return 1
+        dnf)
+            # Use rpm -q for dnf-based systems
+            if [[ "$pkg" == "@"* ]]; then
+                # For groups, check if the group is installed
+                dnf group list --installed "${pkg#@}" &>/dev/null
+            else
+                rpm -q "$pkg" &>/dev/null
             fi
-            command -v "$pkg" &>/dev/null
+            ;;
+        pacman)
+            # Use pacman -Qq for Arch-based systems
+            if [[ "$pkg" == "base-devel" ]]; then
+                # For base-devel, check if the group is installed
+                pacman -Qg base-devel &>/dev/null
+            else
+                pacman -Qq "$pkg" &>/dev/null
+            fi
             ;;
         *)
             return 1

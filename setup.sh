@@ -31,8 +31,10 @@ if ! sudo -n true 2>/dev/null; then
     sudo -v
 fi
 
-# Keep sudo alive
-while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
+# Keep sudo alive - Optimized Bolt version
+# Uses sudo -n -v to refresh timestamp without spawning 'true'
+# Checks parent PID existence directly in the loop condition
+while kill -0 "$$" 2>/dev/null; do sudo -n -v; sleep 250; done 2>/dev/null &
 SUDO_KEEPALIVE_PID=$!
 trap 'kill "$SUDO_KEEPALIVE_PID" 2>/dev/null || true' EXIT
 
