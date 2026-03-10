@@ -50,20 +50,20 @@ if ! command -v docker &> /dev/null; then
         apt)
             curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
             sudo sh /tmp/get-docker.sh
-            sudo usermod -aG docker $USER
+            sudo usermod -aG docker "$USER"
             rm /tmp/get-docker.sh
             ;;
         dnf)
             sudo dnf install -y docker
             sudo systemctl start docker
             sudo systemctl enable docker
-            sudo usermod -aG docker $USER
+            sudo usermod -aG docker "$USER"
             ;;
         pacman)
             sudo pacman -S --noconfirm docker
             sudo systemctl start docker
             sudo systemctl enable docker
-            sudo usermod -aG docker $USER
+            sudo usermod -aG docker "$USER"
             ;;
     esac
 else
@@ -86,14 +86,20 @@ if ! command -v gh &> /dev/null; then
     echo "Installing GitHub CLI..."
     case "$PKG_MANAGER" in
         apt)
-            curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
-            echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
-            sudo apt-get update
+            if [ ! -f /usr/share/keyrings/githubcli-archive-keyring.gpg ]; then
+                curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+            fi
+            if [ ! -f /etc/apt/sources.list.d/github-cli.list ]; then
+                echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+                sudo apt-get update
+            fi
             sudo apt-get install -y gh
             ;;
         dnf)
-            sudo dnf install -y 'dnf-command(config-manager)'
-            sudo dnf config-manager --add-repo https://cli.github.com/packages/rpm/gh-cli.repo
+            if ! dnf repolist | grep -q "gh-cli"; then
+                sudo dnf install -y 'dnf-command(config-manager)'
+                sudo dnf config-manager --add-repo https://cli.github.com/packages/rpm/gh-cli.repo
+            fi
             sudo dnf install -y gh
             ;;
         pacman)
