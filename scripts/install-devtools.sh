@@ -86,9 +86,12 @@ if ! command -v gh &> /dev/null; then
     echo "Installing GitHub CLI..."
     case "$PKG_MANAGER" in
         apt)
-            curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
-            echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
-            sudo apt-get update
+            # Only perform setup if necessary
+            if [ ! -f /usr/share/keyrings/githubcli-archive-keyring.gpg ] || [ ! -f /etc/apt/sources.list.d/github-cli.list ]; then
+                curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+                echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+                sudo apt-get update
+            fi
             sudo apt-get install -y gh
             ;;
         dnf)
