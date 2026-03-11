@@ -13,19 +13,12 @@ is_installed() {
         apt)
             dpkg-query -W -f='${Status}' "$pkg" 2>/dev/null | grep -q 'ok installed'
             ;;
-        dnf)
+        dnf|pacman)
             # For groups or special packages, assume they are missing
-            if [[ "$pkg" == "@"* ]]; then
+            if [[ "$pkg" == "@"* ]] || [[ "$pkg" == "base-devel" ]]; then
                 return 1
             fi
-            rpm -q "$pkg" &> /dev/null
-            ;;
-        pacman)
-            # For groups or special packages, assume they are missing
-            if [[ "$pkg" == "base-devel" ]]; then
-                return 1
-            fi
-            pacman -Qq "$pkg" &> /dev/null
+            command -v "$pkg" &> /dev/null
             ;;
         *)
             return 1
