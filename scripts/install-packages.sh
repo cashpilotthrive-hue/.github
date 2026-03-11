@@ -4,76 +4,92 @@ set -e
 PKG_MANAGER=${1:-apt}
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd .. && pwd)"
 
-echo "Installing essential packages..."
+echo "Checking essential packages..."
 
+# Function to check if a package is installed
+is_installed() {
+    local pkg=$1
+    case "$PKG_MANAGER" in
+        apt)
+            dpkg-query -W -f='${Status}' "$pkg" 2>/dev/null | grep -q "ok installed"
+            ;;
+        dnf)
+            # For dnf, we can use rpm -q for individual packages.
+            # Groups starting with @ are harder to check individually, so we'll assume they need checking.
+            if [[ "$pkg" == @* ]]; then
+                return 1
+            fi
+            rpm -q "$pkg" &>/dev/null
+            ;;
+        pacman)
+            # For pacman, we use -Qq.
+            # base-devel is a group, pacman -Qq base-devel lists members.
+            if [[ "$pkg" == "base-devel" ]]; then
+                return 1
+            fi
+            pacman -Qq "$pkg" &>/dev/null
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
+# List of essential packages per manager
 case "$PKG_MANAGER" in
     apt)
-        sudo apt-get update
-        sudo apt-get install -y \
-            curl \
-            wget \
-            git \
-            vim \
-            neovim \
-            tmux \
-            htop \
-            tree \
-            ncdu \
-            build-essential \
-            software-properties-common \
-            apt-transport-https \
-            ca-certificates \
-            gnupg \
-            lsb-release \
-            zip \
-            unzip \
-            jq \
-            make \
-            gcc \
-            g++
+        PACKAGES=(
+            curl wget git vim neovim tmux htop tree ncdu
+            build-essential software-properties-common
+            apt-transport-https ca-certificates gnupg
+            lsb-release zip unzip jq make gcc g++
+        )
         ;;
     dnf)
-        sudo dnf update -y
-        sudo dnf install -y \
-            curl \
-            wget \
-            git \
-            vim \
-            neovim \
-            tmux \
-            htop \
-            tree \
-            ncdu \
-            @development-tools \
-            zip \
-            unzip \
-            jq \
-            make \
-            gcc \
-            gcc-c++
+        PACKAGES=(
+            curl wget git vim neovim tmux htop tree ncdu
+            @development-tools zip unzip jq make gcc gcc-c++
+        )
         ;;
     pacman)
-        sudo pacman -Syu --noconfirm
-        sudo pacman -S --noconfirm \
-            curl \
-            wget \
-            git \
-            vim \
-            neovim \
-            tmux \
-            htop \
-            tree \
-            ncdu \
-            base-devel \
-            zip \
-            unzip \
-            jq \
-            make \
-            gcc
+        PACKAGES=(
+            curl wget git vim neovim tmux htop tree ncdu
+            base-devel zip unzip jq make gcc
+        )
         ;;
     *)
         echo "Unsupported package manager: $PKG_MANAGER"
         exit 1
+        ;;
+esac
+
+# Identify missing packages
+MISSING_PACKAGES=()
+for pkg in "${PACKAGES[@]}"; do
+    if ! is_installed "$pkg"; then
+        MISSING_PACKAGES+=("$pkg")
+    fi
+done
+
+if [ ${#MISSING_PACKAGES[@]} -eq 0 ]; then
+    echo "✓ All essential packages are already installed"
+    exit 0
+fi
+
+echo "Installing missing packages: ${MISSING_PACKAGES[*]}..."
+
+case "$PKG_MANAGER" in
+    apt)
+        sudo apt-get update
+        sudo apt-get install -y "${MISSING_PACKAGES[@]}"
+        ;;
+    dnf)
+        sudo dnf update -y
+        sudo dnf install -y "${MISSING_PACKAGES[@]}"
+        ;;
+    pacman)
+        sudo pacman -Syu --noconfirm
+        sudo pacman -S --noconfirm "${MISSING_PACKAGES[@]}"
         ;;
 esac
 
