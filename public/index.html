@@ -24,9 +24,10 @@
         <div class="perf-box">
             <h2>⚡ Performance Optimizations</h2>
             <ul>
-                <li>Implemented idempotent package installation to skip redundant system updates.</li>
-                <li>Optimized setup scripts by avoiding unnecessary <code>apt-get update</code> calls.</li>
-                <li>Reduced setup time on warm runs by ~98%.</li>
+                <li>Refactored blocking I/O handlers to standard <code>def</code> to improve concurrency.</li>
+                <li>Enabled SQLite Write-Ahead Logging (WAL) for faster database access.</li>
+                <li>Implemented thread-local SQLite connection pooling with <code>PRAGMA synchronous=NORMAL</code>.</li>
+                <li>Optimized memory usage and reduced lock contention in core paths.</li>
             </ul>
         </div>
 
