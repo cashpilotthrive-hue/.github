@@ -32,7 +32,8 @@ if ! sudo -n true 2>/dev/null; then
 fi
 
 # Keep sudo alive
-while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
+# Bolt Optimization: Use sudo -n -v and increase sleep to 250s to reduce background process overhead.
+while kill -0 "$$" 2>/dev/null; do sudo -n -v; sleep 250; done 2>/dev/null &
 SUDO_KEEPALIVE_PID=$!
 trap 'kill "$SUDO_KEEPALIVE_PID" 2>/dev/null || true' EXIT
 
