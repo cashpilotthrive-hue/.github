@@ -1,5 +1,10 @@
-# Usable Domain URL
+# Autonomous domain setup
 
-The usable URL for the domain is:
+The primary usable URL for this domain is:
 
-- https://github.com
+- https://autonomous.github.io
+
+## Notes
+
+- If a custom DNS domain is configured, point it to the same GitHub Pages site.
+- Keep this file updated if the canonical domain changes.
