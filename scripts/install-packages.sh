@@ -63,11 +63,30 @@ case "$PKG_MANAGER" in
         ;;
 esac
 
+# Optimization: Batch query package status for apt to reduce process forks.
+# This significantly speeds up warm runs by avoiding multiple calls to dpkg-query.
+declare -A INSTALLED_MAP
+if [[ "$PKG_MANAGER" == "apt" ]]; then
+    while read -r name status; do
+        # Use regex to match "ok installed" to correctly handle "hold ok installed"
+        if [[ "$status" =~ "ok installed" ]]; then
+            INSTALLED_MAP["$name"]=1
+        fi
+    done < <(dpkg-query -W -f='${Package} ${Status}\n' "${PACKAGES[@]}" 2>/dev/null || true)
+fi
+
 # Identify missing packages
 MISSING_PACKAGES=()
 for pkg in "${PACKAGES[@]}"; do
-    if ! is_installed "$pkg"; then
-        MISSING_PACKAGES+=("$pkg")
+    if [[ "$PKG_MANAGER" == "apt" ]]; then
+        if [[ -z "${INSTALLED_MAP[$pkg]:-}" ]]; then
+            MISSING_PACKAGES+=("$pkg")
+        fi
+    else
+        # Fallback to individual checks for other package managers
+        if ! is_installed "$pkg"; then
+            MISSING_PACKAGES+=("$pkg")
+        fi
     fi
 done
 
