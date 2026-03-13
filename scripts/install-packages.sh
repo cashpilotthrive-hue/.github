@@ -64,12 +64,31 @@ case "$PKG_MANAGER" in
 esac
 
 # Identify missing packages
+# Optimization: Batch package status checks for apt to avoid multiple process forks
 MISSING_PACKAGES=()
-for pkg in "${PACKAGES[@]}"; do
-    if ! is_installed "$pkg"; then
-        MISSING_PACKAGES+=("$pkg")
-    fi
-done
+if [[ "$PKG_MANAGER" == "apt" ]]; then
+    declare -A PKG_STATUS
+    # Query all packages at once and store their status in an associative array
+    while read -r line; do
+        pkg_name="${line%%:*}"
+        status="${line#*: }"
+        if [[ "$status" == *"ok installed"* ]]; then
+            PKG_STATUS["$pkg_name"]=1
+        fi
+    done < <(dpkg-query -W -f='${Package}: ${Status}\n' "${PACKAGES[@]}" 2>/dev/null || true)
+
+    for pkg in "${PACKAGES[@]}"; do
+        if [[ -z "${PKG_STATUS[$pkg]}" ]]; then
+            MISSING_PACKAGES+=("$pkg")
+        fi
+    done
+else
+    for pkg in "${PACKAGES[@]}"; do
+        if ! is_installed "$pkg"; then
+            MISSING_PACKAGES+=("$pkg")
+        fi
+    done
+fi
 
 if [ ${#MISSING_PACKAGES[@]} -eq 0 ]; then
     echo "✓ All essential packages are already installed"
