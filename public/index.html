@@ -26,6 +26,7 @@
             <ul>
                 <li>Implemented idempotent package installation to skip redundant system updates.</li>
                 <li>Optimized setup scripts by avoiding unnecessary <code>apt-get update</code> calls.</li>
+                <li>Batching package manager queries to minimize process forks.</li>
                 <li>Reduced setup time on warm runs by ~98%.</li>
             </ul>
         </div>
