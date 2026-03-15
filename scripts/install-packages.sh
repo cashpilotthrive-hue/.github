@@ -6,35 +6,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd .. && pwd)"
 
 echo "Checking essential packages..."
 
-# Function to check if a package is installed
-is_installed() {
-    local pkg=$1
-    case "$PKG_MANAGER" in
-        apt)
-            dpkg-query -W -f='${Status}' "$pkg" 2>/dev/null | grep -q "ok installed"
-            ;;
-        dnf)
-            # For dnf, we can use rpm -q for individual packages.
-            # Groups starting with @ are harder to check individually, so we'll assume they need checking.
-            if [[ "$pkg" == @* ]]; then
-                return 1
-            fi
-            rpm -q "$pkg" &>/dev/null
-            ;;
-        pacman)
-            # For pacman, we use -Qq.
-            # base-devel is a group, pacman -Qq base-devel lists members.
-            if [[ "$pkg" == "base-devel" ]]; then
-                return 1
-            fi
-            pacman -Qq "$pkg" &>/dev/null
-            ;;
-        *)
-            return 1
-            ;;
-    esac
-}
-
 # List of essential packages per manager
 case "$PKG_MANAGER" in
     apt)
@@ -65,11 +36,43 @@ esac
 
 # Identify missing packages
 MISSING_PACKAGES=()
-for pkg in "${PACKAGES[@]}"; do
-    if ! is_installed "$pkg"; then
-        MISSING_PACKAGES+=("$pkg")
-    fi
-done
+
+case "$PKG_MANAGER" in
+    apt)
+        # Batch check for apt - significantly faster than individual calls
+        # Use an associative array to store installation status
+        declare -A pkg_status
+        while read -r pkg status; do
+            if [[ "$status" == "install ok installed" ]]; then
+                pkg_status["$pkg"]=1
+            fi
+        done < <(dpkg-query -W -f='${Package} ${Status}\n' "${PACKAGES[@]}" 2>/dev/null || true)
+
+        for pkg in "${PACKAGES[@]}"; do
+            if [[ -z "${pkg_status[$pkg]}" ]]; then
+                MISSING_PACKAGES+=("$pkg")
+            fi
+        done
+        ;;
+    dnf)
+        for pkg in "${PACKAGES[@]}"; do
+            if [[ "$pkg" == @* ]]; then
+                MISSING_PACKAGES+=("$pkg")
+            elif ! rpm -q "$pkg" &>/dev/null; then
+                MISSING_PACKAGES+=("$pkg")
+            fi
+        done
+        ;;
+    pacman)
+        for pkg in "${PACKAGES[@]}"; do
+            if [[ "$pkg" == "base-devel" ]]; then
+                MISSING_PACKAGES+=("$pkg")
+            elif ! pacman -Qq "$pkg" &>/dev/null; then
+                MISSING_PACKAGES+=("$pkg")
+            fi
+        done
+        ;;
+esac
 
 if [ ${#MISSING_PACKAGES[@]} -eq 0 ]; then
     echo "✓ All essential packages are already installed"
