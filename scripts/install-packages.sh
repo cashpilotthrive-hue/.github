@@ -65,11 +65,27 @@ esac
 
 # Identify missing packages
 MISSING_PACKAGES=()
-for pkg in "${PACKAGES[@]}"; do
-    if ! is_installed "$pkg"; then
-        MISSING_PACKAGES+=("$pkg")
-    fi
-done
+
+# Bolt Optimization: Batch apt queries to avoid multiple process forks
+if [[ "$PKG_MANAGER" == "apt" ]]; then
+    declare -A pkg_status
+    # Batch query all packages and store status in associative array
+    while read -r name status; do
+        pkg_status["$name"]="$status"
+    done < <(dpkg-query -W -f='${Package} ${Status}\n' "${PACKAGES[@]}" 2>/dev/null || true)
+
+    for pkg in "${PACKAGES[@]}"; do
+        if [[ ! "${pkg_status[$pkg]}" =~ "ok installed" ]]; then
+            MISSING_PACKAGES+=("$pkg")
+        fi
+    done
+else
+    for pkg in "${PACKAGES[@]}"; do
+        if ! is_installed "$pkg"; then
+            MISSING_PACKAGES+=("$pkg")
+        fi
+    done
+fi
 
 if [ ${#MISSING_PACKAGES[@]} -eq 0 ]; then
     echo "✓ All essential packages are already installed"
