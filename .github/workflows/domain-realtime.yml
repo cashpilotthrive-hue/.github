@@ -28,11 +28,11 @@ jobs:
       - name: Generate provider snippet
         run: |
           mkdir -p generated/providers
-          cat > "generated/providers/${{ matrix.provider }}.txt" <<TXT
+          cat > "generated/providers/${{ matrix.provider }}.txt" <<'TXT'
           provider=${{ matrix.provider }}
           domain=$(tr -d '\r\n' < CNAME)
           target=<org-or-user>.github.io
-          TXT
+TXT
       - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
         with:
           name: dns-solution-${{ matrix.provider }}
