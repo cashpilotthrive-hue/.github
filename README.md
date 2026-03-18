@@ -83,6 +83,10 @@ Modify dotfiles in the `dotfiles/` directory to customize your environment.
     └── pull_request_template.md
 ```
 
+## Security Notes
+
+- Review `SKILLS_SECURITY_ADVISORY.md` for guidance on hidden Unicode prompt-injection risks in agent Skills and recommended mitigations.
+
 ## Requirements
 
 - Ubuntu 20.04+ / Debian 11+ / Fedora 35+ / Arch Linux
