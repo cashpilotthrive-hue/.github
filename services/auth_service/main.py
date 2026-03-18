@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import Response
 
 app = FastAPI()
 
@@ -13,3 +14,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         return response
 
 app.add_middleware(SecurityHeadersMiddleware)
+
+@app.get("/")
+async def root():
+    return {"status": "ok"}
