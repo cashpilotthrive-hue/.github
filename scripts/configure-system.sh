@@ -15,41 +15,46 @@ git config --global core.editor vim
 # Configure git to cache credentials for 1 hour
 git config --global credential.helper 'cache --timeout=3600'
 
-# Create useful aliases
-if ! grep -q "# Custom aliases" ~/.bashrc; then
-    echo "" >> ~/.bashrc
-    echo "# Custom aliases" >> ~/.bashrc
+# BOLT OPTIMIZATION: Read .bashrc once and use internal string matching
+# to avoid multiple process forks from grep.
+BASHRC="$HOME/.bashrc"
+touch "$BASHRC"
+BASHRC_CONTENT=$(cat "$BASHRC")
+NEW_ALIASES=""
+NEWLINE=$'\n'
+
+add_alias_if_missing() {
+    local alias_name="$1"
+    local alias_cmd="$2"
+    # Use Bash internal regex matching for speed.
+    # regex matches: (start of string OR newline), optional whitespace, 'alias',
+    # mandatory whitespace, alias name, then '=' or whitespace.
+    local regex="(^|${NEWLINE})[[:space:]]*alias[[:space:]]+${alias_name//./\\.}[=[:space:]]"
+    if [[ ! "$BASHRC_CONTENT" =~ $regex ]]; then
+        NEW_ALIASES="${NEW_ALIASES}alias ${alias_name}='${alias_cmd}'${NEWLINE}"
+    fi
+}
+
+# Check for custom aliases header
+if [[ ! "$BASHRC_CONTENT" =~ "# Custom aliases" ]]; then
+    NEW_ALIASES="# Custom aliases${NEWLINE}${NEW_ALIASES}"
 fi
 
-if ! grep -qE '^[[:space:]]*alias[[:space:]]+ll=' ~/.bashrc; then
-    echo "alias ll='ls -alF'" >> ~/.bashrc
-fi
-if ! grep -qE '^[[:space:]]*alias[[:space:]]+la=' ~/.bashrc; then
-    echo "alias la='ls -A'" >> ~/.bashrc
-fi
-if ! grep -qE '^[[:space:]]*alias[[:space:]]+l=' ~/.bashrc; then
-    echo "alias l='ls -CF'" >> ~/.bashrc
-fi
-if ! grep -qE '^[[:space:]]*alias[[:space:]]+\.\.=' ~/.bashrc; then
-    echo "alias ..='cd ..'" >> ~/.bashrc
-fi
-if ! grep -qE '^[[:space:]]*alias[[:space:]]+\.\.\.=' ~/.bashrc; then
-    echo "alias ...='cd ../..'" >> ~/.bashrc
-fi
-if ! grep -qE '^[[:space:]]*alias[[:space:]]+gs=' ~/.bashrc; then
-    echo "alias gs='git status'" >> ~/.bashrc
-fi
-if ! grep -qE '^[[:space:]]*alias[[:space:]]+ga=' ~/.bashrc; then
-    echo "alias ga='git add'" >> ~/.bashrc
-fi
-if ! grep -qE '^[[:space:]]*alias[[:space:]]+gc=' ~/.bashrc; then
-    echo "alias gc='git commit'" >> ~/.bashrc
-fi
-if ! grep -qE '^[[:space:]]*alias[[:space:]]+gp=' ~/.bashrc; then
-    echo "alias gp='git push'" >> ~/.bashrc
-fi
-if ! grep -qE '^[[:space:]]*alias[[:space:]]+gl=' ~/.bashrc; then
-    echo "alias gl='git log --oneline --graph --decorate'" >> ~/.bashrc
+# Define aliases to check
+add_alias_if_missing "ll" "ls -alF"
+add_alias_if_missing "la" "ls -A"
+add_alias_if_missing "l" "ls -CF"
+add_alias_if_missing ".." "cd .."
+add_alias_if_missing "..." "cd ../.."
+add_alias_if_missing "gs" "git status"
+add_alias_if_missing "ga" "git add"
+add_alias_if_missing "gc" "git commit"
+add_alias_if_missing "gp" "git push"
+add_alias_if_missing "gl" "git log --oneline --graph --decorate"
+
+# Append all missing aliases in a single write operation if any exist
+if [[ -n "$NEW_ALIASES" ]]; then
+    printf "\n%b" "$NEW_ALIASES" >> "$BASHRC"
 fi
 
 # Set up SSH directory with proper permissions
