@@ -16,40 +16,46 @@ git config --global core.editor vim
 git config --global credential.helper 'cache --timeout=3600'
 
 # Create useful aliases
-if ! grep -q "# Custom aliases" ~/.bashrc; then
-    echo "" >> ~/.bashrc
-    echo "# Custom aliases" >> ~/.bashrc
-fi
+# BOLT OPTIMIZATION: Read .bashrc once and use internal Bash regex to batch updates.
+# This avoids multiple external process forks (grep) in a loop, significantly
+# reducing execution time for warm runs.
+BASHRC=~/.bashrc
+touch "$BASHRC"
+BASHRC_CONTENT=$(<"$BASHRC")
 
-if ! grep -qE '^[[:space:]]*alias[[:space:]]+ll=' ~/.bashrc; then
-    echo "alias ll='ls -alF'" >> ~/.bashrc
-fi
-if ! grep -qE '^[[:space:]]*alias[[:space:]]+la=' ~/.bashrc; then
-    echo "alias la='ls -A'" >> ~/.bashrc
-fi
-if ! grep -qE '^[[:space:]]*alias[[:space:]]+l=' ~/.bashrc; then
-    echo "alias l='ls -CF'" >> ~/.bashrc
-fi
-if ! grep -qE '^[[:space:]]*alias[[:space:]]+\.\.=' ~/.bashrc; then
-    echo "alias ..='cd ..'" >> ~/.bashrc
-fi
-if ! grep -qE '^[[:space:]]*alias[[:space:]]+\.\.\.=' ~/.bashrc; then
-    echo "alias ...='cd ../..'" >> ~/.bashrc
-fi
-if ! grep -qE '^[[:space:]]*alias[[:space:]]+gs=' ~/.bashrc; then
-    echo "alias gs='git status'" >> ~/.bashrc
-fi
-if ! grep -qE '^[[:space:]]*alias[[:space:]]+ga=' ~/.bashrc; then
-    echo "alias ga='git add'" >> ~/.bashrc
-fi
-if ! grep -qE '^[[:space:]]*alias[[:space:]]+gc=' ~/.bashrc; then
-    echo "alias gc='git commit'" >> ~/.bashrc
-fi
-if ! grep -qE '^[[:space:]]*alias[[:space:]]+gp=' ~/.bashrc; then
-    echo "alias gp='git push'" >> ~/.bashrc
-fi
-if ! grep -qE '^[[:space:]]*alias[[:space:]]+gl=' ~/.bashrc; then
-    echo "alias gl='git log --oneline --graph --decorate'" >> ~/.bashrc
+# Array of alias definitions to add (key and value)
+ALIASES=(
+    "ll:alias ll='ls -alF'"
+    "la:alias la='ls -A'"
+    "l:alias l='ls -CF'"
+    "..:alias ..='cd ..'"
+    "...:alias ...='cd ../..'"
+    "gs:alias gs='git status'"
+    "ga:alias ga='git add'"
+    "gc:alias gc='git commit'"
+    "gp:alias gp='git push'"
+    "gl:alias gl='git log --oneline --graph --decorate'"
+)
+
+MISSING_ALIASES=""
+for entry in "${ALIASES[@]}"; do
+    key="${entry%%:*}"
+    value="${entry#*:}"
+
+    # Escape dots in keys for regex matching
+    regex_key="${key//./\\.}"
+    # Match at the start of any line, optionally preceded by whitespace
+    if [[ ! "$BASHRC_CONTENT" =~ (^|$'\n')[[:space:]]*alias[[:space:]]+$regex_key= ]]; then
+        MISSING_ALIASES+="$value"$'\n'
+    fi
+done
+
+if [[ -n "$MISSING_ALIASES" ]]; then
+    # Add a header if it doesn't exist
+    if [[ ! "$BASHRC_CONTENT" =~ (^|$'\n')'# Custom aliases' ]]; then
+        printf "\n# Custom aliases\n" >> "$BASHRC"
+    fi
+    printf "%s" "$MISSING_ALIASES" >> "$BASHRC"
 fi
 
 # Set up SSH directory with proper permissions
