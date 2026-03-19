@@ -24,10 +24,10 @@
         <div class="perf-box">
             <h2>⚡ Performance Optimizations</h2>
             <ul>
-                <li>Implemented idempotent package installation to skip redundant system updates.</li>
-                <li>Batch package queries in <code>install-packages.sh</code> to reduce process forks.</li>
-                <li>Optimized alias configuration in <code>configure-system.sh</code> using single-read and internal regex.</li>
-                <li>Reduced warm-run check time by ~57% for system configuration (from 0.07s to 0.03s).</li>
+                <li>Refactored blocking I/O handlers to standard <code>def</code> to improve concurrency.</li>
+                <li>Enabled SQLite Write-Ahead Logging (WAL) for faster database access.</li>
+                <li>Implemented thread-local SQLite connection pooling with <code>PRAGMA synchronous=NORMAL</code>.</li>
+                <li>Optimized memory usage and reduced lock contention in core paths.</li>
             </ul>
         </div>
 
