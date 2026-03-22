@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Safe Omni Assistant</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 2rem; max-width: 900px; }
+      textarea, input { width: 100%; margin: .5rem 0; }
+      textarea { min-height: 110px; }
+      .row { display: flex; gap: 1rem; align-items: center; }
+      .row > label { min-width: 220px; }
+      .box { border: 1px solid #ddd; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+      pre { background: #f5f5f5; padding: 1rem; overflow: auto; }
+      .btn-row { display: flex; gap: .5rem; flex-wrap: wrap; }
+    </style>
+  </head>
+  <body>
+    <h1>Safe Omni Assistant</h1>
+    <p>A safe ChatGPT-style demo app with chat, tools, memory, files, moderation, audit hooks, and realtime socket responses.</p>
+
+    <div class="box">
+      <h2>Chat</h2>
+      <label>User ID</label>
+      <input id="userId" value="demo-user" />
+      <label>Message</label>
+      <textarea id="message" placeholder="Ask anything safe..."></textarea>
+      <div class="row"><label><input id="tools" type="checkbox" checked /> Tools</label></div>
+      <div class="row"><label><input id="vision" type="checkbox" checked /> Vision hook</label></div>
+      <div class="row"><label><input id="voice" type="checkbox" checked /> Voice hook</label></div>
+      <div class="row"><label><input id="memory" type="checkbox" checked /> Memory</label></div>
+      <div class="btn-row">
+        <button onclick="sendChat()">Send</button>
+        <button onclick="callAllFeatureResponses()">Call all feature responses</button>
+      </div>
+      <pre id="chatOut"></pre>
+    </div>
+
+    <div class="box">
+      <h2>Realtime</h2>
+      <div class="btn-row">
+        <button onclick="connectRealtime()">Connect realtime</button>
+        <button onclick="sendRealtimeMessage()">Send realtime message</button>
+      </div>
+      <pre id="realtimeOut"></pre>
+    </div>
+
+    <div class="box">
+      <h2>Memory</h2>
+      <input id="note" placeholder="Remember this note..." />
+      <button onclick="saveMemory()">Save memory</button>
+      <button onclick="loadMemory()">Load memory</button>
+      <pre id="memoryOut"></pre>
+    </div>
+
+    <script>
+      const API = "http://localhost:8000";
+      let realtimeSocket = null;
+
+      function appendRealtime(entry) {
+        const out = document.getElementById("realtimeOut");
+        const current = out.textContent ? out.textContent + "\n" : "";
+        out.textContent = current + JSON.stringify(entry, null, 2);
+      }
+
+      async function sendChat() {
+        const userId = document.getElementById("userId").value;
+        const message = document.getElementById("message").value;
+        const body = {
+          user_id: userId,
+          tools_enabled: document.getElementById("tools").checked,
+          vision_enabled: document.getElementById("vision").checked,
+          voice_enabled: document.getElementById("voice").checked,
+          memory_enabled: document.getElementById("memory").checked,
+          messages: [{ role: "user", content: message }],
+        };
+        const res = await fetch(`${API}/chat`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        document.getElementById("chatOut").textContent = JSON.stringify(data, null, 2);
+      }
+
+      async function callAllFeatureResponses() {
+        const userId = document.getElementById("userId").value;
+        const message = document.getElementById("message").value;
+        const note = document.getElementById("note").value;
+        const res = await fetch(`${API}/features/respond`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_id: userId, message, note }),
+        });
+        const data = await res.json();
+        document.getElementById("chatOut").textContent = JSON.stringify(data, null, 2);
+      }
+
+      function connectRealtime() {
+        const userId = document.getElementById("userId").value;
+        if (realtimeSocket) {
+          realtimeSocket.close();
+        }
+        realtimeSocket = new WebSocket(`ws://localhost:8000/ws/realtime/${encodeURIComponent(userId)}`);
+        realtimeSocket.onopen = () => appendRealtime({ type: "client", event: "opened" });
+        realtimeSocket.onmessage = (event) => appendRealtime(JSON.parse(event.data));
+        realtimeSocket.onerror = () => appendRealtime({ type: "client", event: "error" });
+        realtimeSocket.onclose = () => appendRealtime({ type: "client", event: "closed" });
+      }
+
+      function sendRealtimeMessage() {
+        const message = document.getElementById("message").value;
+        if (!realtimeSocket || realtimeSocket.readyState !== WebSocket.OPEN) {
+          appendRealtime({ type: "client", event: "not_connected" });
+          return;
+        }
+        realtimeSocket.send(JSON.stringify({ message }));
+      }
+
+      async function saveMemory() {
+        const userId = document.getElementById("userId").value;
+        const note = document.getElementById("note").value;
+        const res = await fetch(`${API}/memory`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_id: userId, note }),
+        });
+        const data = await res.json();
+        document.getElementById("memoryOut").textContent = JSON.stringify(data, null, 2);
+      }
+
+      async function loadMemory() {
+        const userId = document.getElementById("userId").value;
+        const res = await fetch(`${API}/memory/${encodeURIComponent(userId)}`);
+        const data = await res.json();
+        document.getElementById("memoryOut").textContent = JSON.stringify(data, null, 2);
+      }
+    </script>
+  </body>
+</html>
