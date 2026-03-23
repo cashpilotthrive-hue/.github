@@ -24,9 +24,9 @@
         <div class="perf-box">
             <h2>⚡ Performance Optimizations</h2>
             <ul>
-                <li>Refactored blocking I/O handlers to standard <code>def</code> to improve concurrency.</li>
+                <li>Refactored blocking I/O handlers to standard def to improve concurrency.</li>
                 <li>Enabled SQLite Write-Ahead Logging (WAL) for faster database access.</li>
-                <li>Implemented thread-local SQLite connection pooling with <code>PRAGMA synchronous=NORMAL</code>.</li>
+                <li>Implemented thread-local SQLite connection pooling with PRAGMA synchronous=NORMAL.</li>
                 <li>Optimized memory usage and reduced lock contention in core paths.</li>
                 <li>Added idempotency check to `setup-dotfiles.sh` to skip redundant file copies.</li>
             </ul>
