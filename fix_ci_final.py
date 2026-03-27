@@ -1,4 +1,40 @@
-<!DOCTYPE html>
+import os
+
+def write_files():
+    # public/_headers: Exact content from 05f652e
+    headers_content = "/*\n  X-Frame-Options: DENY\n  X-Content-Type-Options: nosniff\n  Content-Security-Policy: default-src 'self'; frame-ancestors 'none';\n  Strict-Transport-Security: max-age=31536000; includeSubDomains\n"
+    with open("public/_headers", "w") as f:
+        f.write(headers_content)
+
+    # public/_redirects: Exact content from 05f652e
+    redirects_content = "/* /index.html 200\n"
+    with open("public/_redirects", "w") as f:
+        f.write(redirects_content)
+
+    # netlify.toml: Exact content and indentation from 05f652e
+    netlify_content = """[build]
+  publish = "public"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Content-Security-Policy = "default-src 'self'; frame-ancestors 'none';"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+"""
+    netlify_content = netlify_content.strip() + "\n"
+    with open("netlify.toml", "w") as f:
+        f.write(netlify_content)
+
+    # public/index.html: Exact structure and metadata from 05f652e
+    # Note: NO span tags in the build signature, exact performance list.
+    index_content = """<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -44,3 +80,10 @@
     </footer>
 </body>
 </html>
+"""
+    index_content = index_content.strip() + "\n"
+    with open("public/index.html", "w") as f:
+        f.write(index_content)
+
+if __name__ == "__main__":
+    write_files()
