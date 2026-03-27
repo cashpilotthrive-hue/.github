@@ -1,4 +1,41 @@
-<!DOCTYPE html>
+import os
+
+def write_files():
+    # public/_headers: exact formatting (2 spaces for directives)
+    headers_content = "/*\n  X-Frame-Options: DENY\n  X-Content-Type-Options: nosniff\n  Content-Security-Policy: default-src 'self'; frame-ancestors 'none'; script-src 'self'; style-src 'self' 'unsafe-inline';\n  Strict-Transport-Security: max-age=31536000; includeSubDomains\n"
+    with open("public/_headers", "w") as f:
+        f.write(headers_content)
+
+    # public/_redirects: exact formatting
+    redirects_content = "/* /index.html 200\n"
+    with open("public/_redirects", "w") as f:
+        f.write(redirects_content)
+
+    # netlify.toml: strict indentation
+    # headers: [[headers]] (0), for (2), [headers.values] (2), keys (4)
+    # redirects: [[redirects]] (0), from (2), to (2), status (2)
+    netlify_content = """[build]
+  publish = "public"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Content-Security-Policy = "default-src 'self'; frame-ancestors 'none'; script-src 'self'; style-src 'self' 'unsafe-inline';"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+"""
+    netlify_content = netlify_content.strip() + "\n"
+    with open("netlify.toml", "w") as f:
+        f.write(netlify_content)
+
+    # public/index.html: exact metadata and spacing
+    index_content = """<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -43,3 +80,10 @@
     </footer>
 </body>
 </html>
+"""
+    index_content = index_content.strip() + "\n"
+    with open("public/index.html", "w") as f:
+        f.write(index_content)
+
+if __name__ == "__main__":
+    write_files()
