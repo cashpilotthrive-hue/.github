@@ -25,6 +25,13 @@ backup_file() {
 copy_dotfile() {
     local file=$1
     if [ -f "$DOTFILES_DIR/$file" ]; then
+        # BOLT OPTIMIZATION: Use cmp -s for idempotency check to skip redundant backups/copies.
+        # This reduces warm-run time by skipping date forks and I/O.
+        if [ -f "$HOME/$file" ] && cmp -s "$DOTFILES_DIR/$file" "$HOME/$file"; then
+            echo "✓ $file is already up to date"
+            return 0
+        fi
+
         echo "Installing $file"
         backup_file "$file"
         cp "$DOTFILES_DIR/$file" "$HOME/$file"
