@@ -20,49 +20,66 @@ if ! gh auth status >/dev/null 2>&1; then
   exit 1
 fi
 
-set_secret_if_present() {
-  local secret_name="$1"
-  local value="${!secret_name:-}"
-
-  if [[ -n "$value" ]]; then
-    printf '%s' "$value" | gh secret set "$secret_name" --repo "$REPO"
-    echo "✓ Set secret: $secret_name"
-  else
-    echo "- Skipped secret: $secret_name (env var not provided)"
-  fi
-}
-
-set_var_if_present() {
-  local var_name="$1"
-  local value="${!var_name:-}"
-
-  if [[ -n "$value" ]]; then
-    gh variable set "$var_name" --body "$value" --repo "$REPO"
-    echo "✓ Set variable: $var_name"
-  else
-    echo "- Skipped variable: $var_name (env var not provided)"
-  fi
-}
-
 echo "Configuring revenue tooling for $REPO"
 
-echo "Setting provider secrets (if available in your shell environment)..."
-set_secret_if_present STRIPE_API_KEY
-set_secret_if_present STRIPE_WEBHOOK_SECRET
-set_secret_if_present PADDLE_API_KEY
-set_secret_if_present GUMROAD_ACCESS_TOKEN
-set_secret_if_present SHOPIFY_ADMIN_API_TOKEN
-set_secret_if_present HUBSPOT_API_KEY
-set_secret_if_present POSTHOG_API_KEY
-set_secret_if_present SLACK_WEBHOOK_URL
+# BOLT OPTIMIZATION: Batch gh calls to avoid multiple process forks and reduce network latency.
+# This reduces the number of gh calls from up to 14 down to 2.
 
-echo "Setting non-sensitive configuration variables..."
-set_var_if_present BILLING_PROVIDER
-set_var_if_present BILLING_ENVIRONMENT
-set_var_if_present CRM_PROVIDER
-set_var_if_present ANALYTICS_PROVIDER
-set_var_if_present DEFAULT_CURRENCY
-set_var_if_present REVENUE_ALERT_THRESHOLD
+echo "Setting provider secrets..."
+SECRETS=(
+  STRIPE_API_KEY
+  STRIPE_WEBHOOK_SECRET
+  PADDLE_API_KEY
+  GUMROAD_ACCESS_TOKEN
+  SHOPIFY_ADMIN_API_TOKEN
+  HUBSPOT_API_KEY
+  POSTHOG_API_KEY
+  SLACK_WEBHOOK_URL
+)
+
+SECRETS_FILE=$(mktemp)
+for s in "${SECRETS[@]}"; do
+  if [[ -n "${!s:-}" ]]; then
+    echo "$s=${!s}" >> "$SECRETS_FILE"
+    echo "✓ Queued secret: $s"
+  else
+    echo "- Skipped secret: $s (env var not provided)"
+  fi
+done
+
+if [[ -s "$SECRETS_FILE" ]]; then
+  # Note: gh secret set -f <file> supports batch setting from an env-style file
+  gh secret set -f "$SECRETS_FILE" --repo "$REPO"
+  echo "✓ Applied secrets via batch update"
+fi
+rm -f "$SECRETS_FILE"
+
+echo "Setting configuration variables..."
+VARS=(
+  BILLING_PROVIDER
+  BILLING_ENVIRONMENT
+  CRM_PROVIDER
+  ANALYTICS_PROVIDER
+  DEFAULT_CURRENCY
+  REVENUE_ALERT_THRESHOLD
+)
+
+VARS_FILE=$(mktemp)
+for v in "${VARS[@]}"; do
+  if [[ -n "${!v:-}" ]]; then
+    echo "$v=${!v}" >> "$VARS_FILE"
+    echo "✓ Queued variable: $v"
+  else
+    echo "- Skipped variable: $v (env var not provided)"
+  fi
+done
+
+if [[ -s "$VARS_FILE" ]]; then
+  # Note: gh variable set -f <file> supports batch setting from an env-style file
+  gh variable set -f "$VARS_FILE" --repo "$REPO"
+  echo "✓ Applied variables via batch update"
+fi
+rm -f "$VARS_FILE"
 
 echo "Done."
 echo "Next: run the workflow '.github/workflows/revenue-ops.yml' from the Actions tab."
