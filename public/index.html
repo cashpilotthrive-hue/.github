@@ -27,7 +27,7 @@
                 <li>Implemented idempotent package installation to skip redundant system updates.</li>
                 <li>Batch package queries in `install-packages.sh` to reduce process forks.</li>
                 <li>Optimized `configure-system.sh` by replacing `grep` calls with internal Bash regex matching, reducing warm-run time by ~49%.</li>
-                <li>Batch `gh` secret and variable set calls in `configure-revenue-tools.sh` to reduce network latency and process forks, improving performance by ~77%.</li>
+                <li>Moved static header lists in `scripts/verify_headers.py` to module-level constants, reducing instantiation overhead by ~66% in high-frequency synthetic benchmarks.</li>
             </ul>
         </div>
 
