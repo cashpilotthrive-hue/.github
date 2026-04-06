@@ -4,6 +4,7 @@ about: Report a problem with the setup scripts or configuration
 title: "[Bug] "
 labels: bug
 assignees: ''
+
 ---
 
 ## Description
