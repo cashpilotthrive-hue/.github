@@ -25,6 +25,13 @@ backup_file() {
 copy_dotfile() {
     local file=$1
     if [ -f "$DOTFILES_DIR/$file" ]; then
+        # BOLT OPTIMIZATION: Skip installation if the file is already identical.
+        # This reduces redundant I/O and prevents unnecessary backups on repeated runs.
+        if [ -f "$HOME/$file" ] && cmp -s "$DOTFILES_DIR/$file" "$HOME/$file"; then
+            echo "Skipping $file (already identical)"
+            return
+        fi
+
         echo "Installing $file"
         backup_file "$file"
         cp "$DOTFILES_DIR/$file" "$HOME/$file"
