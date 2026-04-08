@@ -44,6 +44,12 @@ jobs:
           echo "Scripts are executable and syntactically correct"
           echo "Note: Full installation requires sudo and is not run in CI"
 
+      - name: Test Git auto-setup script
+        run: |
+          bash scripts/setup-git.sh
+          echo "✓ Git auto-setup completed successfully"
+          git config --global --list | grep -E '(init\.|core\.editor|color\.|credential\.|alias\.)' | sort
+
   validate-structure:
     runs-on: ubuntu-latest
     permissions:
@@ -59,6 +65,8 @@ jobs:
           test -d dotfiles
           test -d config
           test -f setup.sh
+          test -f install.sh
+          test -f scripts/setup-git.sh
           test -f README.md
           echo "✓ Directory structure is valid"
 

@@ -52,19 +52,23 @@ echo -e "${GREEN}Detected package manager: ${PKG_MANAGER}${NC}"
 echo ""
 
 # Step 1: Update system
-echo -e "${GREEN}[1/4] Updating system packages...${NC}"
+echo -e "${GREEN}[1/5] Updating system packages...${NC}"
 "${SCRIPT_DIR}/scripts/install-packages.sh" "$PKG_MANAGER"
 
 # Step 2: Install development tools
-echo -e "${GREEN}[2/4] Installing development tools...${NC}"
+echo -e "${GREEN}[2/5] Installing development tools...${NC}"
 "${SCRIPT_DIR}/scripts/install-devtools.sh" "$PKG_MANAGER"
 
 # Step 3: Setup dotfiles
-echo -e "${GREEN}[3/4] Setting up dotfiles...${NC}"
+echo -e "${GREEN}[3/5] Setting up dotfiles...${NC}"
 "${SCRIPT_DIR}/scripts/setup-dotfiles.sh"
 
-# Step 4: Configure system
-echo -e "${GREEN}[4/4] Configuring system settings...${NC}"
+# Step 4: Configure Git autonomously
+echo -e "${GREEN}[4/5] Configuring Git (hands-off)...${NC}"
+"${SCRIPT_DIR}/scripts/setup-git.sh"
+
+# Step 5: Configure system
+echo -e "${GREEN}[5/5] Configuring system settings...${NC}"
 "${SCRIPT_DIR}/scripts/configure-system.sh"
 
 echo ""
