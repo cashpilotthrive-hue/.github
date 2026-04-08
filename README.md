@@ -83,6 +83,12 @@ Modify dotfiles in the `dotfiles/` directory to customize your environment.
     └── pull_request_template.md
 ```
 
+## Network Access (Twingate Connector)
+
+To complete secure remote network access, follow the connector deployment guide:
+
+- [`TWINGATE_CONNECTOR_SETUP.md`](TWINGATE_CONNECTOR_SETUP.md)
+
 ## Requirements
 
 - Ubuntu 20.04+ / Debian 11+ / Fedora 35+ / Arch Linux
