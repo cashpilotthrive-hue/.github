@@ -25,9 +25,9 @@
             <h2>⚡ Performance Optimizations</h2>
             <ul>
                 <li>Implemented idempotent package installation to skip redundant system updates.</li>
-                <li>Batch package queries in <code>scripts/install-packages.sh</code> to reduce process forks.</li>
-                <li>Optimization of <code>scripts/configure-system.sh</code> by replacing redundant <code>grep</code> forks with internal Bash regex matching resulted in a ~49% warm-run performance gain.</li>
-                <li>Optimized <code>scripts/setup-dotfiles.sh</code> using <code>cmp -s</code> to skip redundant backups and copies when files are already identical.</li>
+                <li>Batch package queries in `scripts/install-packages.sh` to reduce process forks.</li>
+                <li>Optimization of `scripts/configure-system.sh` by replacing redundant `grep` forks with internal Bash regex matching resulted in a ~49% warm-run performance gain.</li>
+                <li>Optimized `scripts/setup-dotfiles.sh` using `cmp -s` to skip redundant backups and copies when files are already identical.</li>
             </ul>
         </div>
 
