@@ -25,6 +25,12 @@ backup_file() {
 copy_dotfile() {
     local file=$1
     if [ -f "$DOTFILES_DIR/$file" ]; then
+        # BOLT OPTIMIZATION: Use cmp -s to skip redundant copies if files are identical.
+        # This significantly improves performance on warm runs.
+        if [ -f "$HOME/$file" ] && cmp -s "$DOTFILES_DIR/$file" "$HOME/$file"; then
+            echo "✓ $file is already up to date"
+            return
+        fi
         echo "Installing $file"
         backup_file "$file"
         cp "$DOTFILES_DIR/$file" "$HOME/$file"
