@@ -25,6 +25,11 @@ backup_file() {
 copy_dotfile() {
     local file=$1
     if [ -f "$DOTFILES_DIR/$file" ]; then
+        # BOLT OPTIMIZATION: Idempotency check with cmp -s
+        # Only copy and backup if the file has changed.
+        if [ -f "$HOME/$file" ] && cmp -s "$DOTFILES_DIR/$file" "$HOME/$file"; then
+            return 0
+        fi
         echo "Installing $file"
         backup_file "$file"
         cp "$DOTFILES_DIR/$file" "$HOME/$file"
