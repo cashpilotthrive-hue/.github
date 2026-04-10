@@ -164,8 +164,14 @@ def get_memory(user_id: str) -> dict[str, Any]:
 @app.post("/files")
 async def upload_file(file: UploadFile = File(...)) -> dict[str, Any]:
     fid = str(uuid.uuid4())
-    raw = await file.read()
-    meta = {"id": fid, "name": file.filename, "size": len(raw)}
+    # BOLT OPTIMIZATION: Avoid reading the entire file into memory just to get its size.
+    # We use the underlying file object's seek and tell for a robust, memory-efficient
+    # way to determine file size that works across all FastAPI/Starlette versions.
+    # Note: Starlette's UploadFile.seek only accepts one argument (offset).
+    file.file.seek(0, 2)  # Seek to the end of the file
+    size = file.file.tell()
+    file.file.seek(0)  # Reset to the beginning
+    meta = {"id": fid, "name": file.filename, "size": size}
     FILES[fid] = meta
     append_audit("file.uploaded", meta)
     return meta
