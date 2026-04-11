@@ -24,9 +24,11 @@
         <div class="perf-box">
             <h2>⚡ Performance Optimizations</h2>
             <ul>
+                <li>Implemented idempotent package installation to skip redundant system updates.</li>
                 <li>Batch package queries in `scripts/install-packages.sh` to reduce process forks.</li>
-                <li>Optimized `scripts/configure-system.sh` by replacing `grep` forks with internal Bash regex matching, reducing warm-run time by ~49%.</li>
-                <li>Added idempotency check to `scripts/setup-dotfiles.sh` using `cmp -s`, reducing warm-run time by ~48%.</li>
+                <li>Optimization of `scripts/configure-system.sh` by replacing redundant `grep` forks with internal Bash regex matching resulted in a ~49% warm-run performance gain.</li>
+                <li>Optimized `scripts/setup-dotfiles.sh` using `cmp -s` to skip redundant backups and copies when files are already identical.</li>
+                <li>Batch `gh secret set` and `gh variable set` calls in `scripts/configure-revenue-tools.sh` using the `-f` flag to reduce process forks and execution time.</li>
             </ul>
         </div>
 
