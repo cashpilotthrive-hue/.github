@@ -1,0 +1,5 @@
+{
+  "name": "afs-dashboard",
+  "main": "run_afs.py",
+  "compatibility_date": "2024-03-07"
+}

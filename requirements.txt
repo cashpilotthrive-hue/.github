@@ -1,2 +1,1 @@
 # AFS Dependencies
-uagents-core
