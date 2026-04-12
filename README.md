@@ -101,17 +101,3 @@ This project is licensed under the MIT License. See `LICENSE` for details.
 ---
 
 Thank you for exploring AFS — where finance meets the future, autonomously.
-
----
-
-## 🔌 Optional: Register a Chat Agent
-
-If you want to register a chat agent endpoint, use environment variables for secrets (never hardcode API keys in source files):
-
-```bash
-export AGENTVERSE_KEY="your-agentverse-api-key"
-export AGENT_SEED_PHRASE="your-agent-seed-phrase"
-python register_chat_agent.py
-```
-
-This repository includes `register_chat_agent.py` as a safe helper script that reads credentials from your environment.
