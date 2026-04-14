@@ -9,3 +9,7 @@
 ## 2026-04-10 - Memory-efficient file size detection in FastAPI
 **Learning:** Reading an entire UploadFile into memory just to determine its size is a major bottleneck and OOM risk. While 'file.size' exists in newer Starlette versions, it may return 'None' or be absent in others.
 **Action:** Use 'await file.seek(0, 2)' followed by 'await file.tell()' for a robust, memory-efficient size check that doesn't load the file content.
+
+## 2026-04-12 - Batching GitHub CLI calls for performance
+**Learning:** Sequential calls to 'gh secret set' or 'gh variable set' are slow due to process fork overhead. Batching them using '--env-file' reduces forks from N to 1.
+**Action:** Use 'gh secret set --env-file .env' to apply multiple secrets at once.
