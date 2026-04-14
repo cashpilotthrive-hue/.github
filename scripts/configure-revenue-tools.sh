@@ -21,13 +21,13 @@ if ! gh auth status >/dev/null 2>&1; then
 fi
 
 # BOLT OPTIMIZATION: Batch GitHub CLI calls using temporary .env files.
-# This reduces process forks from up to 14 down to 2 by using the --env-file flag.
+# This reduces process forks from up to 14 down to 2 by using the -f flag.
 # Each 'gh secret set -f' or 'gh variable set -f' call handles all entries at once.
 
 SECRETS_FILE=$(mktemp)
 VARS_FILE=$(mktemp)
 # Ensure temporary files are cleaned up and have restricted permissions
-trap 'rm --env-file "$SECRETS_FILE" "$VARS_FILE"' EXIT
+trap 'rm -f "$SECRETS_FILE" "$VARS_FILE"' EXIT
 chmod 600 "$SECRETS_FILE" "$VARS_FILE"
 
 collect_secret() {
@@ -72,7 +72,7 @@ collect_secret SLACK_WEBHOOK_URL
 
 if [[ -s "$SECRETS_FILE" ]]; then
   echo "Applying secrets in batch..."
-  gh secret set --repo "$REPO" --env-file "$SECRETS_FILE"
+  gh secret set --repo "$REPO" -f "$SECRETS_FILE"
   echo "✓ Secrets configured successfully"
 fi
 
@@ -86,7 +86,7 @@ collect_var REVENUE_ALERT_THRESHOLD
 
 if [[ -s "$VARS_FILE" ]]; then
   echo "Applying variables in batch..."
-  gh variable set --repo "$REPO" --env-file "$VARS_FILE"
+  gh variable set --repo "$REPO" -f "$VARS_FILE"
   echo "✓ Variables configured successfully"
 fi
 
