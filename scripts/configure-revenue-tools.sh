@@ -80,7 +80,7 @@ done
 
 if [[ -s "$SECRETS_FILE" ]]; then
   echo "Applying secrets batch..."
-  gh secret set --repo "$REPO" --env-file "$SECRETS_FILE"
+  gh secret set --repo "$REPO" -f "$SECRETS_FILE"
   echo "✓ Secrets applied successfully"
 else
   echo "No secrets to apply"
@@ -88,7 +88,7 @@ fi
 
 if [[ -s "$VARS_FILE" ]]; then
   echo "Applying variables batch..."
-  gh variable set --repo "$REPO" --env-file "$VARS_FILE"
+  gh variable set --repo "$REPO" -f "$VARS_FILE"
   echo "✓ Variables applied successfully"
 else
   echo "No variables to apply"
