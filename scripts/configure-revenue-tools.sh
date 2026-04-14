@@ -20,7 +20,7 @@ if ! gh auth status >/dev/null 2>&1; then
   exit 1
 fi
 
-# BOLT OPTIMIZATION: Batch GitHub CLI calls using temporary .env files and the --env-file flag.
+# BOLT OPTIMIZATION: Batch GitHub CLI calls using temporary .env files and the -f flag.
 # This reduces process forks from 14+ to 2, significantly improving execution time.
 # Requires gh v2.30.0 or later.
 
