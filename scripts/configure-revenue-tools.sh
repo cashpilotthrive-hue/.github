@@ -20,49 +20,83 @@ if ! gh auth status >/dev/null 2>&1; then
   exit 1
 fi
 
-set_secret_if_present() {
-  local secret_name="$1"
-  local value="${!secret_name:-}"
-
-  if [[ -n "$value" ]]; then
-    printf '%s' "$value" | gh secret set "$secret_name" --repo "$REPO"
-    echo "✓ Set secret: $secret_name"
-  else
-    echo "- Skipped secret: $secret_name (env var not provided)"
-  fi
-}
-
-set_var_if_present() {
-  local var_name="$1"
-  local value="${!var_name:-}"
-
-  if [[ -n "$value" ]]; then
-    gh variable set "$var_name" --body "$value" --repo "$REPO"
-    echo "✓ Set variable: $var_name"
-  else
-    echo "- Skipped variable: $var_name (env var not provided)"
-  fi
-}
-
 echo "Configuring revenue tooling for $REPO"
 
-echo "Setting provider secrets (if available in your shell environment)..."
-set_secret_if_present STRIPE_API_KEY
-set_secret_if_present STRIPE_WEBHOOK_SECRET
-set_secret_if_present PADDLE_API_KEY
-set_secret_if_present GUMROAD_ACCESS_TOKEN
-set_secret_if_present SHOPIFY_ADMIN_API_TOKEN
-set_secret_if_present HUBSPOT_API_KEY
-set_secret_if_present POSTHOG_API_KEY
-set_secret_if_present SLACK_WEBHOOK_URL
+# BOLT OPTIMIZATION: Batch GitHub CLI calls using temporary .env files and the --env-file flag.
+# This reduces process forks from 14 to 2, significantly improving performance.
 
-echo "Setting non-sensitive configuration variables..."
-set_var_if_present BILLING_PROVIDER
-set_var_if_present BILLING_ENVIRONMENT
-set_var_if_present CRM_PROVIDER
-set_var_if_present ANALYTICS_PROVIDER
-set_var_if_present DEFAULT_CURRENCY
-set_var_if_present REVENUE_ALERT_THRESHOLD
+# Create temporary files for batching
+SECRETS_FILE=$(mktemp)
+VARS_FILE=$(mktemp)
+
+# Ensure temporary files are cleaned up on exit
+trap 'rm -f "$SECRETS_FILE" "$VARS_FILE"' EXIT
+
+# Set permissions for the secrets file
+chmod 600 "$SECRETS_FILE"
+
+# Define the lists of secrets and variables
+SECRETS=(
+  STRIPE_API_KEY
+  STRIPE_WEBHOOK_SECRET
+  PADDLE_API_KEY
+  GUMROAD_ACCESS_TOKEN
+  SHOPIFY_ADMIN_API_TOKEN
+  HUBSPOT_API_KEY
+  POSTHOG_API_KEY
+  SLACK_WEBHOOK_URL
+)
+
+VARS=(
+  BILLING_PROVIDER
+  BILLING_ENVIRONMENT
+  CRM_PROVIDER
+  ANALYTICS_PROVIDER
+  DEFAULT_CURRENCY
+  REVENUE_ALERT_THRESHOLD
+)
+
+echo "Preparing provider secrets..."
+SECRETS_COUNT=0
+for secret_name in "${SECRETS[@]}"; do
+  value="${!secret_name:-}"
+  if [[ -n "$value" ]]; then
+    # Escape double quotes in the value for .env format
+    escaped_value="${value//\"/\\\"}"
+    printf '%s="%s"\n' "$secret_name" "$escaped_value" >> "$SECRETS_FILE"
+    echo "  + Added secret to batch: $secret_name"
+    SECRETS_COUNT=$((SECRETS_COUNT + 1))
+  else
+    echo "  - Skipped secret: $secret_name (env var not provided)"
+  fi
+done
+
+if [[ $SECRETS_COUNT -gt 0 ]]; then
+  echo "Pushing $SECRETS_COUNT secrets in a single batch..."
+  gh secret set --repo "$REPO" --env-file "$SECRETS_FILE"
+  echo "✓ Secrets configured."
+fi
+
+echo "Preparing configuration variables..."
+VARS_COUNT=0
+for var_name in "${VARS[@]}"; do
+  value="${!var_name:-}"
+  if [[ -n "$value" ]]; then
+    # Escape double quotes in the value for .env format
+    escaped_value="${value//\"/\\\"}"
+    printf '%s="%s"\n' "$var_name" "$escaped_value" >> "$VARS_FILE"
+    echo "  + Added variable to batch: $var_name"
+    VARS_COUNT=$((VARS_COUNT + 1))
+  else
+    echo "  - Skipped variable: $var_name (env var not provided)"
+  fi
+done
+
+if [[ $VARS_COUNT -gt 0 ]]; then
+  echo "Pushing $VARS_COUNT variables in a single batch..."
+  gh variable set --repo "$REPO" --env-file "$VARS_FILE"
+  echo "✓ Variables configured."
+fi
 
 echo "Done."
 echo "Next: run the workflow '.github/workflows/revenue-ops.yml' from the Actions tab."
