@@ -13,3 +13,11 @@
 ## 2026-03-27 - Batching GitHub CLI calls for performance
 **Learning:** Executing `gh secret set` and `gh variable set` individually for multiple items is slow due to repeated process forks and network round-trips. GitHub CLI (v2.30.0+) supports batching via the `-f` flag using a dotenv-formatted file.
 **Action:** Use `gh secret set -f .env` and `gh variable set -f .env` to apply multiple configurations in a single command. Ensure temporary files are secured with `chmod 600` and cleaned up with `trap`.
+
+## 2026-04-17 - Regex vs native string search for small blocklists
+**Learning:** For small blocklists (e.g., < 10 terms), Python's native string 'in' operator on a lowered string is significantly faster (up to 10-20x) than 're.search' or 're.findall' with 're.IGNORECASE', especially on large content. Python's 'in' operator is highly optimized for substring search.
+**Action:** Prefer native string search with a guard or loop for small sets of static terms before reaching for regular expressions.
+
+## 2026-04-17 - Combining DNS lookups to reduce latency
+**Learning:** Each 'dig' call incurs process fork overhead and a network round-trip. Most DNS servers and clients support multiple queries in a single packet.
+**Action:** Use 'dig +short domain A domain AAAA' to fetch multiple record types at once, then parse the results in pure Bash to avoid additional forks.
