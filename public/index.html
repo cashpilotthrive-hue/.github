@@ -29,7 +29,7 @@
                 <li>Optimization of `scripts/configure-system.sh` by replacing redundant `grep` forks with internal Bash regex matching resulted in a ~49% warm-run performance gain.</li>
                 <li>Optimized `scripts/setup-dotfiles.sh` using `cmp -s` to skip redundant backups and copies when files are already identical.</li>
                 <li>Batch `gh secret set` and `gh variable set` calls in `scripts/configure-revenue-tools.sh` using the `-f` flag to reduce process forks and execution time.</li>
-                <li>Combined DNS lookups in `scripts/test_domain.sh` to reduce network round-trips and process forks.</li>
+                <li>Combined DNS lookups using `dig` in `scripts/test_domain.sh` to reduce network round-trips and process forks.</li>
             </ul>
         </div>
 
