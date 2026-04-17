@@ -16,8 +16,25 @@ fi
 
 echo "CNAME check passed: $ACTUAL_DOMAIN"
 
-A_RECORDS="$(dig +short A "$EXPECTED_DOMAIN" || true)"
-AAAA_RECORDS="$(dig +short AAAA "$EXPECTED_DOMAIN" || true)"
+# BOLT OPTIMIZATION: Combined A and AAAA lookups into a single 'dig' call to reduce
+# network round-trips and process forks. Results are parsed in pure Bash to avoid
+# additional dependencies like 'grep' or 'awk'.
+RECORDS="$(dig +short "$EXPECTED_DOMAIN" A "$EXPECTED_DOMAIN" AAAA || true)"
+
+A_RECORDS=""
+AAAA_RECORDS=""
+while read -r line; do
+    [[ -z "$line" ]] && continue
+    if [[ "$line" =~ : ]]; then
+        AAAA_RECORDS+="${line}"$'\n'
+    else
+        A_RECORDS+="${line}"$'\n'
+    fi
+done <<< "$RECORDS"
+
+# Remove trailing newlines
+A_RECORDS="${A_RECORDS%$'\n'}"
+AAAA_RECORDS="${AAAA_RECORDS%$'\n'}"
 
 if [[ -z "$A_RECORDS" && -z "$AAAA_RECORDS" ]]; then
   echo "No DNS A/AAAA records found for $EXPECTED_DOMAIN"
