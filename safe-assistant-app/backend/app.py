@@ -162,12 +162,16 @@ def get_memory(user_id: str) -> dict[str, Any]:
 
 
 @app.post("/files")
-async def upload_file(file: UploadFile = File(...)) -> dict[str, Any]:
+def upload_file(file: UploadFile = File(...)) -> dict[str, Any]:
     fid = str(uuid.uuid4())
     # BOLT OPTIMIZATION: Avoid reading the entire file into memory just to get its size.
     # We use the underlying file object's seek and tell for a robust, memory-efficient
     # way to determine file size that works across all FastAPI/Starlette versions.
     # Note: Starlette's UploadFile.seek only accepts one argument (offset).
+    #
+    # PERF: This is a synchronous 'def' handler. FastAPI will run it in a thread pool,
+    # which is ideal for synchronous file I/O operations (seek/tell), preventing
+    # the main event loop from being blocked and improving overall responsiveness.
     file.file.seek(0, 2)  # Seek to the end of the file
     size = file.file.tell()
     file.file.seek(0)  # Reset to the beginning

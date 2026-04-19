@@ -47,3 +47,16 @@ def test_chat_safe():
     assert r.status_code == 200
     payload = r.json()
     assert 'Safe Omni Assistant response' in payload['content']
+
+
+def test_upload_file():
+    content = b"test content"
+    r = client.post(
+        '/files',
+        files={'file': ('test.txt', content)}
+    )
+    assert r.status_code == 200
+    data = r.json()
+    assert data['name'] == 'test.txt'
+    assert data['size'] == len(content)
+    assert 'id' in data
