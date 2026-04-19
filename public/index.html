@@ -25,10 +25,10 @@
             <h2>⚡ Performance Optimizations</h2>
             <ul>
                 <li>Implemented idempotent package installation to skip redundant system updates.</li>
-                <li>Batch package queries in `scripts/install-packages.sh` to reduce process forks.</li>
-                <li>Optimization of `scripts/configure-system.sh` by replacing redundant `grep` forks with internal Bash regex matching resulted in a ~49% warm-run performance gain.</li>
-                <li>Optimized `scripts/setup-dotfiles.sh` using `cmp -s` to skip redundant backups and copies when files are already identical.</li>
-                <li>Batch `gh secret set` and `gh variable set` calls in `scripts/configure-revenue-tools.sh` using the `-f` flag to reduce process forks and execution time.</li>
+                <li>Batch package queries in scripts/install-packages.sh to reduce process forks.</li>
+                <li>Optimization of scripts/configure-system.sh by replacing redundant grep forks with internal Bash regex matching resulted in a ~49% warm-run performance gain.</li>
+                <li>Optimized scripts/setup-dotfiles.sh using cmp -s to skip redundant backups and copies when files are already identical.</li>
+                <li>Batch gh secret set and gh variable set calls in scripts/configure-revenue-tools.sh using the -f flag to reduce process forks and execution time.</li>
                 <li>Optimized the backend /files endpoint by switching to a synchronous handler, allowing FastAPI to offload file I/O to a thread pool and improving event loop responsiveness.</li>
             </ul>
         </div>
