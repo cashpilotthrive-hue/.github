@@ -162,7 +162,12 @@ def get_memory(user_id: str) -> dict[str, Any]:
 
 
 @app.post("/files")
-async def upload_file(file: UploadFile = File(...)) -> dict[str, Any]:
+def upload_file(file: UploadFile = File(...)) -> dict[str, Any]:
+    """
+    Optimized to use a synchronous handler, allowing FastAPI to offload file I/O
+    to a thread pool. This prevents blocking the main event loop during seek/tell
+    operations, improving concurrency and event loop responsiveness.
+    """
     fid = str(uuid.uuid4())
     # BOLT OPTIMIZATION: Avoid reading the entire file into memory just to get its size.
     # We use the underlying file object's seek and tell for a robust, memory-efficient
