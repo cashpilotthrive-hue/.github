@@ -162,7 +162,7 @@ def get_memory(user_id: str) -> dict[str, Any]:
 
 
 @app.post("/files")
-async def upload_file(file: UploadFile = File(...)) -> dict[str, Any]:
+def upload_file(file: UploadFile = File(...)) -> dict[str, Any]:
     fid = str(uuid.uuid4())
     # BOLT OPTIMIZATION: Avoid reading the entire file into memory just to get its size.
     # We use the underlying file object's seek and tell for a robust, memory-efficient

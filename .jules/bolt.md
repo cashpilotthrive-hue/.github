@@ -13,3 +13,7 @@
 ## 2026-03-27 - Batching GitHub CLI calls for performance
 **Learning:** Executing `gh secret set` and `gh variable set` individually for multiple items is slow due to repeated process forks and network round-trips. GitHub CLI (v2.30.0+) supports batching via the `-f` flag using a dotenv-formatted file.
 **Action:** Use `gh secret set -f .env` and `gh variable set -f .env` to apply multiple configurations in a single command. Ensure temporary files are secured with `chmod 600` and cleaned up with `trap`.
+
+## 2026-03-27 - FastAPI event loop blocking by sync I/O
+**Learning:** Route handlers performing synchronous I/O (like seek and tell on UploadFile.file) should be defined as 'def' rather than 'async def'. This allows FastAPI to run them in a thread pool, preventing the main event loop from being blocked and significantly improving concurrency and responsiveness.
+**Action:** Always prefer 'def' for endpoints that use synchronous file operations or other blocking calls.
