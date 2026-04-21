@@ -92,6 +92,7 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+
 def _get_moderation_hits(lowered_content: str) -> list[str]:
     """Internal helper to identify blocklist hits in lowered content."""
     return [term for term in SAFE_BLOCKLIST if term in lowered_content]
@@ -108,7 +109,6 @@ def chat(payload: ChatRequest) -> ChatResponse:
     latest_user_message = next(
         (m.content for m in reversed(payload.messages) if m.role == "user"), ""
     )
-
     # BOLT OPTIMIZATION: Lower message once and reuse for moderation and tool checks.
     # This avoids redundant O(N) string traversals and allocations on every request.
     lowered_message = latest_user_message.lower()
