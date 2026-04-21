@@ -92,10 +92,14 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+def _get_moderation_hits(lowered_content: str) -> list[str]:
+    """Internal helper to identify blocklist hits in lowered content."""
+    return [term for term in SAFE_BLOCKLIST if term in lowered_content]
+
+
 @app.post("/moderate", response_model=ModerationResponse)
 def moderate(payload: ModerationRequest) -> ModerationResponse:
-    lowered = payload.content.lower()
-    hits = [term for term in SAFE_BLOCKLIST if term in lowered]
+    hits = _get_moderation_hits(payload.content.lower())
     return ModerationResponse(flagged=bool(hits), categories=hits)
 
 
@@ -104,11 +108,16 @@ def chat(payload: ChatRequest) -> ChatResponse:
     latest_user_message = next(
         (m.content for m in reversed(payload.messages) if m.role == "user"), ""
     )
-    moderation = moderate(ModerationRequest(content=latest_user_message))
-    if moderation.flagged:
+
+    # BOLT OPTIMIZATION: Lower message once and reuse for moderation and tool checks.
+    # This avoids redundant O(N) string traversals and allocations on every request.
+    lowered_message = latest_user_message.lower()
+
+    hits = _get_moderation_hits(lowered_message)
+    if hits:
         append_audit(
             "chat.blocked",
-            {"user_id": payload.user_id, "categories": moderation.categories},
+            {"user_id": payload.user_id, "categories": hits},
         )
         raise HTTPException(
             status_code=400,
@@ -120,7 +129,8 @@ def chat(payload: ChatRequest) -> ChatResponse:
         memory_snippet = f"\nMemory context: {' | '.join(MEMORIES[payload.user_id][-3:])}"
 
     tool_calls: list[dict[str, Any]] = []
-    if payload.tools_enabled and "time" in latest_user_message.lower():
+    # BOLT OPTIMIZATION: Reuse pre-lowered message for tool keyword check.
+    if payload.tools_enabled and "time" in lowered_message:
         tool_calls.append(
             {
                 "tool": "get_current_time",
@@ -144,7 +154,9 @@ def chat(payload: ChatRequest) -> ChatResponse:
         timestamp=datetime.now(timezone.utc),
     )
 
-    CHAT_HISTORY.append({"request": payload.model_dump(), "response": response.model_dump()})
+    # BOLT OPTIMIZATION: Store Pydantic models directly instead of calling model_dump().
+    # This eliminates the overhead of recursive dictionary conversion on every request.
+    CHAT_HISTORY.append({"request": payload, "response": response})
     append_audit("chat.completed", {"user_id": payload.user_id})
     return response
 
