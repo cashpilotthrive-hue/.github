@@ -17,3 +17,7 @@
 ## 2026-03-27 - FastAPI event loop blocking by sync I/O
 **Learning:** Route handlers performing synchronous I/O (like seek and tell on UploadFile.file) should be defined as 'def' rather than 'async def'. This allows FastAPI to run them in a thread pool, preventing the main event loop from being blocked and significantly improving concurrency and responsiveness.
 **Action:** Always prefer 'def' for endpoints that use synchronous file operations or other blocking calls.
+
+## 2026-04-21 - Avoiding redundant Pydantic serialization
+**Learning:** Calling `model_dump()` (or `dict()` in Pydantic v1) on large models or lists of models is an expensive operation that can significantly increase request latency. Deferring serialization or storing objects directly in in-memory caches avoids this overhead.
+**Action:** Only serialize Pydantic models when strictly necessary (e.g., at the network boundary or when persistence requires it). Store the model objects themselves in in-memory structures to maintain performance.
