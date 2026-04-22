@@ -13,7 +13,7 @@
         h1, h2, h3 { color: #2c3e50; }
     </style>
 </head>
-<body data-build-timestamp="2026-03-27 17:20:00 UTC">
+<body data-build-timestamp="2026-04-21 17:31:21 UTC">
     <header>
         <h1>Betting Platform Social Workflows</h1>
     </header>
@@ -30,13 +30,14 @@
                 <li>Optimized `scripts/setup-dotfiles.sh` using `cmp -s` to skip redundant backups and copies when files are already identical.</li>
                 <li>Batch `gh secret set` and `gh variable set` calls in `scripts/configure-revenue-tools.sh` using the `-f` flag to reduce process forks and execution time.</li>
                 <li>Optimized the backend /files endpoint by switching to a synchronous handler, allowing FastAPI to offload file I/O to a thread pool and improving event loop responsiveness.</li>
+                <li>Optimized the backend /chat endpoint by reusing a single pre-lowered user message for moderation and tool checks, improving request latency.</li>
             </ul>
         </div>
 
         <div class="build-signature">
             <h3>Build Signature</h3>
-            <p><strong>Build ID:</strong> <span>1771219342564672045</span></p>
-            <p><strong>Build Timestamp:</strong> <span>2026-03-27 17:20:00 UTC</span></p>
+            <p><strong>Build ID:</strong> <span>1771219342564672046</span></p>
+            <p><strong>Build Timestamp:</strong> <span>2026-04-21 17:31:21 UTC</span></p>
             <p><strong>Agent:</strong> Bolt ⚡</p>
         </div>
     </main>
