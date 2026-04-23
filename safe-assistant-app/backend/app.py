@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Literal, Optional
 import uuid
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
@@ -26,7 +26,7 @@ AUDIT_LOG: list[dict[str, Any]] = []
 
 
 class ChatMessage(BaseModel):
-    role: str = Field(pattern="^(system|user|assistant|tool)$")
+    role: Literal["system", "user", "assistant", "tool"]
     content: str
 
 
@@ -92,11 +92,16 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
-@app.post("/moderate", response_model=ModerationResponse)
-def moderate(payload: ModerationRequest) -> ModerationResponse:
-    lowered = payload.content.lower()
+def _moderate_content(content: str, lowered_content: Optional[str] = None) -> ModerationResponse:
+    """Internal helper to moderate content, optionally reusing a pre-lowered string."""
+    lowered = lowered_content if lowered_content is not None else content.lower()
     hits = [term for term in SAFE_BLOCKLIST if term in lowered]
     return ModerationResponse(flagged=bool(hits), categories=hits)
+
+
+@app.post("/moderate", response_model=ModerationResponse)
+def moderate(payload: ModerationRequest) -> ModerationResponse:
+    return _moderate_content(payload.content)
 
 
 @app.post("/chat", response_model=ChatResponse)
@@ -104,7 +109,12 @@ def chat(payload: ChatRequest) -> ChatResponse:
     latest_user_message = next(
         (m.content for m in reversed(payload.messages) if m.role == "user"), ""
     )
-    moderation = moderate(ModerationRequest(content=latest_user_message))
+
+    # BOLT OPTIMIZATION: Reuse a single lowered version of the message for both
+    # moderation and tool-triggering checks to avoid redundant string manipulation.
+    lowered_message = latest_user_message.lower()
+
+    moderation = _moderate_content(latest_user_message, lowered_content=lowered_message)
     if moderation.flagged:
         append_audit(
             "chat.blocked",
@@ -120,7 +130,7 @@ def chat(payload: ChatRequest) -> ChatResponse:
         memory_snippet = f"\nMemory context: {' | '.join(MEMORIES[payload.user_id][-3:])}"
 
     tool_calls: list[dict[str, Any]] = []
-    if payload.tools_enabled and "time" in latest_user_message.lower():
+    if payload.tools_enabled and "time" in lowered_message:
         tool_calls.append(
             {
                 "tool": "get_current_time",
