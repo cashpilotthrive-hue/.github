@@ -101,3 +101,26 @@ This project is licensed under the MIT License. See `LICENSE` for details.
 ---
 
 Thank you for exploring AFS — where finance meets the future, autonomously.
+
+---
+
+## 🔌 Optional: Register a Chat Agent
+
+If you want to register a chat agent endpoint, use environment variables for secrets (never hardcode API keys in source files):
+
+```bash
+export AGENTVERSE_KEY="your-agentverse-api-key"
+export AGENT_SEED_PHRASE="your-agent-seed-phrase"
+export AGENT_ENDPOINT="https://your-agent-host.example/chat"
+export AGENT_NAME="ChatG"  # optional; defaults to ChatG
+python register_chat_agent.py
+```
+
+This repository includes `register_chat_agent.py` as a helper script that validates required environment variables and then registers the agent.
+
+### Token safety checklist
+
+- Treat JWT/API keys as secrets.
+- Revoke and rotate any token that was pasted into chat, logs, commits, or screenshots.
+- Use short-lived credentials where possible.
+- Keep `.env` files out of version control.
