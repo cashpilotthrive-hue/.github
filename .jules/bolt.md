@@ -17,3 +17,11 @@
 ## 2026-03-27 - FastAPI event loop blocking by sync I/O
 **Learning:** Route handlers performing synchronous I/O (like seek and tell on UploadFile.file) should be defined as 'def' rather than 'async def'. This allows FastAPI to run them in a thread pool, preventing the main event loop from being blocked and significantly improving concurrency and responsiveness.
 **Action:** Always prefer 'def' for endpoints that use synchronous file operations or other blocking calls.
+
+## 2026-04-21 - Avoiding redundant string manipulation in chat endpoints
+**Learning:** In endpoints like `/chat` that perform multiple checks (moderation, tool triggering) on user input, calling `.lower()` multiple times on large content is a bottleneck. Pre-computing the lowered string once and passing it to helpers provides a measurable speedup.
+**Action:** Reuse pre-computed transformed strings (lowered, stripped) across multiple internal logic checks to minimize O(N) operations.
+
+## 2026-04-21 - Strict indentation for `_headers` configuration
+**Learning:** Standard static hosting providers (Netlify/Cloudflare) require security headers to be indented under their path pattern in the `_headers` file. Removing indentation breaks the association and disables the headers.
+**Action:** Always maintain 2-space indentation for header definitions in `public/_headers`.
