@@ -17,3 +17,7 @@
 ## 2026-03-27 - FastAPI event loop blocking by sync I/O
 **Learning:** Route handlers performing synchronous I/O (like seek and tell on UploadFile.file) should be defined as 'def' rather than 'async def'. This allows FastAPI to run them in a thread pool, preventing the main event loop from being blocked and significantly improving concurrency and responsiveness.
 **Action:** Always prefer 'def' for endpoints that use synchronous file operations or other blocking calls.
+
+## 2026-04-21 - Redundant string manipulation in chat endpoints
+**Learning:** Re-lowering large user message payloads multiple times (e.g., for moderation and tool detection) creates a significant CPU bottleneck.
+**Action:** Compute the lowercase version of the content once and pass it as an optional argument to internal helpers or downstream logic to avoid redundant O(N) operations.
