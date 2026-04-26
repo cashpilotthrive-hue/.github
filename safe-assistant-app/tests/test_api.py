@@ -47,3 +47,12 @@ def test_chat_safe():
     assert r.status_code == 200
     payload = r.json()
     assert 'Safe Omni Assistant response' in payload['content']
+
+
+def test_moderation_reports_no_restrictions_for_safe_content():
+    r = client.post('/moderate', json={'content': 'Tell me a joke about cats'})
+    assert r.status_code == 200
+    payload = r.json()
+    assert payload['flagged'] is False
+    assert payload['categories'] == []
+    assert payload['restriction'] == 'none'
