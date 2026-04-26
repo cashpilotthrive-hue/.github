@@ -34,5 +34,6 @@ Browse to `http://localhost:4173`.
 ## Notes
 
 - This is a local demo with in-memory storage (non-persistent).
+- The `/moderate` response includes `restriction` (`none` or `blocked`) plus matched `categories`.
 - Replace in-memory stores with a database and managed object storage for production.
 - Add proper authentication + role-based authorization for real deployments.

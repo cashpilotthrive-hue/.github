@@ -58,6 +58,7 @@ class ModerationRequest(BaseModel):
 class ModerationResponse(BaseModel):
     flagged: bool
     categories: list[str]
+    restriction: str
 
 
 class ToolRunRequest(BaseModel):
@@ -95,8 +96,9 @@ def health() -> dict[str, str]:
 @app.post("/moderate", response_model=ModerationResponse)
 def moderate(payload: ModerationRequest) -> ModerationResponse:
     lowered = payload.content.lower()
-    hits = [term for term in SAFE_BLOCKLIST if term in lowered]
-    return ModerationResponse(flagged=bool(hits), categories=hits)
+    hits = sorted(term for term in SAFE_BLOCKLIST if term in lowered)
+    restriction = "blocked" if hits else "none"
+    return ModerationResponse(flagged=bool(hits), categories=hits, restriction=restriction)
 
 
 @app.post("/chat", response_model=ChatResponse)
