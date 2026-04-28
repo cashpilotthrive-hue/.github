@@ -2,8 +2,9 @@ import os
 
 def apply_strict_formatting():
     # netlify.toml
-    # Memory says: keys like 'for', 'X-Frame-Options', 'Content-Security-Policy', 'from', 'to' must be defined with 0-space indentation.
-    # Also CSP and HSTS headers must end with a trailing semicolon and must not contain any spaces after internal semicolons.
+    # Memory: keys like for, X-Frame-Options, Content-Security-Policy, from, to at 0-space.
+    # CSP and HSTS: trailing semicolon, no spaces after internal semicolons.
+    # Exactly one trailing newline.
     netlify_toml = (
         '[build]\n'
         '  publish = "public"\n'
@@ -25,8 +26,9 @@ def apply_strict_formatting():
         f.write(netlify_toml)
 
     # public/_headers
-    # Memory says: 2-space indentation under the path pattern.
-    # Also CSP and HSTS headers must end with a trailing semicolon and must not contain any spaces after internal semicolons.
+    # Memory: 2-space indentation.
+    # CSP and HSTS: trailing semicolon, no spaces after internal semicolons.
+    # Exactly one trailing newline.
     public_headers = (
         '/*\n'
         '  X-Frame-Options: DENY\n'
@@ -38,14 +40,15 @@ def apply_strict_formatting():
         f.write(public_headers)
 
     # public/_redirects
-    # Memory says: exactly '/* /index.html 200' followed by a single trailing newline.
+    # Memory: exactly '/* /index.html 200' followed by a single trailing newline.
     public_redirects = '/* /index.html 200\n'
     with open('public/_redirects', 'w', newline='\n') as f:
         f.write(public_redirects)
 
     # public/index.html
-    # Memory says: items must match required strings exactly, including leading number and period.
-    # Must not contain markdown backticks.
+    # Memory: exact strings for items, no backticks, leading number and period.
+    # build-timestamp in body, build ID in signature.
+    # Exactly one trailing newline (not explicitly required for index.html but good practice).
     index_html = (
         '<!DOCTYPE html>\n'
         '<html lang="en">\n'
@@ -60,6 +63,8 @@ def apply_strict_formatting():
         '        .perf-box { background: #f4f4f4; padding: 1rem; border-radius: 4px; margin-top: 2rem; border-left: 4px solid #f39c12; }\n'
         '        .build-signature { margin-top: 2rem; padding: 1rem; border: 1px dashed #ccc; background: #fafafa; }\n'
         '        h1, h2, h3 { color: #2c3e50; }\n'
+    )
+    index_html += (
         '    </style>\n'
         '</head>\n'
         '<body data-build-timestamp="2026-04-21 17:31:21 UTC">\n'
