@@ -52,27 +52,21 @@ index_html_content = """<!DOCTYPE html>
         <p>&copy; 2026 Betting Platform - Optimized by Bolt ⚡</p>
     </footer>
 </body>
-</html>
-"""
-write_strict_file('public/index.html', index_html_content)
+</html>"""
 
 # public/_headers
 headers_content = """/*
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Content-Security-Policy: default-src 'self';frame-ancestors 'none';script-src 'self';style-src 'self' 'unsafe-inline';
-  Strict-Transport-Security: max-age=31536000;includeSubDomains;
-"""
-write_strict_file('public/_headers', headers_content)
+  Strict-Transport-Security: max-age=31536000;includeSubDomains;"""
 
 # public/_redirects
 redirects_content = "/* /index.html 200"
-write_strict_file('public/_redirects', redirects_content)
 
 # netlify.toml
-# Note: Indentation for publish must be exactly 2 spaces.
 netlify_toml_content = """[build]
-  publish = "public"
+publish = "public"
 
 [[headers]]
 for = "/*"
@@ -85,8 +79,11 @@ Strict-Transport-Security = "max-age=31536000;includeSubDomains;"
 [[redirects]]
 from = "/*"
 to = "/index.html"
-status = 200
-"""
+status = 200"""
+
+write_strict_file('public/index.html', index_html_content)
+write_strict_file('public/_headers', headers_content)
+write_strict_file('public/_redirects', redirects_content)
 write_strict_file('netlify.toml', netlify_toml_content)
 
 print("CI-compliant strict formatting applied to all files.")
