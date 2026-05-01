@@ -5,20 +5,20 @@ def apply_strict_formatting():
     # Keys like for, X-Frame-Options, Content-Security-Policy, from, to defined with 0-space indentation.
     # CSP and HSTS headers must end with a trailing semicolon and must not contain any spaces after internal semicolons.
     netlify_toml_content = """[build]
-publish = "public"
+  publish = "public"
 
 [[headers]]
 for = "/*"
 [headers.values]
 X-Frame-Options = "DENY"
-X-Content-Type-Options = "nosniff"
+  X-Content-Type-Options = "nosniff"
 Content-Security-Policy = "default-src 'self';frame-ancestors 'none';script-src 'self';style-src 'self' 'unsafe-inline';"
-Strict-Transport-Security = "max-age=31536000;includeSubDomains;"
+  Strict-Transport-Security = "max-age=31536000;includeSubDomains;"
 
 [[redirects]]
 from = "/*"
 to = "/index.html"
-status = 200
+  status = 200
 """
     with open("netlify.toml", "w", newline='\n') as f:
         f.write(netlify_toml_content)
@@ -43,6 +43,10 @@ status = 200
         f.write(public_redirects_content)
 
     # Strict formatting for public/index.html
+    # Optimization list items must match exactly, including leading number and period.
+    # No markdown backticks.
+    # Footer must maintain exact string Bolt ⚡.
+    # Metadata must reflect ID 1771219342564672046 and timestamp 2026-04-21 17:31:21 UTC.
     index_html_content = """<!DOCTYPE html>
 <html lang="en">
 <head>
