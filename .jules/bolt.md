@@ -17,3 +17,7 @@
 ## 2026-03-27 - FastAPI event loop blocking by sync I/O
 **Learning:** Route handlers performing synchronous I/O (like seek and tell on UploadFile.file) should be defined as 'def' rather than 'async def'. This allows FastAPI to run them in a thread pool, preventing the main event loop from being blocked and significantly improving concurrency and responsiveness.
 **Action:** Always prefer 'def' for endpoints that use synchronous file operations or other blocking calls.
+
+## 2026-05-02 - Redundant string manipulation and Pydantic validation
+**Learning:** Reusing pre-lowered user message strings for both moderation and tool checks avoids redundant O(N) operations, especially significant for large payloads. Additionally, replacing regex-based `pattern` validation with `typing.Literal` in Pydantic models improves validation performance for fixed sets of string values by avoiding regex engine overhead.
+**Action:** Use `typing.Literal` for fixed string sets in Pydantic models and cache/reuse results of expensive string operations like `.lower()` within the same request lifecycle.
