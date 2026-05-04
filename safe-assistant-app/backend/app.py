@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Literal
 import uuid
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
@@ -26,7 +26,7 @@ AUDIT_LOG: list[dict[str, Any]] = []
 
 
 class ChatMessage(BaseModel):
-    role: str = Field(pattern="^(system|user|assistant|tool)$")
+    role: Literal["system", "user", "assistant", "tool"]
     content: str
 
 
@@ -92,11 +92,15 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+def _moderate_content(lowered_content: str) -> ModerationResponse:
+    """Internal helper to check content against blocklist using pre-lowered string."""
+    hits = [term for term in SAFE_BLOCKLIST if term in lowered_content]
+    return ModerationResponse(flagged=bool(hits), categories=hits)
+
+
 @app.post("/moderate", response_model=ModerationResponse)
 def moderate(payload: ModerationRequest) -> ModerationResponse:
-    lowered = payload.content.lower()
-    hits = [term for term in SAFE_BLOCKLIST if term in lowered]
-    return ModerationResponse(flagged=bool(hits), categories=hits)
+    return _moderate_content(payload.content.lower())
 
 
 @app.post("/chat", response_model=ChatResponse)
@@ -104,7 +108,12 @@ def chat(payload: ChatRequest) -> ChatResponse:
     latest_user_message = next(
         (m.content for m in reversed(payload.messages) if m.role == "user"), ""
     )
-    moderation = moderate(ModerationRequest(content=latest_user_message))
+
+    # BOLT OPTIMIZATION: Reuse a single pre-lowered user message for moderation
+    # and tool checks to avoid redundant string allocations and .lower() calls.
+    lowered_user_message = latest_user_message.lower()
+
+    moderation = _moderate_content(lowered_user_message)
     if moderation.flagged:
         append_audit(
             "chat.blocked",
@@ -120,7 +129,7 @@ def chat(payload: ChatRequest) -> ChatResponse:
         memory_snippet = f"\nMemory context: {' | '.join(MEMORIES[payload.user_id][-3:])}"
 
     tool_calls: list[dict[str, Any]] = []
-    if payload.tools_enabled and "time" in latest_user_message.lower():
+    if payload.tools_enabled and "time" in lowered_user_message:
         tool_calls.append(
             {
                 "tool": "get_current_time",
