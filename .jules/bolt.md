@@ -17,3 +17,7 @@
 ## 2026-03-27 - FastAPI event loop blocking by sync I/O
 **Learning:** Route handlers performing synchronous I/O (like seek and tell on UploadFile.file) should be defined as 'def' rather than 'async def'. This allows FastAPI to run them in a thread pool, preventing the main event loop from being blocked and significantly improving concurrency and responsiveness.
 **Action:** Always prefer 'def' for endpoints that use synchronous file operations or other blocking calls.
+
+## 2026-05-04 - Codebase cleanliness and PR hygiene
+**Learning:** Including temporary benchmark scripts or unrelated files (even if intended for verification) leads to code review friction and is viewed as a maintainability risk.
+**Action:** Always delete temporary verification scripts and benchmark files before finalizing a PR to ensure the submitted changes are focused and clean.
