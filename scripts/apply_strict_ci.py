@@ -1,4 +1,8 @@
-<!DOCTYPE html>
+import os
+
+def fix_index_html():
+    path = 'public/index.html'
+    content = """<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -45,4 +49,50 @@
         <p>&copy; 2026 Betting Platform - Optimized by Bolt ⚡</p>
     </footer>
 </body>
-</html>
+</html>"""
+    with open(path, 'w', newline='\n') as f:
+        f.write(content)
+
+def fix_netlify_toml():
+    path = 'netlify.toml'
+    content = """[build]
+  publish = "public"
+
+[[headers]]
+for = "/*"
+[headers.values]
+X-Frame-Options = "DENY"
+X-Content-Type-Options = "nosniff"
+Content-Security-Policy = "default-src 'self';frame-ancestors 'none';script-src 'self';style-src 'self' 'unsafe-inline';"
+Strict-Transport-Security = "max-age=31536000;includeSubDomains;"
+
+[[redirects]]
+from = "/*"
+to = "/index.html"
+status = 200
+"""
+    with open(path, 'w', newline='\n') as f:
+        f.write(content)
+
+def fix_headers():
+    path = 'public/_headers'
+    content = """/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Content-Security-Policy: default-src 'self';frame-ancestors 'none';script-src 'self';style-src 'self' 'unsafe-inline';
+  Strict-Transport-Security: max-age=31536000;includeSubDomains;
+"""
+    with open(path, 'w', newline='\n') as f:
+        f.write(content)
+
+def fix_redirects():
+    path = 'public/_redirects'
+    content = "/* /index.html 200\n"
+    with open(path, 'w', newline='\n') as f:
+        f.write(content)
+
+if __name__ == "__main__":
+    fix_index_html()
+    fix_netlify_toml()
+    fix_headers()
+    fix_redirects()
