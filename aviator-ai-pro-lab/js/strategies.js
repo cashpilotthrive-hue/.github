@@ -76,6 +76,11 @@ class StrategyEngine {
     let currentBankroll = bankroll;
     let state = this._initState(strategyKey, strategy.params);
 
+    // BOLT OPTIMIZATION: Track metrics in a single pass to avoid redundant O(N) iterations
+    let wins = 0;
+    let peakBankroll = bankroll;
+    let maxDrawdown = 0;
+
     for (let i = 0; i < crashPoints.length; i++) {
       if (currentBankroll <= 0) break;
 
@@ -90,31 +95,41 @@ class StrategyEngine {
       const profit = payout - actualBet;
       currentBankroll += profit;
 
+      // BOLT OPTIMIZATION: Update metrics during simulation
+      if (won) wins++;
+      if (currentBankroll > peakBankroll) peakBankroll = currentBankroll;
+      const currentDrawdown = peakBankroll - currentBankroll;
+      if (currentDrawdown > maxDrawdown) maxDrawdown = currentDrawdown;
+
       results.push({
         round: i + 1,
-        crashPoint: parseFloat(crashPoint.toFixed(2)),
-        betAmount: parseFloat(actualBet.toFixed(2)),
-        cashOutTarget: parseFloat(cashOutTarget.toFixed(2)),
+        // BOLT OPTIMIZATION: Use Math.round instead of slower parseFloat(toFixed(2))
+        crashPoint: Math.round(crashPoint * 100) / 100,
+        betAmount: Math.round(actualBet * 100) / 100,
+        cashOutTarget: Math.round(cashOutTarget * 100) / 100,
         won,
-        profit: parseFloat(profit.toFixed(2)),
-        bankroll: parseFloat(currentBankroll.toFixed(2))
+        profit: Math.round(profit * 100) / 100,
+        bankroll: Math.round(currentBankroll * 100) / 100
       });
 
       this._updateState(strategyKey, state, won, crashPoint, results);
     }
 
+    const totalRounds = results.length;
+    const totalProfit = currentBankroll - bankroll;
+
     return {
       strategy: strategy.name,
       results,
-      finalBankroll: parseFloat(currentBankroll.toFixed(2)),
-      totalRounds: results.length,
-      wins: results.filter(r => r.won).length,
-      losses: results.filter(r => !r.won).length,
-      winRate: results.length > 0 ? (results.filter(r => r.won).length / results.length * 100).toFixed(1) : '0.0',
-      totalProfit: parseFloat((currentBankroll - bankroll).toFixed(2)),
-      roi: parseFloat(((currentBankroll - bankroll) / bankroll * 100).toFixed(2)),
-      maxDrawdown: this._calcMaxDrawdown(results, bankroll),
-      peakBankroll: Math.max(...results.map(r => r.bankroll), bankroll).toFixed(2)
+      finalBankroll: Math.round(currentBankroll * 100) / 100,
+      totalRounds,
+      wins,
+      losses: totalRounds - wins,
+      winRate: totalRounds > 0 ? (wins / totalRounds * 100).toFixed(1) : '0.0',
+      totalProfit: Math.round(totalProfit * 100) / 100,
+      roi: Math.round((totalProfit / bankroll * 100) * 100) / 100,
+      maxDrawdown: Math.round(maxDrawdown * 100) / 100,
+      peakBankroll: peakBankroll.toFixed(2)
     };
   }
 
@@ -301,8 +316,9 @@ class StrategyEngine {
 
     return {
       suggestedBet: Math.max(1, Math.min(betSizing, bankroll * 0.1)),
-      suggestedCashOut: parseFloat(suggestedCashOut.toFixed(2)),
-      confidence: parseFloat(confidence.toFixed(3)),
+      // BOLT OPTIMIZATION: Faster rounding
+      suggestedCashOut: Math.round(suggestedCashOut * 100) / 100,
+      confidence: Math.round(confidence * 1000) / 1000,
       analysis: { avg, volatility, momentum, lowCrashRatio }
     };
   }
@@ -311,15 +327,7 @@ class StrategyEngine {
     return Math.min(0.99, 0.97 / cashOut);
   }
 
-  _calcMaxDrawdown(results, initialBankroll) {
-    let peak = initialBankroll;
-    let maxDD = 0;
-    for (const r of results) {
-      peak = Math.max(peak, r.bankroll);
-      maxDD = Math.max(maxDD, peak - r.bankroll);
-    }
-    return parseFloat(maxDD.toFixed(2));
-  }
+  // BOLT OPTIMIZATION: _calcMaxDrawdown removed as it's now integrated into backtest() loop
 
   /**
    * AI Optimizer: Find optimal parameters for a strategy
@@ -362,23 +370,24 @@ class StrategyEngine {
     const params = { ...baseParams };
     const rand = (min, max) => min + Math.random() * (max - min);
 
-    params.cashOut = parseFloat(rand(1.1, 5.0).toFixed(2));
-    params.baseBet = parseFloat(rand(1, 50).toFixed(0));
+    // BOLT OPTIMIZATION: Faster rounding
+    params.cashOut = Math.round(rand(1.1, 5.0) * 100) / 100;
+    params.baseBet = Math.round(rand(1, 50));
 
     switch (key) {
       case 'martingale':
-        params.multiplier = parseFloat(rand(1.5, 3.0).toFixed(1));
-        params.maxBet = parseFloat(rand(200, 2000).toFixed(0));
+        params.multiplier = Math.round(rand(1.5, 3.0) * 10) / 10;
+        params.maxBet = Math.round(rand(200, 2000));
         break;
       case 'antiMartingale':
-        params.multiplier = parseFloat(rand(1.5, 3.0).toFixed(1));
+        params.multiplier = Math.round(rand(1.5, 3.0) * 10) / 10;
         params.maxWins = Math.floor(rand(2, 6));
         break;
       case 'dalembert':
-        params.unitSize = parseFloat(rand(1, 20).toFixed(0));
+        params.unitSize = Math.round(rand(1, 20));
         break;
       case 'kelly':
-        params.fraction = parseFloat(rand(0.05, 0.5).toFixed(2));
+        params.fraction = Math.round(rand(0.05, 0.5) * 100) / 100;
         break;
       case 'aiNeural':
         params.riskLevel = ['low', 'medium', 'high'][Math.floor(Math.random() * 3)];
