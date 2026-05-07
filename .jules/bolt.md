@@ -17,3 +17,7 @@
 ## 2026-03-27 - FastAPI event loop blocking by sync I/O
 **Learning:** Route handlers performing synchronous I/O (like seek and tell on UploadFile.file) should be defined as 'def' rather than 'async def'. This allows FastAPI to run them in a thread pool, preventing the main event loop from being blocked and significantly improving concurrency and responsiveness.
 **Action:** Always prefer 'def' for endpoints that use synchronous file operations or other blocking calls.
+
+## 2026-04-21 - Avoiding toFixed() in hot loops
+**Learning:** In JavaScript, `n.toFixed(2)` is significantly slower than `Math.round(n * 100) / 100` (up to 60x slower) because it performs string conversion. In a backtest simulation with 10,000+ rounds, this adds up to measurable latency.
+**Action:** Use `Math.round(n * 100) / 100` for numerical rounding in performance-critical loops and only use `.toFixed()` when a formatted string is explicitly required for the UI.
