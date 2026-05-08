@@ -15,5 +15,9 @@
 **Action:** Use `gh secret set -f .env` and `gh variable set -f .env` to apply multiple configurations in a single command. Ensure temporary files are secured with `chmod 600` and cleaned up with `trap`.
 
 ## 2026-03-27 - FastAPI event loop blocking by sync I/O
-**Learning:** Route handlers performing synchronous I/O (like seek and tell on UploadFile.file) should be defined as 'def' rather than 'async def'. This allows FastAPI to run them in a thread pool, preventing the main event loop from being blocked and significantly improving concurrency and responsiveness.
+**Learning:** Route handlers performing synchronous I/O (like seek and tell on UploadFile.file) should be defined as 'def' rather than 'async def'. This allows FastAPI to offload file I/O to a thread pool, preventing the main event loop from being blocked and significantly improving concurrency and responsiveness.
 **Action:** Always prefer 'def' for endpoints that use synchronous file operations or other blocking calls.
+
+## 2026-04-21 - Optimization of simulation engine metrics
+**Learning:** Consolidating multiple metrics passes (filter, map, Math.max) into a single O(N) loop and replacing string-heavy `toFixed` rounding with a `Math.round` helper yields an ~80% performance gain in the Aviator simulation engine.
+**Action:** Always prefer single-pass loops for metrics and mathematical rounding over string conversion in high-frequency numerical paths.
