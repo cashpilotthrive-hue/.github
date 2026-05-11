@@ -91,27 +91,85 @@ class AviatorEngine {
    * Get statistical analysis of crash history
    */
   getStats() {
-    if (this.history.length === 0) return null;
+    const len = this.history.length;
+    if (len === 0) return null;
 
-    const crashes = this.history.map(r => r.crashPoint);
-    const profits = this.history.map(r => r.profit);
-    const wins = this.history.filter(r => r.won);
+    let winCount = 0;
+    let totalProfit = 0;
+    let sumCrashes = 0;
+    let maxCrash = -Infinity;
+    let minCrash = Infinity;
+    let sumPositiveProfit = 0;
+    let sumNegativeProfit = 0;
+    let longestWinStreak = 0;
+    let currentWinStreak = 0;
+    let longestLoseStreak = 0;
+    let currentLoseStreak = 0;
+    let maxDD = 0;
+    let peak = 0;
+    let cumulativeProfit = 0;
+
+    const crashes = new Array(len);
+    const profits = new Array(len);
+
+    for (let i = 0; i < len; i++) {
+      const r = this.history[i];
+      const crash = r.crashPoint;
+      const profit = r.profit;
+      const won = r.won;
+
+      crashes[i] = crash;
+      profits[i] = profit;
+
+      sumCrashes += crash;
+      if (crash > maxCrash) maxCrash = crash;
+      if (crash < minCrash) minCrash = crash;
+
+      totalProfit += profit;
+      if (profit > 0) sumPositiveProfit += profit;
+      else if (profit < 0) sumNegativeProfit += Math.abs(profit);
+
+      if (won) {
+        winCount++;
+        currentWinStreak++;
+        if (currentWinStreak > longestWinStreak) longestWinStreak = currentWinStreak;
+        currentLoseStreak = 0;
+      } else {
+        currentLoseStreak++;
+        if (currentLoseStreak > longestLoseStreak) longestLoseStreak = currentLoseStreak;
+        currentWinStreak = 0;
+      }
+
+      cumulativeProfit += profit;
+      if (cumulativeProfit > peak) peak = cumulativeProfit;
+      const currentDD = peak - cumulativeProfit;
+      if (currentDD > maxDD) maxDD = currentDD;
+    }
+
+    const profitFactor = sumNegativeProfit === 0
+      ? (sumPositiveProfit > 0 ? Infinity : 0)
+      : sumPositiveProfit / sumNegativeProfit;
 
     return {
-      totalRounds: this.history.length,
-      winRate: (wins.length / this.history.length * 100).toFixed(1),
-      totalProfit: profits.reduce((a, b) => a + b, 0).toFixed(2),
-      avgCrash: (crashes.reduce((a, b) => a + b, 0) / crashes.length).toFixed(2),
-      maxCrash: Math.max(...crashes).toFixed(2),
-      minCrash: Math.min(...crashes).toFixed(2),
-      medianCrash: this._median(crashes).toFixed(2),
-      longestWinStreak: this._longestStreak(this.history, true),
-      longestLoseStreak: this._longestStreak(this.history, false),
-      avgProfit: (profits.reduce((a, b) => a + b, 0) / profits.length).toFixed(2),
-      maxDrawdown: this._maxDrawdown(profits).toFixed(2),
-      sharpeRatio: this._sharpeRatio(profits).toFixed(3),
-      profitFactor: this._profitFactor().toFixed(2)
+      totalRounds: len,
+      winRate: (winCount / len * 100).toFixed(1),
+      totalProfit: this._round(totalProfit).toFixed(2),
+      avgCrash: this._round(sumCrashes / len).toFixed(2),
+      maxCrash: this._round(maxCrash).toFixed(2),
+      minCrash: this._round(minCrash).toFixed(2),
+      medianCrash: this._round(this._median(crashes)).toFixed(2),
+      longestWinStreak,
+      longestLoseStreak,
+      avgProfit: this._round(totalProfit / len).toFixed(2),
+      maxDrawdown: this._round(maxDD).toFixed(2),
+      sharpeRatio: this._round(this._sharpeRatio(profits), 3).toFixed(3),
+      profitFactor: (profitFactor === Infinity ? 'Infinity' : this._round(profitFactor).toFixed(2))
     };
+  }
+
+  _round(n, decimals = 2) {
+    const factor = Math.pow(10, decimals);
+    return Math.round(n * factor) / factor;
   }
 
   _median(arr) {
@@ -120,37 +178,16 @@ class AviatorEngine {
     return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
   }
 
-  _longestStreak(rounds, isWin) {
-    let max = 0, current = 0;
-    for (const r of rounds) {
-      if (r.won === isWin) { current++; max = Math.max(max, current); }
-      else { current = 0; }
-    }
-    return max;
-  }
-
-  _maxDrawdown(profits) {
-    let peak = 0, maxDD = 0, cumulative = 0;
-    for (const p of profits) {
-      cumulative += p;
-      peak = Math.max(peak, cumulative);
-      maxDD = Math.max(maxDD, peak - cumulative);
-    }
-    return maxDD;
-  }
-
   _sharpeRatio(profits) {
-    if (profits.length < 2) return 0;
-    const mean = profits.reduce((a, b) => a + b, 0) / profits.length;
-    const variance = profits.reduce((sum, p) => sum + Math.pow(p - mean, 2), 0) / (profits.length - 1);
-    const std = Math.sqrt(variance);
+    const len = profits.length;
+    if (len < 2) return 0;
+    let sum = 0;
+    for (let i = 0; i < len; i++) sum += profits[i];
+    const mean = sum / len;
+    let varianceSum = 0;
+    for (let i = 0; i < len; i++) varianceSum += Math.pow(profits[i] - mean, 2);
+    const std = Math.sqrt(varianceSum / (len - 1));
     return std === 0 ? 0 : (mean / std) * Math.sqrt(252);
-  }
-
-  _profitFactor() {
-    const wins = this.history.filter(r => r.profit > 0).reduce((s, r) => s + r.profit, 0);
-    const losses = Math.abs(this.history.filter(r => r.profit < 0).reduce((s, r) => s + r.profit, 0));
-    return losses === 0 ? wins > 0 ? Infinity : 0 : wins / losses;
   }
 
   reset() {
