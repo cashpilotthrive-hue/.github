@@ -156,18 +156,23 @@ class AviatorEngine {
     return {
       totalRounds,
       winRate: (wins / totalRounds * 100).toFixed(1),
-      totalProfit: totalProfit.toFixed(2),
-      avgProfit: (totalProfit / totalRounds).toFixed(2),
-      avgCrash: (totalCrash / totalRounds).toFixed(2),
-      maxCrash: maxCrash.toFixed(2),
-      minCrash: minCrash.toFixed(2),
-      medianCrash: this._median(crashes).toFixed(2),
+      totalProfit: this._round(totalProfit).toFixed(2),
+      avgProfit: this._round(totalProfit / totalRounds).toFixed(2),
+      avgCrash: this._round(totalCrash / totalRounds).toFixed(2),
+      maxCrash: this._round(maxCrash).toFixed(2),
+      minCrash: this._round(minCrash).toFixed(2),
+      medianCrash: this._round(this._median(crashes)).toFixed(2),
       longestWinStreak,
       longestLoseStreak,
-      maxDrawdown: maxDD.toFixed(2),
+      maxDrawdown: this._round(maxDD).toFixed(2),
       sharpeRatio: this._sharpeRatio(profits).toFixed(3),
-      profitFactor: profitFactor.toFixed(2)
+      profitFactor: this._round(profitFactor).toFixed(2)
     };
+  }
+
+  _round(n, decimals = 2) {
+    const factor = Math.pow(10, decimals);
+    return Math.round(n * factor) / factor;
   }
 
   _median(arr) {
