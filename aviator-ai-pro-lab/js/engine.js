@@ -94,6 +94,8 @@ class AviatorEngine {
     const totalRounds = this.history.length;
     if (totalRounds === 0) return null;
 
+    // BOLT OPTIMIZATION: Consolidate metrics calculation into a single O(N) loop
+    // to avoid multiple array iterations (map, filter, reduce) and allocations.
     let totalProfit = 0;
     let totalCrash = 0;
     let maxCrash = -Infinity;
@@ -154,23 +156,18 @@ class AviatorEngine {
     return {
       totalRounds,
       winRate: (wins / totalRounds * 100).toFixed(1),
-      totalProfit: this._round(totalProfit).toFixed(2),
-      avgCrash: this._round(totalCrash / totalRounds).toFixed(2),
-      maxCrash: this._round(maxCrash).toFixed(2),
-      minCrash: this._round(minCrash).toFixed(2),
-      medianCrash: this._round(this._median(crashes)).toFixed(2),
+      totalProfit: totalProfit.toFixed(2),
+      avgProfit: (totalProfit / totalRounds).toFixed(2),
+      avgCrash: (totalCrash / totalRounds).toFixed(2),
+      maxCrash: maxCrash.toFixed(2),
+      minCrash: minCrash.toFixed(2),
+      medianCrash: this._median(crashes).toFixed(2),
       longestWinStreak,
       longestLoseStreak,
-      avgProfit: this._round(totalProfit / totalRounds).toFixed(2),
-      maxDrawdown: this._round(maxDD).toFixed(2),
+      maxDrawdown: maxDD.toFixed(2),
       sharpeRatio: this._sharpeRatio(profits).toFixed(3),
-      profitFactor: this._round(profitFactor).toFixed(2)
+      profitFactor: profitFactor.toFixed(2)
     };
-  }
-
-  _round(n, decimals = 2) {
-    const factor = Math.pow(10, decimals);
-    return Math.round(n * factor) / factor;
   }
 
   _median(arr) {
