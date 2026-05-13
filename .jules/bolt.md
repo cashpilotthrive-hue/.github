@@ -17,3 +17,7 @@
 ## 2026-03-27 - FastAPI event loop blocking by sync I/O
 **Learning:** Route handlers performing synchronous I/O (like seek and tell on UploadFile.file) should be defined as 'def' rather than 'async def'. This allows FastAPI to run them in a thread pool, preventing the main event loop from being blocked and significantly improving concurrency and responsiveness.
 **Action:** Always prefer 'def' for endpoints that use synchronous file operations or other blocking calls.
+
+## 2026-05-13 - Iterative min/max for large arrays in JavaScript
+**Learning:** Using `Math.max(...array)` or `Math.min(...array)` on large datasets (like simulation history) can cause "Maximum call stack size exceeded" errors and is slower than a manual loop.
+**Action:** Always use a single `for` loop to calculate multiple statistics (min, max, sum, streaks) in one pass for both performance and memory safety.
