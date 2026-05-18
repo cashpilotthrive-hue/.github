@@ -99,7 +99,7 @@ class AviatorEngine {
   /**
    * Get statistical analysis of crash history
    * BOLT OPTIMIZATION: Consolidated metrics into a single O(N) pass to avoid multiple array iterations.
-   * Replaced toFixed calls with performant _round helper.
+   * Final results are returned as Strings via toFixed for UI compatibility and to maintain API consistency.
    * Used single-pass variance formula: Var(X) = E[X^2] - (E[X])^2.
    */
   getStats() {
@@ -155,24 +155,24 @@ class AviatorEngine {
 
     const avgProfit = totalProfit / len;
     const variance = (totalProfitSq / len) - (avgProfit * avgProfit);
-    const std = Math.sqrt(variance);
+    const std = Math.sqrt(Math.max(0, variance));
     const sharpe = std === 0 ? 0 : (avgProfit / std) * Math.sqrt(252);
     const profitFactor = totalLossAmount === 0 ? (totalWinProfit > 0 ? Infinity : 0) : totalWinProfit / totalLossAmount;
 
     return {
       totalRounds: len,
       winRate: (wins / len * 100).toFixed(1),
-      totalProfit: this._round(totalProfit),
-      avgCrash: this._round(totalCrash / len),
-      maxCrash: this._round(maxCrash),
-      minCrash: this._round(minCrash),
-      medianCrash: this._round(this._median(crashes)),
+      totalProfit: totalProfit.toFixed(2),
+      avgCrash: (totalCrash / len).toFixed(2),
+      maxCrash: maxCrash.toFixed(2),
+      minCrash: minCrash.toFixed(2),
+      medianCrash: this._median(crashes).toFixed(2),
       longestWinStreak: maxWinStreak,
       longestLoseStreak: maxLoseStreak,
-      avgProfit: this._round(avgProfit),
-      maxDrawdown: this._round(maxDD),
-      sharpeRatio: this._round(sharpe, 3),
-      profitFactor: this._round(profitFactor)
+      avgProfit: avgProfit.toFixed(2),
+      maxDrawdown: maxDD.toFixed(2),
+      sharpeRatio: sharpe.toFixed(3),
+      profitFactor: profitFactor === Infinity ? "Infinity" : profitFactor.toFixed(2)
     };
   }
 
