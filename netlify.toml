@@ -1,15 +1,20 @@
 [build]
-  publish = "public"
+publish = "public"
 
 [[headers]]
-  for = "/*"
-  [headers.values]
-    X-Frame-Options = "DENY"
-    X-Content-Type-Options = "nosniff"
-    Content-Security-Policy = "default-src 'self';frame-ancestors 'none';script-src 'self';style-src 'self' 'unsafe-inline';"
-    Strict-Transport-Security = "max-age=31536000;includeSubDomains"
+for = "/*"
+[headers.values]
+X-Frame-Options = "DENY"
+X-Content-Type-Options = "nosniff"
+Content-Security-Policy = "default-src 'self';frame-ancestors 'none';script-src 'self';style-src 'self' 'unsafe-inline';"
+Strict-Transport-Security = "max-age=31536000;includeSubDomains;"
+
+[[headers]]
+for = "/js/engine.js"
+[headers.values]
+Content-Type = "application/javascript"
 
 [[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+from = "/*"
+to = "/index.html"
+status = 200
