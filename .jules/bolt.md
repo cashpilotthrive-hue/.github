@@ -17,3 +17,7 @@
 ## 2026-03-27 - FastAPI event loop blocking by sync I/O
 **Learning:** Route handlers performing synchronous I/O (like seek and tell on UploadFile.file) should be defined as 'def' rather than 'async def'. This allows FastAPI to run them in a thread pool, preventing the main event loop from being blocked and significantly improving concurrency and responsiveness.
 **Action:** Always prefer 'def' for endpoints that use synchronous file operations or other blocking calls.
+
+## 2026-04-21 - Avoiding multiple passes for summary statistics
+**Learning:** Using multiple array methods like `.map()`, `.filter()`, and `.reduce()` to calculate different metrics (min, max, avg, streaks, etc.) on the same dataset results in multiple O(N) passes. Additionally, `Math.max(...arr)` can cause stack overflow on very large datasets.
+**Action:** Consolidate all metrics into a single O(N) `for` loop. Track `min`, `max`, and streak counters iteratively within the loop to improve performance and ensure safety for large datasets.
