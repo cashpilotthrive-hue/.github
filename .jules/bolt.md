@@ -17,3 +17,7 @@
 ## 2026-03-27 - FastAPI event loop blocking by sync I/O
 **Learning:** Route handlers performing synchronous I/O (like seek and tell on UploadFile.file) should be defined as 'def' rather than 'async def'. This allows FastAPI to run them in a thread pool, preventing the main event loop from being blocked and significantly improving concurrency and responsiveness.
 **Action:** Always prefer 'def' for endpoints that use synchronous file operations or other blocking calls.
+
+## 2026-05-21 - Single-pass statistics calculation
+**Learning:** Performing multiple array passes (map, filter, reduce) for related metrics on large datasets (10k+ elements) in `AviatorEngine.getStats` created a significant bottleneck and memory overhead.
+**Action:** Consolidate related statistical calculations into a single O(N) loop to minimize iterations and intermediate array allocations.
