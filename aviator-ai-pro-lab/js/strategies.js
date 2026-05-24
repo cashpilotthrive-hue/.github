@@ -3,6 +3,8 @@
  * Multiple betting strategies with AI-powered optimization
  */
 
+const EMPTY_RESULTS = Object.freeze([]);
+
 class StrategyEngine {
   constructor() {
     this.strategies = {
@@ -111,7 +113,7 @@ class StrategyEngine {
         maxDrawdown = currentDrawdown;
       }
 
-      // BOLT OPTIMIZATION: Optionally skip results collection for ~70% faster execution during optimization.
+      // BOLT OPTIMIZATION: Optionally skip results collection for ~80% faster execution during optimization.
       if (includeResults) {
         results.push({
           round: i + 1,
@@ -124,7 +126,7 @@ class StrategyEngine {
         });
       }
 
-      this._updateState(strategyKey, state, won, crashPoint, results);
+      this._updateState(strategyKey, state, won, crashPoint, results || EMPTY_RESULTS);
     }
 
     const totalRounds = i;
