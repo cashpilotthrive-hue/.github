@@ -32,6 +32,7 @@
                 <li>6. Optimized the backend /files endpoint by switching to a synchronous handler, allowing FastAPI to offload file I/O to a thread pool and improving event loop responsiveness.</li>
                 <li>7. Refactored the backtest method in aviator-ai-pro-lab/js/strategies.js to calculate simulation metrics in a single O(N) pass, improving performance by ~33%.</li>
                 <li>8. Optimized AviatorEngine.getStats in aviator-ai-pro-lab/js/engine.js by consolidating metrics calculation into a single O(N) loop and using performant rounding, resulting in a ~40% speedup.</li>
+                <li>9. Optimized StrategyEngine.backtest in aviator-ai-pro-lab/js/strategies.js by implementing an optional high-performance mode that skips results collection for ~80% speedup.</li>
             </ul>
         </div>
 

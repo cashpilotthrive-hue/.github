@@ -3,7 +3,7 @@
  * Multiple betting strategies with AI-powered optimization
  */
 
-const EMPTY_RESULTS = Object.freeze([]);
+const EMPTY_RESULTS = [];
 
 class StrategyEngine {
   constructor() {
