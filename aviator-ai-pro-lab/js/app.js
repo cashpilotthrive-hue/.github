@@ -17,6 +17,7 @@ class AviatorApp {
     this.profitChart = null;
     this.crashChart = null;
     this.distributionChart = null;
+    this.distributionBuckets = [0, 0, 0, 0, 0, 0];
     this.comparisonChart = null;
     this.selectedStrategy = 'fixed';
     this.backtestRounds = 500;
@@ -210,6 +211,10 @@ class AviatorApp {
   _generateInitialCrashData() {
     this.crashPoints = this.engine.generateCrashHistory(100);
     this._updateCrashChart();
+
+    // BOLT OPTIMIZATION: Initialize distribution buckets once
+    this.distributionBuckets = [0, 0, 0, 0, 0, 0];
+    this.crashPoints.forEach(c => this._incrementBucket(c));
     this._updateDistributionChart();
   }
 
@@ -232,6 +237,9 @@ class AviatorApp {
 
     const crashPoint = this.engine.generateCrashPoint();
     this.crashPoints.push(crashPoint);
+
+    // BOLT OPTIMIZATION: Increment distribution bucket incrementally (O(1))
+    this._incrementBucket(crashPoint);
 
     const cashOut = params.cashOut || 2.0;
     const betAmount = Math.min(params.baseBet || 10, this.bankroll);
@@ -285,6 +293,7 @@ class AviatorApp {
     this.bankroll = this.initialBankroll;
     this.bankrollHistory = [this.initialBankroll];
     this.crashPoints = [];
+    this.distributionBuckets = [0, 0, 0, 0, 0, 0];
     this._generateInitialCrashData();
     this._updateDisplay();
     this._clearHistory();
@@ -541,18 +550,19 @@ class AviatorApp {
     this._updateDistributionChart();
   }
 
+  _incrementBucket(c) {
+    if (c < 1.5) this.distributionBuckets[0]++;
+    else if (c < 2) this.distributionBuckets[1]++;
+    else if (c < 3) this.distributionBuckets[2]++;
+    else if (c < 5) this.distributionBuckets[3]++;
+    else if (c < 10) this.distributionBuckets[4]++;
+    else this.distributionBuckets[5]++;
+  }
+
   _updateDistributionChart() {
-    const crashes = this.crashPoints;
-    const buckets = [0, 0, 0, 0, 0, 0];
-    crashes.forEach(c => {
-      if (c < 1.5) buckets[0]++;
-      else if (c < 2) buckets[1]++;
-      else if (c < 3) buckets[2]++;
-      else if (c < 5) buckets[3]++;
-      else if (c < 10) buckets[4]++;
-      else buckets[5]++;
-    });
-    this.distributionChart.data.datasets[0].data = buckets;
+    // BOLT OPTIMIZATION: Use pre-calculated incremental buckets (O(1) update)
+    // instead of O(N) re-calculation from the full history.
+    this.distributionChart.data.datasets[0].data = [...this.distributionBuckets];
     this.distributionChart.update('none');
   }
 
