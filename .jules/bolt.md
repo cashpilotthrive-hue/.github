@@ -19,9 +19,5 @@
 **Action:** Always prefer 'def' for endpoints that use synchronous file operations or other blocking calls.
 
 ## 2026-05-25 - StrategyEngine and AI analysis optimization
-**Learning:** Consolidating multiple array passes (reduce, filter, slice) into a single O(N) loop in hot paths like  provides a massive performance boost (reduced execution time by ~80%). Additionally, providing an option to skip large object allocations (like the  array in ) during iterative optimization loops significantly reduces GC pressure and further accelerates simulations (another ~35% gain on top of algorithmic changes).
-**Action:** Always look for opportunities to consolidate multiple array iterations in hot paths and provide mechanisms to skip heavy object allocations in high-frequency/iterative contexts.
-
-## 2026-05-25 - StrategyEngine and AI analysis optimization
 **Learning:** Consolidating multiple array passes (reduce, filter, slice) into a single O(N) loop in hot paths like `_aiAnalyze` provides a massive performance boost (reduced execution time by ~80%). Additionally, providing an option to skip large object allocations (like the `results` array in `backtest`) during iterative optimization loops significantly reduces GC pressure and further accelerates simulations (another ~35% gain on top of algorithmic changes).
 **Action:** Always look for opportunities to consolidate multiple array iterations in hot paths and provide mechanisms to skip heavy object allocations in high-frequency/iterative contexts.
