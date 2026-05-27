@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import re
 from typing import Any, Literal
 import uuid
 
@@ -75,6 +76,10 @@ SAFE_BLOCKLIST = {
     "wire fraud",
 }
 
+# BOLT OPTIMIZATION: Pre-compile regex for moderation to improve performance
+# from O(N*M) to O(N) where N is content length and M is blocklist size.
+BLOCKLIST_REGEX = re.compile("|".join(map(re.escape, SAFE_BLOCKLIST)))
+
 
 def append_audit(event: str, detail: dict[str, Any]) -> None:
     AUDIT_LOG.append(
@@ -94,8 +99,14 @@ def health() -> dict[str, str]:
 
 def _moderate_content(lowered_content: str) -> ModerationResponse:
     """Internal helper to check content against blocklist using pre-lowered string."""
+    # BOLT OPTIMIZATION: Fast-path for safe content using a single regex pass.
+    # This is O(N) instead of O(N*M) and significantly faster for safe strings.
+    if not BLOCKLIST_REGEX.search(lowered_content):
+        return ModerationResponse(flagged=False, categories=[])
+
+    # Fallback to iterative search for correct overlapping term reporting.
     hits = [term for term in SAFE_BLOCKLIST if term in lowered_content]
-    return ModerationResponse(flagged=bool(hits), categories=hits)
+    return ModerationResponse(flagged=True, categories=hits)
 
 
 @app.post("/moderate", response_model=ModerationResponse)
