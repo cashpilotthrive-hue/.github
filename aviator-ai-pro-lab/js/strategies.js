@@ -317,7 +317,8 @@ class StrategyEngine {
     const avg = sum / len;
     let varianceSum = 0;
     for (let i = 0; i < len; i++) {
-      varianceSum += Math.pow(crashes[i] - avg, 2);
+      const diff = crashes[i] - avg;
+      varianceSum += diff * diff;
     }
     const volatility = Math.sqrt(varianceSum / len);
 

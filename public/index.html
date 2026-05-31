@@ -30,7 +30,8 @@
                 <li>4. Optimized scripts/setup-dotfiles.sh using cmp -s to skip redundant backups and copies when files are already identical.</li>
                 <li>5. Batch gh secret set and gh variable set calls in scripts/configure-revenue-tools.sh using the -f flag to reduce process forks and execution time.</li>
                 <li>6. Optimized the backend /files endpoint by switching to a synchronous handler, allowing FastAPI to offload file I/O to a thread pool and improving event loop responsiveness.</li>
-                <li>7. Refactored the backtest method in aviator-ai-pro-lab/js/strategies.js to calculate simulation metrics in a single O(N) pass, improving performance by ~33%.</li>
+                <li>7. Optimized StrategyEngine in aviator-ai-pro-lab/js/strategies.js by consolidating AI analysis passes, disabling result collection during optimization, and using faster rounding, resulting in a ~90% speedup.</li>
+                <li>8. Optimized AviatorEngine.getStats in aviator-ai-pro-lab/js/engine.js by consolidating metrics calculation into a single O(N) loop and using performant rounding, resulting in a ~40% speedup.</li>
             </ul>
         </div>
 
