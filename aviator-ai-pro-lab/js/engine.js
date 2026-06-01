@@ -105,6 +105,11 @@ class AviatorEngine {
     let grossWins = 0, grossLosses = 0;
     const crashes = [];
 
+    // BOLT OPTIMIZATION: Consolidate all metrics (including variance via Welford's algorithm)
+    // into a single O(N) loop to avoid multiple passes and redundant calculations.
+    let m2 = 0;
+    let mean = 0;
+
     for (let i = 0; i < len; i++) {
       const r = this.history[i];
       const crash = r.crashPoint;
@@ -134,20 +139,14 @@ class AviatorEngine {
         currentWinStreak = 0;
         grossLosses += Math.abs(profit);
       }
+
+      // Welford's algorithm for online variance calculation
+      const delta = profit - mean;
+      mean += delta / (i + 1);
+      m2 += delta * (profit - mean);
     }
 
     const avgProfit = sumProfit / len;
-
-    // BOLT OPTIMIZATION: Consolidate variance calculation into a single O(N) loop
-    // using Welford's algorithm to avoid second pass over history and redundant Math.pow.
-    let m2 = 0;
-    let mean = 0;
-    for (let i = 0; i < len; i++) {
-      const x = this.history[i].profit;
-      const delta = x - mean;
-      mean += delta / (i + 1);
-      m2 += delta * (x - mean);
-    }
     const variance = len < 2 ? 0 : m2 / (len - 1);
     const std = Math.sqrt(variance);
     const sharpe = std === 0 ? 0 : (avgProfit / std) * Math.sqrt(252);
