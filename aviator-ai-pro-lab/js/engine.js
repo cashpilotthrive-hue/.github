@@ -137,11 +137,18 @@ class AviatorEngine {
     }
 
     const avgProfit = sumProfit / len;
-    let varianceSum = 0;
+
+    // BOLT OPTIMIZATION: Consolidate variance calculation into a single O(N) loop
+    // using Welford's algorithm to avoid second pass over history and redundant Math.pow.
+    let m2 = 0;
+    let mean = 0;
     for (let i = 0; i < len; i++) {
-      varianceSum += Math.pow(this.history[i].profit - avgProfit, 2);
+      const x = this.history[i].profit;
+      const delta = x - mean;
+      mean += delta / (i + 1);
+      m2 += delta * (x - mean);
     }
-    const variance = len < 2 ? 0 : varianceSum / (len - 1);
+    const variance = len < 2 ? 0 : m2 / (len - 1);
     const std = Math.sqrt(variance);
     const sharpe = std === 0 ? 0 : (avgProfit / std) * Math.sqrt(252);
 
