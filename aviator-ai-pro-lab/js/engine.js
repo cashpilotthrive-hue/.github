@@ -3,15 +3,16 @@
  * Provably fair crash point generation and game simulation
  */
 
+// BOLT OPTIMIZATION: Pre-compute hex lookup table outside the class to avoid re-creation
+const HEX_TABLE = Array.from({ length: 256 }, (_, i) => i.toString(16).padStart(2, '0'));
+
 class AviatorEngine {
   constructor(houseEdge = 0.03) {
     this.houseEdge = houseEdge;
     this.history = [];
 
-    // BOLT OPTIMIZATION: Pre-allocate buffer for seed generation and hex lookup table
-    // to reduce garbage collection and improve performance in core loops.
+    // BOLT OPTIMIZATION: Pre-allocate buffer for seed generation to reduce garbage collection
     this._seedBuffer = new Uint32Array(4);
-    this._hexTable = Array.from({ length: 256 }, (_, i) => i.toString(16).padStart(2, '0'));
 
     this.seed = this._generateSeed();
   }
@@ -172,10 +173,10 @@ class AviatorEngine {
   }
 
   _toHex(v) {
-    return this._hexTable[(v >>> 24) & 0xff] +
-           this._hexTable[(v >>> 16) & 0xff] +
-           this._hexTable[(v >>> 8) & 0xff] +
-           this._hexTable[v & 0xff];
+    return HEX_TABLE[(v >>> 24) & 0xff] +
+           HEX_TABLE[(v >>> 16) & 0xff] +
+           HEX_TABLE[(v >>> 8) & 0xff] +
+           HEX_TABLE[v & 0xff];
   }
 
   _round(num, decimals = 2) {
