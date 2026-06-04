@@ -127,7 +127,6 @@ class StrategyEngine {
 
       this._updateState(strategyKey, state, won, crashPoint, results || []);
     }
-
     const totalProfit = currentBankroll - bankroll;
 
     return {
