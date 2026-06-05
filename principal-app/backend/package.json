@@ -1,0 +1,26 @@
+{
+  "name": "principal-app-backend",
+  "version": "1.0.0",
+  "description": "Principal App – Fastify backend with Prisma and WebSocket support",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev --name init"
+  },
+  "dependencies": {
+    "@fastify/websocket": "^10.0.1",
+    "@prisma/client": "^5.12.1",
+    "fastify": "^5.7.2",
+    "typescript": "^5.4.5",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.7",
+    "@types/uuid": "^9.0.8",
+    "prisma": "^5.12.1",
+    "ts-node-dev": "^2.0.0"
+  }
+}
