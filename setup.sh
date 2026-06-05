@@ -20,7 +20,7 @@ echo -e "${GREEN}================================${NC}"
 echo ""
 
 # Check if running on Linux
-if [[ "$OSTYPE" != "linux-gnu"* ]]; then
+if [[ "$OSTYPE" != linux* ]]; then
     echo -e "${RED}Error: This script is designed for Linux systems only.${NC}"
     exit 1
 fi
