@@ -2,6 +2,8 @@
 
 This repository contains scripts and configurations for setting up a personal Linux development environment.
 
+## 🚀 Quick Start: [Get the Linux Setup →](GET_LINUX.md)
+
 ## Features
 
 - 🚀 Automated package installation
