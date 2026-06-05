@@ -66,3 +66,12 @@ jobs:
         run: |
           grep -q "Personal Linux System Setup" README.md
           echo "✓ README contains expected content"
+      
+      - name: Validate documentation site
+        run: |
+          echo "Checking docs directory for GitHub Pages..."
+          test -d docs
+          test -f docs/index.html
+          test -f docs/_config.yml
+          grep -q "G-EGPG5BBDRS" docs/index.html
+          echo "✓ Documentation site is valid"
