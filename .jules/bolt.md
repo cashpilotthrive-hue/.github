@@ -17,3 +17,7 @@
 ## 2026-03-27 - FastAPI event loop blocking by sync I/O
 **Learning:** Route handlers performing synchronous I/O (like seek and tell on UploadFile.file) should be defined as 'def' rather than 'async def'. This allows FastAPI to run them in a thread pool, preventing the main event loop from being blocked and significantly improving concurrency and responsiveness.
 **Action:** Always prefer 'def' for endpoints that use synchronous file operations or other blocking calls.
+
+## 2026-05-15 - Correct single-pass variance with Welford's Algorithm
+**Learning:** Consolidating multi-pass statistical calculations into a single pass is a great performance win, but naive variance implementations (like sum of squares) can be numerically unstable, and incorrect Welford's implementations (using the same mean for both delta calculations) produce mathematically wrong results.
+**Action:** Always use the standard Welford's algorithm: `delta = x - mean; mean += delta / n; delta2 = x - mean; m2 += delta * delta2;` where `m2` is the sum of squares of differences from the current mean.
