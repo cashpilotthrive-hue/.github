@@ -17,7 +17,3 @@
 ## 2026-03-27 - FastAPI event loop blocking by sync I/O
 **Learning:** Route handlers performing synchronous I/O (like seek and tell on UploadFile.file) should be defined as 'def' rather than 'async def'. This allows FastAPI to run them in a thread pool, preventing the main event loop from being blocked and significantly improving concurrency and responsiveness.
 **Action:** Always prefer 'def' for endpoints that use synchronous file operations or other blocking calls.
-
-## 2026-06-06 - Single-pass statistics with Welford's algorithm
-**Learning:** Multiple array passes for mean and variance (using reduce and Math.pow) in `StrategyEngine._aiAnalyze` were a significant bottleneck during iterative optimization. Consolidating these into a single O(N) pass using Welford's algorithm for online variance reduced AI Neural optimization time by ~77%.
-**Action:** Prefer single-pass algorithms like Welford's for statistical analysis in hot loops to minimize array traversals and improve cache locality.
