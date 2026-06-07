@@ -3,6 +3,8 @@
  * Multiple betting strategies with AI-powered optimization
  */
 
+const EMPTY_RESULTS = [];
+
 class StrategyEngine {
   constructor() {
     this.strategies = {
@@ -125,7 +127,7 @@ class StrategyEngine {
         });
       }
 
-      this._updateState(strategyKey, state, won, crashPoint, results || []);
+      this._updateState(strategyKey, state, won, crashPoint, results || EMPTY_RESULTS);
     }
     const totalProfit = currentBankroll - bankroll;
 
