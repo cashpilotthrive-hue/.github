@@ -130,7 +130,7 @@ class StrategyEngine {
       this._updateState(strategyKey, state, won, crashPoint, results);
     }
 
-    const totalRounds = includeResults ? results.length : Math.min(i, crashPoints.length);
+    const totalRounds = includeResults ? results.length : i;
     const totalProfit = currentBankroll - bankroll;
 
     return {
@@ -232,6 +232,10 @@ class StrategyEngine {
     };
   }
 
+  /**
+   * Update internal strategy state after a round
+   * NOTE: results array is empty during optimization for performance.
+   */
   _updateState(key, state, won, crashPoint, results) {
     if (won) {
       state.consecutiveWins++;
