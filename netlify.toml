@@ -1,5 +1,5 @@
 [build]
-publish = "public"
+  publish = "public"
 
 [[headers]]
 for="/*"
@@ -10,6 +10,6 @@ Content-Security-Policy="default-src 'self';frame-ancestors 'none';script-src 's
 Strict-Transport-Security="max-age=31536000;includeSubDomains;"
 
 [[redirects]]
-for="/*"
+from="/*"
 to="/index.html"
 status=200
