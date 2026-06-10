@@ -4,6 +4,8 @@
  */
 
 class StrategyEngine {
+  static EMPTY_ARRAY = [];
+
   constructor() {
     this.strategies = {
       fixed: {
@@ -74,7 +76,6 @@ class StrategyEngine {
 
     // BOLT OPTIMIZATION: Optionally skip results array to save memory/CPU during optimization
     const results = includeResults ? [] : null;
-    const emptyArray = []; // Reuse a single empty array to avoid GC pressure
     let currentBankroll = bankroll;
     let state = this._initState(strategyKey, strategy.params);
 
@@ -127,7 +128,7 @@ class StrategyEngine {
         });
       }
 
-      this._updateState(strategyKey, state, won, crashPoint, results || emptyArray);
+      this._updateState(strategyKey, state, won, crashPoint, results || StrategyEngine.EMPTY_ARRAY);
     }
 
     const totalRounds = roundsCount;
