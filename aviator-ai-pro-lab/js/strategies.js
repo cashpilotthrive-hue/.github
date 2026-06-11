@@ -72,7 +72,7 @@ class StrategyEngine {
     const strategy = this.strategies[strategyKey];
     if (!strategy) throw new Error(`Unknown strategy: ${strategyKey}`);
 
-    const results = includeResults ? [] : null;
+    const results = [];
     let currentBankroll = bankroll;
     let state = this._initState(strategyKey, strategy.params);
 
@@ -112,6 +112,8 @@ class StrategyEngine {
         maxDrawdown = currentDrawdown;
       }
 
+      // BOLT OPTIMIZATION: Skip results collection in optimization passes to save memory/CPU.
+      // Verified that none of the current strategies use the results array in _updateState.
       if (includeResults) {
         // BOLT OPTIMIZATION: Use Math.round instead of toFixed for 20x faster rounding
         results.push({
