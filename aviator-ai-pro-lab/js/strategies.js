@@ -72,7 +72,7 @@ class StrategyEngine {
     const strategy = this.strategies[strategyKey];
     if (!strategy) throw new Error(`Unknown strategy: ${strategyKey}`);
 
-    const results = includeResults ? [] : null;
+    const results = [];
     let currentBankroll = bankroll;
     let state = this._initState(strategyKey, strategy.params);
 
