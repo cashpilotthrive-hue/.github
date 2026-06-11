@@ -33,7 +33,7 @@ jobs:
           domain=$(tr -d '\r\n' < CNAME)
           target=<org-or-user>.github.io
           TXT
-      - uses: actions/upload-artifact@834a144ee995460f934fe73c887e1c88bd1ee0c7
+      - uses: actions/upload-artifact@6f51ac03b9356f520e98042945d3e05949e2954a
         with:
           name: dns-solution-${{ matrix.provider }}
           path: generated/providers/${{ matrix.provider }}.txt
@@ -71,7 +71,7 @@ jobs:
           }
           JSON
           echo "domain=$DOMAIN" >> "$GITHUB_OUTPUT"
-      - uses: actions/upload-artifact@834a144ee995460f934fe73c887e1c88bd1ee0c7
+      - uses: actions/upload-artifact@6f51ac03b9356f520e98042945d3e05949e2954a
         with:
           name: site-build
           path: |
