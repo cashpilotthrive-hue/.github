@@ -72,7 +72,10 @@ class StrategyEngine {
     const strategy = this.strategies[strategyKey];
     if (!strategy) throw new Error(`Unknown strategy: ${strategyKey}`);
 
-    const results = includeResults ? [] : null;
+    const results = [];
+    // BOLT OPTIMIZATION: resultsSummary only tracks essential round data for stateful strategies
+    // during optimization to avoid full object allocation for every round.
+    const resultsSummary = includeResults ? results : [];
     let currentBankroll = bankroll;
     let state = this._initState(strategyKey, strategy.params);
 
@@ -113,7 +116,6 @@ class StrategyEngine {
       }
 
       if (includeResults) {
-        // BOLT OPTIMIZATION: Use Math.round instead of toFixed for 20x faster rounding
         results.push({
           round: i + 1,
           crashPoint: Math.round(crashPoint * 100) / 100,
@@ -123,9 +125,15 @@ class StrategyEngine {
           profit: Math.round(profit * 100) / 100,
           bankroll: Math.round(currentBankroll * 100) / 100
         });
+      } else {
+        // Even if results array is skipped, maintain a minimal summary if needed for state.
+        // Currently, no strategies in StrategyEngine use the results array for state updates,
+        // but we pass resultsSummary for future-proofing and consistency.
+        resultsSummary.push({ won, profit });
+        if (resultsSummary.length > 50) resultsSummary.shift();
       }
 
-      this._updateState(strategyKey, state, won, crashPoint, results);
+      this._updateState(strategyKey, state, won, crashPoint, resultsSummary);
     }
     const totalProfit = currentBankroll - bankroll;
 
