@@ -83,6 +83,9 @@ class StrategyEngine {
     let peakBankroll = bankroll;
     let maxDrawdown = 0;
     let totalRounds = 0;
+    // BOLT OPTIMIZATION: lightweight results summary for stateful strategies (e.g. Labouchere)
+    // to allow history-based updates without the overhead of full round object allocation.
+    const resultsSummary = includeResults ? results : [];
 
     for (let i = 0; i < crashPoints.length; i++) {
       if (currentBankroll <= 0) break;
@@ -124,9 +127,11 @@ class StrategyEngine {
           profit: Math.round(profit * 100) / 100,
           bankroll: Math.round(currentBankroll * 100) / 100
         });
+      } else {
+        resultsSummary.push({ won, profit });
       }
 
-      this._updateState(strategyKey, state, won, crashPoint, results);
+      this._updateState(strategyKey, state, won, crashPoint, resultsSummary);
     }
 
     const totalProfit = currentBankroll - bankroll;
