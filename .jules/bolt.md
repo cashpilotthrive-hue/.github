@@ -17,3 +17,15 @@
 ## 2026-03-27 - FastAPI event loop blocking by sync I/O
 **Learning:** Route handlers performing synchronous I/O (like seek and tell on UploadFile.file) should be defined as 'def' rather than 'async def'. This allows FastAPI to run them in a thread pool, preventing the main event loop from being blocked and significantly improving concurrency and responsiveness.
 **Action:** Always prefer 'def' for endpoints that use synchronous file operations or other blocking calls.
+
+## 2026-06-17 - StrategyEngine optimization and state corruption
+**Learning:** Optimizing the `optimize` method by mutating `strategy.params` in-place without a shallow copy of original parameters leads to state corruption and a "random walk" sampling instead of independent sampling.
+**Action:** Always capture `originalParams = { ...strategy.params }` before iterative optimization and use it as the base for randomization, restoring it after the loop.
+
+## 2026-06-17 - CI Compliance: Section header indentation
+**Learning:** In `netlify.toml`, even section headers like `[[headers]]` and `[[redirects]]` must have zero-space indentation to pass strict CI compliance checks.
+**Action:** Always ensure section headers and their keys are left-aligned (0 indentation) in Netlify configuration files.
+
+## 2026-06-17 - CI Compliance: SHA pinning false positives
+**Learning:** Strict GitHub Action pinning checks may fail even when SHAs are used if the line contains a version comment like `# v4`. Some checkers might be misconfigured to flag the comment as an unpinned version.
+**Action:** Remove version comments (e.g., `# v4.6.0`) from workflow files when strict pinning is required to avoid false positives.
