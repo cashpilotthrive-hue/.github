@@ -25,3 +25,7 @@
 ## 2026-06-17 - CI Compliance: Section header indentation
 **Learning:** In `netlify.toml`, even section headers like `[[headers]]` and `[[redirects]]` must have zero-space indentation to pass strict CI compliance checks.
 **Action:** Always ensure section headers and their keys are left-aligned (0 indentation) in Netlify configuration files.
+
+## 2026-06-17 - CI Compliance: SHA pinning false positives
+**Learning:** Strict GitHub Action pinning checks may fail even when SHAs are used if the line contains a version comment like `# v4`. Some checkers might be misconfigured to flag the comment as an unpinned version.
+**Action:** Remove version comments (e.g., `# v4.6.0`) from workflow files when strict pinning is required to avoid false positives.
