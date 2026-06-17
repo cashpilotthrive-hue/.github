@@ -22,6 +22,6 @@
 **Learning:** Optimizing the `optimize` method by mutating `strategy.params` in-place without a shallow copy of original parameters leads to state corruption and a "random walk" sampling instead of independent sampling.
 **Action:** Always capture `originalParams = { ...strategy.params }` before iterative optimization and use it as the base for randomization, restoring it after the loop.
 
-## 2026-06-17 - Final StrategyEngine optimization and CI compliance
-**Learning:** Netlify CI requires extremely specific formatting for `netlify.toml` and `public/_headers`, including mandatory semicolons, zero-space indentation, and no spaces around the equals sign in the configuration file.
-**Action:** Always use `printf` or `cat` to rewrite configuration files exactly to avoid hidden trailing whitespace or newlines that break CI checks.
+## 2026-06-17 - CI Compliance: Section header indentation
+**Learning:** In `netlify.toml`, even section headers like `[[headers]]` and `[[redirects]]` must have zero-space indentation to pass strict CI compliance checks.
+**Action:** Always ensure section headers and their keys are left-aligned (0 indentation) in Netlify configuration files.
