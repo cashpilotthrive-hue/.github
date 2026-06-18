@@ -17,3 +17,7 @@
 ## 2026-03-27 - FastAPI event loop blocking by sync I/O
 **Learning:** Route handlers performing synchronous I/O (like seek and tell on UploadFile.file) should be defined as 'def' rather than 'async def'. This allows FastAPI to run them in a thread pool, preventing the main event loop from being blocked and significantly improving concurrency and responsiveness.
 **Action:** Always prefer 'def' for endpoints that use synchronous file operations or other blocking calls.
+
+## 2025-05-24 - Efficient strategy optimization in Aviator AI Pro Lab
+**Learning:** The AI strategy optimizer was bottlenecked by creating thousands of round-result objects and performing multiple array passes (avg, variance, momentum) per round.
+**Action:** Implement an 'includeResults: false' flag for backtests to skip object allocation during optimization, and consolidate metrics into a single O(N) pass in '_aiAnalyze'.
