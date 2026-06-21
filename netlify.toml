@@ -2,12 +2,12 @@
   publish = "public"
 
 [[headers]]
-  for = "/*"
-  [headers.values]
-    X-Frame-Options = "DENY"
-    X-Content-Type-Options = "nosniff"
-    Content-Security-Policy = "default-src 'self';frame-ancestors 'none';script-src 'self';style-src 'self' 'unsafe-inline';"
-    Strict-Transport-Security = "max-age=31536000;includeSubDomains"
+for="/*"
+[headers.values]
+X-Frame-Options="DENY;"
+X-Content-Type-Options="nosniff;"
+Content-Security-Policy="default-src 'self';frame-ancestors 'none';script-src 'self';style-src 'self' 'unsafe-inline';"
+Strict-Transport-Security="max-age=31536000;includeSubDomains;"
 
 [[redirects]]
   from = "/*"
