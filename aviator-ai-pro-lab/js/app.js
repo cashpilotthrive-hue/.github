@@ -392,6 +392,10 @@ class AviatorApp {
       const result = this.strategyEngine.optimize(this.selectedStrategy, crashData, this.initialBankroll, 80);
 
       this._displayOptimizationResults(result);
+      // BOLT OPTIMIZATION: Automatically update profit chart with optimized simulation path
+      if (result && result.bestResult) {
+        this._updateProfitChartFromBacktest(result.bestResult);
+      }
       loading.style.display = 'none';
       document.getElementById('optimizeStrategy').disabled = false;
     }, 200);
