@@ -392,6 +392,9 @@ class AviatorApp {
       const result = this.strategyEngine.optimize(this.selectedStrategy, crashData, this.initialBankroll, 80);
 
       this._displayOptimizationResults(result);
+      if (result && result.bestResult) {
+        this._updateProfitChartFromBacktest(result.bestResult);
+      }
       loading.style.display = 'none';
       document.getElementById('optimizeStrategy').disabled = false;
     }, 200);
@@ -404,6 +407,7 @@ class AviatorApp {
     }
 
     const el = document.getElementById('optimizerResults');
+    el.classList.remove('no-data');
     const profitClass = result.bestResult.totalProfit >= 0 ? 'positive' : 'negative';
 
     const paramsHTML = Object.entries(result.bestParams)
