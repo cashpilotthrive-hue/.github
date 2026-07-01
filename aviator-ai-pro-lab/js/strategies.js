@@ -116,17 +116,17 @@ class StrategyEngine {
       if (includeResults) {
         results.push({
           round: i + 1,
-          crashPoint: Math.round(crashPoint * 100) / 100,
-          betAmount: Math.round(actualBet * 100) / 100,
-          cashOutTarget: Math.round(cashOutTarget * 100) / 100,
+          crashPoint: this._round(crashPoint),
+          betAmount: this._round(actualBet),
+          cashOutTarget: this._round(cashOutTarget),
           won,
-          profit: Math.round(profit * 100) / 100,
-          bankroll: Math.round(currentBankroll * 100) / 100
+          profit: this._round(profit),
+          bankroll: this._round(currentBankroll)
         });
       }
 
       totalRounds++;
-      this._updateState(strategyKey, state, won, crashPoint, results);
+      this._updateState(strategyKey, state, won, crashPoint);
     }
 
     const totalProfit = currentBankroll - bankroll;
@@ -134,16 +134,21 @@ class StrategyEngine {
     return {
       strategy: strategy.name,
       results,
-      finalBankroll: Math.round(currentBankroll * 100) / 100,
+      finalBankroll: this._round(currentBankroll),
       totalRounds,
       wins,
       losses,
       winRate: totalRounds > 0 ? (wins / totalRounds * 100).toFixed(1) : '0.0',
-      totalProfit: Math.round(totalProfit * 100) / 100,
-      roi: Math.round((totalProfit / bankroll * 100) * 100) / 100,
-      maxDrawdown: Math.round(maxDrawdown * 100) / 100,
+      totalProfit: this._round(totalProfit),
+      roi: this._round(totalProfit / bankroll * 100),
+      maxDrawdown: this._round(maxDrawdown),
       peakBankroll: peakBankroll.toFixed(2)
     };
+  }
+
+  _round(num, decimals = 2) {
+    const p = Math.pow(10, decimals);
+    return Math.round(num * p) / p;
   }
 
   _initState(key, params) {
@@ -230,7 +235,7 @@ class StrategyEngine {
     };
   }
 
-  _updateState(key, state, won, crashPoint, results) {
+  _updateState(key, state, won, crashPoint) {
     if (won) {
       state.consecutiveWins++;
       state.consecutiveLosses = 0;
