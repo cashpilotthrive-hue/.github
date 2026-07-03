@@ -393,6 +393,7 @@ class StrategyEngine {
       this.strategies[strategyKey].params = bestParams;
       finalResult = this.backtest(strategyKey, crashPoints, bankroll, { includeResults: true });
       finalResult.score = bestResult.score;
+      finalResult.params = bestParams;
       this.strategies[strategyKey].params = originalParams;
     }
 
