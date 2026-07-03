@@ -127,7 +127,7 @@ class StrategyEngine {
         });
       }
 
-      this._updateState(strategyKey, state, won, crashPoint, results);
+      this._updateState(strategyKey, state, won, crashPoint);
     }
     const totalProfit = currentBankroll - bankroll;
 
@@ -230,7 +230,7 @@ class StrategyEngine {
     };
   }
 
-  _updateState(key, state, won, crashPoint, results) {
+  _updateState(key, state, won, crashPoint) {
     if (won) {
       state.consecutiveWins++;
       state.consecutiveLosses = 0;
