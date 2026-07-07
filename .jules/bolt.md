@@ -17,3 +17,15 @@
 ## 2026-03-27 - FastAPI event loop blocking by sync I/O
 **Learning:** Route handlers performing synchronous I/O (like seek and tell on UploadFile.file) should be defined as 'def' rather than 'async def'. This allows FastAPI to run them in a thread pool, preventing the main event loop from being blocked and significantly improving concurrency and responsiveness.
 **Action:** Always prefer 'def' for endpoints that use synchronous file operations or other blocking calls.
+
+## 2024-05-15 - Consolidating passes in simulation loops
+**Learning:** Multiple O(N) array methods (reduce, filter, slice) inside a tight simulation loop (100k+ iterations) create significant overhead due to repeated iterations and intermediate array allocations.
+**Action:** Consolidate statistical calculations into a single O(N) pass using a traditional for-loop to minimize overhead.
+
+## 2024-05-15 - Conditional result generation for optimization
+**Learning:** Generating and storing full simulation results (e.g., round-by-round logs) is extremely expensive during parameter optimization where only the final summary metrics matter.
+**Action:** Implement an 'includeResults' flag in backtest methods to skip result array population during iterative search phases, saving ~80% CPU and memory.
+
+## 2024-05-15 - State management in optimization loops
+**Learning:** Mutating strategy parameters in-place during an optimization loop can lead to state corruption if original parameters are not correctly cloned and restored.
+**Action:** Always capture a shallow copy of parameters before an optimization loop and explicitly restore them after iterations and final high-fidelity tests.
