@@ -349,11 +349,6 @@ class StrategyEngine {
     };
   }
 
-  _round(n, decimals = 2) {
-    const p = Math.pow(10, decimals);
-    return Math.round(n * p) / p;
-  }
-
   _estimateWinProb(cashOut) {
     return Math.min(0.99, 0.97 / cashOut);
   }
