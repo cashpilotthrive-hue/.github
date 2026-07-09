@@ -398,12 +398,13 @@ class AviatorApp {
   }
 
   _displayOptimizationResults(result) {
+    const el = document.getElementById('optimizerResults');
+    el.classList.remove('no-data');
+
     if (!result || !result.bestResult) {
-      document.getElementById('optimizerResults').innerHTML = '<p class="no-data">Optimization could not find valid parameters.</p>';
+      el.innerHTML = '<p class="no-data">Optimization could not find valid parameters.</p>';
       return;
     }
-
-    const el = document.getElementById('optimizerResults');
     const profitClass = result.bestResult.totalProfit >= 0 ? 'positive' : 'negative';
 
     const paramsHTML = Object.entries(result.bestParams)
