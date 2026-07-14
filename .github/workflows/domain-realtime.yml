@@ -33,7 +33,7 @@ jobs:
           domain=$(tr -d '\r\n' < CNAME)
           target=<org-or-user>.github.io
           TXT
-      - uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febabb082c67da73
+      - uses: actions/upload-artifact@0af58f1d06a74b55bc3eeefa3c35630d93be6527
         with:
           name: dns-solution-${{ matrix.provider }}
           path: generated/providers/${{ matrix.provider }}.txt
@@ -71,7 +71,7 @@ jobs:
           }
           JSON
           echo "domain=$DOMAIN" >> "$GITHUB_OUTPUT"
-      - uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febabb082c67da73
+      - uses: actions/upload-artifact@0af58f1d06a74b55bc3eeefa3c35630d93be6527
         with:
           name: site-build
           path: |
@@ -85,7 +85,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/download-artifact@cc206184f97c399a382e39958ee73c1739c9df80
+      - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c14d85
         with:
           name: site-build
           path: .
