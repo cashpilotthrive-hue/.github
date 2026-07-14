@@ -33,7 +33,7 @@ jobs:
           domain=$(tr -d '\r\n' < CNAME)
           target=<org-or-user>.github.io
           TXT
-      - uses: actions/upload-artifact@a8a914291bb02a1c0710ba910811277a3ad08b04
+      - uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febabb082c67da73
         with:
           name: dns-solution-${{ matrix.provider }}
           path: generated/providers/${{ matrix.provider }}.txt
@@ -71,7 +71,7 @@ jobs:
           }
           JSON
           echo "domain=$DOMAIN" >> "$GITHUB_OUTPUT"
-      - uses: actions/upload-artifact@a8a914291bb02a1c0710ba910811277a3ad08b04
+      - uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febabb082c67da73
         with:
           name: site-build
           path: |
@@ -85,14 +85,14 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c14d85
+      - uses: actions/download-artifact@cc206184f97c399a382e39958ee73c1739c9df80
         with:
           name: site-build
           path: .
       - name: Setup Pages
         uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@163693583ad899a28867769910074550e05445e5
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa
         with:
           path: ./site
       - name: Deploy to GitHub Pages
