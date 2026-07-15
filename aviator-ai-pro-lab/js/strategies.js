@@ -370,11 +370,11 @@ class StrategyEngine {
 
     let bestResult = null;
     let bestParams = null;
+    const originalParams = { ...strategy.params };
 
     for (let i = 0; i < iterations; i++) {
-      const params = this._randomizeParams(strategyKey, strategy.params);
-      const tempStrategy = { ...this.strategies[strategyKey], params };
-      this.strategies[strategyKey] = tempStrategy;
+      const params = this._randomizeParams(strategyKey, originalParams);
+      this.strategies[strategyKey].params = params;
 
       try {
         // BOLT OPTIMIZATION: Use { includeResults: false } to avoid massive array allocations during iterations
@@ -390,14 +390,15 @@ class StrategyEngine {
       }
     }
 
-    this.strategies[strategyKey] = { ...strategy, params: strategy.params };
+    // Restore original params
+    this.strategies[strategyKey].params = originalParams;
 
     // Final high-fidelity backtest with best parameters to include results for UI
     if (bestParams) {
       this.strategies[strategyKey].params = bestParams;
       const finalResult = this.backtest(strategyKey, crashPoints, bankroll, { includeResults: true });
       bestResult = { ...finalResult, score: bestResult.score };
-      this.strategies[strategyKey].params = strategy.params; // Restore
+      this.strategies[strategyKey].params = originalParams; // Restore again
     }
 
     return {

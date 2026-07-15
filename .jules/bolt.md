@@ -17,3 +17,7 @@
 ## 2026-03-27 - FastAPI event loop blocking by sync I/O
 **Learning:** Route handlers performing synchronous I/O (like seek and tell on UploadFile.file) should be defined as 'def' rather than 'async def'. This allows FastAPI to run them in a thread pool, preventing the main event loop from being blocked and significantly improving concurrency and responsiveness.
 **Action:** Always prefer 'def' for endpoints that use synchronous file operations or other blocking calls.
+
+## 2026-03-27 - Netlify CI sensitivity to config file formatting
+**Learning:** Netlify deployment CI checks for `public/_redirects` and `public/_headers` are extremely sensitive to trailing whitespace and newline characters. Even a single extra space or a missing final newline can cause compliance failures.
+**Action:** Use `printf` or similar tools that do not append hidden characters to ensure files match required compliance strings exactly. Avoid using `echo` if its trailing newline behavior is inconsistent across environments.
