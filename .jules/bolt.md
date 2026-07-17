@@ -17,3 +17,7 @@
 ## 2026-03-27 - FastAPI event loop blocking by sync I/O
 **Learning:** Route handlers performing synchronous I/O (like seek and tell on UploadFile.file) should be defined as 'def' rather than 'async def'. This allows FastAPI to run them in a thread pool, preventing the main event loop from being blocked and significantly improving concurrency and responsiveness.
 **Action:** Always prefer 'def' for endpoints that use synchronous file operations or other blocking calls.
+
+## 2026-04-22 - Regex search overhead for small static collections
+**Learning:** In Python, replacing individual substring searches (`term in text`) with a compiled regex pattern (`re.compile("term1|term2|...")`) for a small collection (e.g. 7 terms) can be slower, particularly on large safe texts, because Python's built-in substring search (Boyer-Moore-Horspool) runs in highly optimized C and avoids the backtracking and state machine traversal of Python's `re` module.
+**Action:** Keep small collection substring checks as native `in` checks rather than converting them to regular expressions unless the collection scale or pattern complexity warrants a regex engine.
