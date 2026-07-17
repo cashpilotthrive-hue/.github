@@ -144,11 +144,11 @@ class StrategyEngine {
       totalRounds,
       wins,
       losses,
-      winRate: totalRounds > 0 ? this._round(wins / totalRounds * 100, 1).toFixed(1) : '0.0',
+      winRate: totalRounds > 0 ? (wins / totalRounds * 100).toFixed(1) : '0.0',
       totalProfit: Math.round(totalProfit * 100) / 100,
       roi: Math.round((totalProfit / bankroll * 100) * 100) / 100,
       maxDrawdown: Math.round(maxDrawdown * 100) / 100,
-      peakBankroll: this._round(peakBankroll, 2).toFixed(2)
+      peakBankroll: peakBankroll.toFixed(2)
     };
   }
 
