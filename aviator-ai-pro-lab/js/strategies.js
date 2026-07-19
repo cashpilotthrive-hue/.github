@@ -66,13 +66,22 @@ class StrategyEngine {
   }
 
   /**
+   * Helper function to round numbers to specified decimal places efficiently.
+   */
+  _round(n, decimals) {
+    const factor = Math.pow(10, decimals);
+    return Math.round(n * factor) / factor;
+  }
+
+  /**
    * Execute a strategy for a given number of rounds against crash data
    */
-  backtest(strategyKey, crashPoints, bankroll = 1000) {
+  backtest(strategyKey, crashPoints, bankroll = 1000, options = {}) {
+    const { includeResults = true } = options;
     const strategy = this.strategies[strategyKey];
     if (!strategy) throw new Error(`Unknown strategy: ${strategyKey}`);
 
-    const results = [];
+    const results = includeResults ? [] : null;
     let currentBankroll = bankroll;
     let state = this._initState(strategyKey, strategy.params);
 
@@ -81,6 +90,7 @@ class StrategyEngine {
     let losses = 0;
     let peakBankroll = bankroll;
     let maxDrawdown = 0;
+    let totalRounds = 0;
 
     for (let i = 0; i < crashPoints.length; i++) {
       if (currentBankroll <= 0) break;
@@ -110,21 +120,25 @@ class StrategyEngine {
         maxDrawdown = currentDrawdown;
       }
 
-      // BOLT OPTIMIZATION: Use Math.round instead of toFixed for 20x faster rounding
-      results.push({
-        round: i + 1,
-        crashPoint: Math.round(crashPoint * 100) / 100,
-        betAmount: Math.round(actualBet * 100) / 100,
-        cashOutTarget: Math.round(cashOutTarget * 100) / 100,
-        won,
-        profit: Math.round(profit * 100) / 100,
-        bankroll: Math.round(currentBankroll * 100) / 100
-      });
+      totalRounds++;
 
-      this._updateState(strategyKey, state, won, crashPoint, results);
+      if (includeResults) {
+        // BOLT OPTIMIZATION: Use Math.round instead of toFixed for 20x faster rounding
+        results.push({
+          round: i + 1,
+          crashPoint: Math.round(crashPoint * 100) / 100,
+          betAmount: Math.round(actualBet * 100) / 100,
+          cashOutTarget: Math.round(cashOutTarget * 100) / 100,
+          won,
+          profit: Math.round(profit * 100) / 100,
+          bankroll: Math.round(currentBankroll * 100) / 100
+        });
+      }
+
+      // BOLT OPTIMIZATION: Removed unused results parameter from state update to simplify and prevent overhead.
+      this._updateState(strategyKey, state, won, crashPoint);
     }
 
-    const totalRounds = results.length;
     const totalProfit = currentBankroll - bankroll;
 
     return {
@@ -226,7 +240,7 @@ class StrategyEngine {
     };
   }
 
-  _updateState(key, state, won, crashPoint, results) {
+  _updateState(key, state, won, crashPoint) {
     if (won) {
       state.consecutiveWins++;
       state.consecutiveLosses = 0;
@@ -297,14 +311,35 @@ class StrategyEngine {
       };
     }
 
-    const avg = crashes.reduce((a, b) => a + b, 0) / crashes.length;
-    const variance = crashes.reduce((s, c) => s + Math.pow(c - avg, 2), 0) / crashes.length;
+    // BOLT OPTIMIZATION: Single O(N) pass for avg, variance (volatility), recentAvg and lowCrashRatio
+    const len = crashes.length;
+    let sum = 0;
+    let sumSq = 0;
+    let recentSum = 0;
+    let lowCrashCount = 0;
+    const recentLimit = Math.min(len, 5);
+    const recentStartIndex = len - recentLimit;
+
+    for (let i = 0; i < len; i++) {
+      const c = crashes[i];
+      sum += c;
+      sumSq += c * c;
+      if (i >= recentStartIndex) {
+        recentSum += c;
+      }
+      if (c < 1.5) {
+        lowCrashCount++;
+      }
+    }
+
+    const avg = sum / len;
+    const variance = Math.max(0, (sumSq / len) - (avg * avg));
     const volatility = Math.sqrt(variance);
 
-    const recentAvg = crashes.slice(-5).reduce((a, b) => a + b, 0) / Math.min(crashes.length, 5);
+    const recentAvg = recentSum / recentLimit;
     const momentum = recentAvg - avg;
 
-    const lowCrashRatio = crashes.filter(c => c < 1.5).length / crashes.length;
+    const lowCrashRatio = lowCrashCount / len;
 
     let suggestedCashOut;
     if (lowCrashRatio > 0.4) {
@@ -323,10 +358,11 @@ class StrategyEngine {
     state.momentum = momentum;
     state.volatility = volatility;
 
+    // BOLT OPTIMIZATION: Used fast math-based helper rounding instead of parseFloat(n.toFixed(decimals))
     return {
       suggestedBet: Math.max(1, Math.min(betSizing, bankroll * 0.1)),
-      suggestedCashOut: parseFloat(suggestedCashOut.toFixed(2)),
-      confidence: parseFloat(confidence.toFixed(3)),
+      suggestedCashOut: this._round(suggestedCashOut, 2),
+      confidence: this._round(confidence, 3),
       analysis: { avg, volatility, momentum, lowCrashRatio }
     };
   }
@@ -346,13 +382,17 @@ class StrategyEngine {
     let bestResult = null;
     let bestParams = null;
 
+    // Capture original params of strategy to avoid random walk degradation due to shared object mutation.
+    const originalParams = { ...strategy.params };
+
     for (let i = 0; i < iterations; i++) {
-      const params = this._randomizeParams(strategyKey, strategy.params);
+      const params = this._randomizeParams(strategyKey, originalParams);
       const tempStrategy = { ...this.strategies[strategyKey], params };
       this.strategies[strategyKey] = tempStrategy;
 
       try {
-        const result = this.backtest(strategyKey, crashPoints, bankroll);
+        // BOLT OPTIMIZATION: Use fast path simulation by skipping results array during optimizer runs.
+        const result = this.backtest(strategyKey, crashPoints, bankroll, { includeResults: false });
         const score = this._scoreResult(result, bankroll);
 
         if (!bestResult || score > bestResult.score) {
@@ -364,7 +404,21 @@ class StrategyEngine {
       }
     }
 
-    this.strategies[strategyKey] = { ...strategy, params: strategy.params };
+    // Restore original parameters to the engine's strategy config
+    this.strategies[strategyKey] = { ...strategy, params: originalParams };
+
+    if (bestParams) {
+      // BOLT OPTIMIZATION: Run a final high-fidelity simulation with the best parameters to restore results array for UI visualization.
+      const tempStrategy = { ...this.strategies[strategyKey], params: bestParams };
+      this.strategies[strategyKey] = tempStrategy;
+
+      const score = bestResult.score;
+      bestResult = this.backtest(strategyKey, crashPoints, bankroll, { includeResults: true });
+      bestResult.score = score;
+
+      // Ensure we restore original parameters to the state
+      this.strategies[strategyKey] = { ...strategy, params: originalParams };
+    }
 
     return {
       bestParams,
