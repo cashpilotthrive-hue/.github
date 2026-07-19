@@ -17,3 +17,7 @@
 ## 2026-03-27 - FastAPI event loop blocking by sync I/O
 **Learning:** Route handlers performing synchronous I/O (like seek and tell on UploadFile.file) should be defined as 'def' rather than 'async def'. This allows FastAPI to run them in a thread pool, preventing the main event loop from being blocked and significantly improving concurrency and responsiveness.
 **Action:** Always prefer 'def' for endpoints that use synchronous file operations or other blocking calls.
+
+## 2026-07-19 - Skipping results array creation during AI optimization
+**Learning:** During iterative optimization (e.g., 50–100 iterations of 500–1000 rounds), building the `results` array of objects (pushing, rounding, allocating memory) is a massive bottleneck that degrades performance.
+**Action:** Implement an `includeResults` toggle in simulation/backtest handlers. Set to `false` during high-frequency parameter-tuning iterations to save garbage collection and allocation cycles, and only run a single high-fidelity run with `includeResults: true` for the best candidate at the end.
