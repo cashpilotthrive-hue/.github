@@ -68,15 +68,17 @@ class StrategyEngine {
   /**
    * Execute a strategy for a given number of rounds against crash data
    */
-  backtest(strategyKey, crashPoints, bankroll = 1000) {
+  backtest(strategyKey, crashPoints, bankroll = 1000, options = {}) {
     const strategy = this.strategies[strategyKey];
     if (!strategy) throw new Error(`Unknown strategy: ${strategyKey}`);
 
+    const { includeResults = true } = options;
     const results = [];
     let currentBankroll = bankroll;
     let state = this._initState(strategyKey, strategy.params);
 
     // BOLT OPTIMIZATION: Calculate metrics in a single pass to avoid redundant array iterations
+    let roundsExecuted = 0;
     let wins = 0;
     let losses = 0;
     let peakBankroll = bankroll;
@@ -110,21 +112,25 @@ class StrategyEngine {
         maxDrawdown = currentDrawdown;
       }
 
-      // BOLT OPTIMIZATION: Use Math.round instead of toFixed for 20x faster rounding
-      results.push({
-        round: i + 1,
-        crashPoint: Math.round(crashPoint * 100) / 100,
-        betAmount: Math.round(actualBet * 100) / 100,
-        cashOutTarget: Math.round(cashOutTarget * 100) / 100,
-        won,
-        profit: Math.round(profit * 100) / 100,
-        bankroll: Math.round(currentBankroll * 100) / 100
-      });
+      roundsExecuted++;
 
-      this._updateState(strategyKey, state, won, crashPoint, results);
+      if (includeResults) {
+        // BOLT OPTIMIZATION: Use Math.round instead of toFixed for 20x faster rounding
+        results.push({
+          round: i + 1,
+          crashPoint: Math.round(crashPoint * 100) / 100,
+          betAmount: Math.round(actualBet * 100) / 100,
+          cashOutTarget: Math.round(cashOutTarget * 100) / 100,
+          won,
+          profit: Math.round(profit * 100) / 100,
+          bankroll: Math.round(currentBankroll * 100) / 100
+        });
+      }
+
+      this._updateState(strategyKey, state, won, crashPoint);
     }
 
-    const totalRounds = results.length;
+    const totalRounds = roundsExecuted;
     const totalProfit = currentBankroll - bankroll;
 
     return {
@@ -226,7 +232,7 @@ class StrategyEngine {
     };
   }
 
-  _updateState(key, state, won, crashPoint, results) {
+  _updateState(key, state, won, crashPoint) {
     if (won) {
       state.consecutiveWins++;
       state.consecutiveLosses = 0;
@@ -297,14 +303,27 @@ class StrategyEngine {
       };
     }
 
-    const avg = crashes.reduce((a, b) => a + b, 0) / crashes.length;
-    const variance = crashes.reduce((s, c) => s + Math.pow(c - avg, 2), 0) / crashes.length;
+    // BOLT OPTIMIZATION: Calculate all metrics in a single O(N) pass
+    let sum = 0;
+    let sumSq = 0;
+    let lowCrashCount = 0;
+    let recentSum = 0;
+    const len = crashes.length;
+
+    for (let i = 0; i < len; i++) {
+      const c = crashes[i];
+      sum += c;
+      sumSq += c * c;
+      if (c < 1.5) lowCrashCount++;
+      if (i >= len - 5) recentSum += c;
+    }
+
+    const avg = sum / len;
+    const variance = Math.max(0, (sumSq / len) - (avg * avg));
     const volatility = Math.sqrt(variance);
-
-    const recentAvg = crashes.slice(-5).reduce((a, b) => a + b, 0) / Math.min(crashes.length, 5);
+    const recentAvg = recentSum / Math.min(len, 5);
     const momentum = recentAvg - avg;
-
-    const lowCrashRatio = crashes.filter(c => c < 1.5).length / crashes.length;
+    const lowCrashRatio = lowCrashCount / len;
 
     let suggestedCashOut;
     if (lowCrashRatio > 0.4) {
@@ -352,7 +371,7 @@ class StrategyEngine {
       this.strategies[strategyKey] = tempStrategy;
 
       try {
-        const result = this.backtest(strategyKey, crashPoints, bankroll);
+        const result = this.backtest(strategyKey, crashPoints, bankroll, { includeResults: false });
         const score = this._scoreResult(result, bankroll);
 
         if (!bestResult || score > bestResult.score) {
@@ -365,6 +384,15 @@ class StrategyEngine {
     }
 
     this.strategies[strategyKey] = { ...strategy, params: strategy.params };
+
+    // Perform one final backtest with best params to get full results for UI
+    if (bestParams) {
+      const originalParams = this.strategies[strategyKey].params;
+      this.strategies[strategyKey].params = bestParams;
+      const finalResult = this.backtest(strategyKey, crashPoints, bankroll, { includeResults: true });
+      this.strategies[strategyKey].params = originalParams;
+      bestResult = { ...finalResult, score: bestResult.score };
+    }
 
     return {
       bestParams,
