@@ -83,7 +83,10 @@ class AviatorEngine {
     const points = [];
     for (let i = 0; i < count; i++) {
       points.push(this.generateCrashPoint());
-      this.seed = this._generateSeed();
+      // BOLT OPTIMIZATION: Instead of invoking the heavy synchronous crypto.getRandomValues
+      // call via _generateSeed() on every single round, we propagate subsequent seeds
+      // deterministically using the existing fast _simpleHash function.
+      this.seed = this._simpleHash(this.seed);
     }
     return points;
   }
@@ -103,6 +106,7 @@ class AviatorEngine {
     let maxLoseStreak = 0, currentLoseStreak = 0;
     let peak = 0, maxDD = 0, cumulativeProfit = 0;
     let grossWins = 0, grossLosses = 0;
+    let sumSqProfit = 0; // Track sum of squares of profits for single-pass variance
     const crashes = [];
 
     for (let i = 0; i < len; i++) {
@@ -117,6 +121,8 @@ class AviatorEngine {
       if (crash < minCrash) minCrash = crash;
 
       sumProfit += profit;
+      sumSqProfit += profit * profit; // Accumulate profit squares
+
       cumulativeProfit += profit;
       if (cumulativeProfit > peak) peak = cumulativeProfit;
       const dd = peak - cumulativeProfit;
@@ -137,11 +143,9 @@ class AviatorEngine {
     }
 
     const avgProfit = sumProfit / len;
-    let varianceSum = 0;
-    for (let i = 0; i < len; i++) {
-      varianceSum += Math.pow(this.history[i].profit - avgProfit, 2);
-    }
-    const variance = len < 2 ? 0 : varianceSum / (len - 1);
+    // BOLT OPTIMIZATION: Use single-pass variance formula to completely avoid a second iteration loop.
+    // For numerical stability, we take Math.max(0, ...) to avoid tiny negative values due to floating-point imprecision.
+    const variance = len < 2 ? 0 : Math.max(0, (sumSqProfit - (sumProfit * sumProfit) / len) / (len - 1));
     const std = Math.sqrt(variance);
     const sharpe = std === 0 ? 0 : (avgProfit / std) * Math.sqrt(252);
 
