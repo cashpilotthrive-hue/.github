@@ -17,3 +17,7 @@
 ## 2026-03-27 - FastAPI event loop blocking by sync I/O
 **Learning:** Route handlers performing synchronous I/O (like seek and tell on UploadFile.file) should be defined as 'def' rather than 'async def'. This allows FastAPI to run them in a thread pool, preventing the main event loop from being blocked and significantly improving concurrency and responsiveness.
 **Action:** Always prefer 'def' for endpoints that use synchronous file operations or other blocking calls.
+
+## 2026-04-18 - Small blocklist list-comprehension performance in Python
+**Learning:** For small blocklists (e.g., 7 terms), using a Python list comprehension `hits = [term for term in SAFE_BLOCKLIST if term in lowered_content]` is substantially faster than compiling/searching with regex or short-circuiting with `any()`. Short-circuit generators and compiled regex engines have compilation/backtracking overhead that is larger than the trivial list comprehension for small inputs.
+**Action:** Retain simple list comprehensions or set membership checks for small datasets instead of over-complicating with regex/generators.
