@@ -17,3 +17,7 @@
 ## 2026-03-27 - FastAPI event loop blocking by sync I/O
 **Learning:** Route handlers performing synchronous I/O (like seek and tell on UploadFile.file) should be defined as 'def' rather than 'async def'. This allows FastAPI to run them in a thread pool, preventing the main event loop from being blocked and significantly improving concurrency and responsiveness.
 **Action:** Always prefer 'def' for endpoints that use synchronous file operations or other blocking calls.
+
+## 2026-04-21 - Initialization failure breaking click handlers in AviatorApp
+**Learning:** A pre-existing syntax error `this._updateCrashChart is not a function` in the initialization phase (`_generateInitialCrashData`) aborted execution of the `AviatorApp` constructor, leaving the global `app` variable undefined and silent failures in inline event handlers like `onclick="app.selectStrategy(...)"`.
+**Action:** Always capture and inspect console error events (`page.on('console', ...)` / `page.on('pageerror', ...)`) in headless Playwright verification scripts to catch initialization exceptions that do not trigger HTTP errors.
