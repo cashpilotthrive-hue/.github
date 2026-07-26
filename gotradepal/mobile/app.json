@@ -1,0 +1,1 @@
+{"expo":{"name":"GoTradePal","slug":"gotradepal","scheme":"gotradepal","version":"0.1.0","orientation":"portrait","userInterfaceStyle":"automatic","ios":{"bundleIdentifier":"com.gotradepal.app","supportsTablet":true},"android":{"package":"com.gotradepal.app","adaptiveIcon":{"backgroundColor":"#0B1220"}},"extra":{"apiUrl":"http://localhost:8000"}}}
