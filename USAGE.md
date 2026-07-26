@@ -43,6 +43,7 @@ The script will:
 3. Install development tools
 4. Configure dotfiles
 5. Apply system settings
+6. Install bash auto-completion for setup scripts
 
 ### 4. Post-Installation
 
@@ -61,6 +62,16 @@ gh --version
 # Test Docker (requires logout/login for group changes)
 docker run hello-world
 ```
+
+### Optional Setup Flags
+
+```bash
+./setup.sh --help
+./setup.sh --only dotfiles
+./setup.sh --skip autocomplete
+```
+
+Available step names: `packages`, `devtools`, `dotfiles`, `system`, `autocomplete`.
 
 ## Individual Scripts
 
@@ -90,6 +101,12 @@ You can also run individual setup scripts:
 
 ```bash
 ./scripts/configure-system.sh
+```
+
+### Install Shell Auto-Completion
+
+```bash
+./scripts/install-autocomplete.sh
 ```
 
 ## Customization

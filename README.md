@@ -41,6 +41,21 @@ chmod +x setup.sh
 - kubectl
 
 
+## Setup Options & Auto-Completion
+
+`setup.sh` now supports optional step filtering:
+
+```bash
+./setup.sh --help
+./setup.sh --only devtools
+./setup.sh --skip autocomplete
+```
+
+The setup process also installs bash auto-completion for:
+- `setup.sh`
+- `scripts/install-packages.sh`
+- `scripts/install-devtools.sh`
+
 ## Revenue Tooling Automation
 
 Use `scripts/configure-revenue-tools.sh` to provision revenue/CRM/analytics secrets and variables in a target GitHub repository, then run `.github/workflows/revenue-ops.yml` for scheduled health checks and reconciliation scaffolding. See `REVENUE_TOOLING_SETUP.md`.
@@ -61,6 +76,7 @@ Modify dotfiles in the `dotfiles/` directory to customize your environment.
 │   ├── install-devtools.sh
 │   ├── setup-dotfiles.sh
 │   ├── configure-system.sh
+│   ├── install-autocomplete.sh
 │   └── configure-revenue-tools.sh
 ├── dotfiles/                       # Configuration files
 │   ├── .bashrc
