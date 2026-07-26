@@ -1,0 +1,25 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: gotradepal
+      POSTGRES_PASSWORD: gotradepal
+      POSTGRES_DB: gotradepal
+    ports: ["5432:5432"]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./database/migrations:/docker-entrypoint-initdb.d:ro
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+  backend:
+    build: ./backend
+    env_file: .env.example
+    ports: ["8000:8000"]
+    depends_on: [db, redis]
+  admin:
+    build: ./admin
+    ports: ["5173:80"]
+    depends_on: [backend]
+volumes:
+  pgdata:
