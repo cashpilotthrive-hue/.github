@@ -83,7 +83,9 @@ class AviatorEngine {
     const points = [];
     for (let i = 0; i < count; i++) {
       points.push(this.generateCrashPoint());
-      this.seed = this._generateSeed();
+      // BOLT OPTIMIZATION: Propagate seed deterministically using simpleHash
+      // to avoid slow synchronous calls to _generateSeed() with crypto.getRandomValues.
+      this.seed = this._simpleHash(this.seed);
     }
     return points;
   }
@@ -95,10 +97,11 @@ class AviatorEngine {
     const len = this.history.length;
     if (len === 0) return null;
 
-    // BOLT OPTIMIZATION: Consolidate all metric calculations into a single O(N) loop
-    // to avoid redundant array iterations and multiple passes over the history.
+    // BOLT OPTIMIZATION: Consolidate all metric calculations, including standard deviation and
+    // variance, into a single O(N) pass by tracking the sum of squares of profits (sumSqProfit).
+    // This completely removes the redundant second iteration loop over history.
     let sumCrash = 0, maxCrash = -Infinity, minCrash = Infinity;
-    let sumProfit = 0, winCount = 0;
+    let sumProfit = 0, winCount = 0, sumSqProfit = 0;
     let maxWinStreak = 0, currentWinStreak = 0;
     let maxLoseStreak = 0, currentLoseStreak = 0;
     let peak = 0, maxDD = 0, cumulativeProfit = 0;
@@ -117,6 +120,7 @@ class AviatorEngine {
       if (crash < minCrash) minCrash = crash;
 
       sumProfit += profit;
+      sumSqProfit += profit * profit;
       cumulativeProfit += profit;
       if (cumulativeProfit > peak) peak = cumulativeProfit;
       const dd = peak - cumulativeProfit;
@@ -137,11 +141,7 @@ class AviatorEngine {
     }
 
     const avgProfit = sumProfit / len;
-    let varianceSum = 0;
-    for (let i = 0; i < len; i++) {
-      varianceSum += Math.pow(this.history[i].profit - avgProfit, 2);
-    }
-    const variance = len < 2 ? 0 : varianceSum / (len - 1);
+    const variance = len < 2 ? 0 : Math.max(0, (sumSqProfit - (sumProfit * sumProfit) / len) / (len - 1));
     const std = Math.sqrt(variance);
     const sharpe = std === 0 ? 0 : (avgProfit / std) * Math.sqrt(252);
 
