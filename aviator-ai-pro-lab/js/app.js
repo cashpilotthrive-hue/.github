@@ -392,18 +392,23 @@ class AviatorApp {
       const result = this.strategyEngine.optimize(this.selectedStrategy, crashData, this.initialBankroll, 80);
 
       this._displayOptimizationResults(result);
+      if (result && result.bestResult) {
+        this._updateProfitChartFromBacktest(result.bestResult);
+      }
       loading.style.display = 'none';
       document.getElementById('optimizeStrategy').disabled = false;
     }, 200);
   }
 
   _displayOptimizationResults(result) {
+    const el = document.getElementById('optimizerResults');
+    el.classList.remove('no-data');
+
     if (!result || !result.bestResult) {
-      document.getElementById('optimizerResults').innerHTML = '<p class="no-data">Optimization could not find valid parameters.</p>';
+      el.innerHTML = '<p class="no-data">Optimization could not find valid parameters.</p>';
+      el.classList.add('no-data');
       return;
     }
-
-    const el = document.getElementById('optimizerResults');
     const profitClass = result.bestResult.totalProfit >= 0 ? 'positive' : 'negative';
 
     const paramsHTML = Object.entries(result.bestParams)
