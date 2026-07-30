@@ -404,6 +404,7 @@ class AviatorApp {
     }
 
     const el = document.getElementById('optimizerResults');
+    el.classList.remove('no-data');
     const profitClass = result.bestResult.totalProfit >= 0 ? 'positive' : 'negative';
 
     const paramsHTML = Object.entries(result.bestParams)
