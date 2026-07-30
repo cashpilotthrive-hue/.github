@@ -17,3 +17,7 @@
 ## 2026-03-27 - FastAPI event loop blocking by sync I/O
 **Learning:** Route handlers performing synchronous I/O (like seek and tell on UploadFile.file) should be defined as 'def' rather than 'async def'. This allows FastAPI to run them in a thread pool, preventing the main event loop from being blocked and significantly improving concurrency and responsiveness.
 **Action:** Always prefer 'def' for endpoints that use synchronous file operations or other blocking calls.
+
+## 2026-05-25 - High-performance hex string generation in JavaScript
+**Learning:** Standard `number.toString(16).padStart(8, '0')` is relatively slow in high-frequency loops due to object allocations and string manipulation. Using a pre-allocated `Uint32Array` buffer and a pre-computed 256-entry byte-to-hex lookup table is significantly faster.
+**Action:** Use a pre-computed hex lookup table and bitwise shifts for hot-path hex string generation in performance-critical JavaScript code.
