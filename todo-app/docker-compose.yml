@@ -1,0 +1,19 @@
+version: '3.9'
+
+services:
+  todo-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    restart: unless-stopped
+    volumes:
+      - todo-data:/app/data
+
+volumes:
+  todo-data:
+    driver: local
