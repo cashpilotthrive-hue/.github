@@ -68,11 +68,11 @@ class StrategyEngine {
   /**
    * Execute a strategy for a given number of rounds against crash data
    */
-  backtest(strategyKey, crashPoints, bankroll = 1000) {
+  backtest(strategyKey, crashPoints, bankroll = 1000, includeResults = true) {
     const strategy = this.strategies[strategyKey];
     if (!strategy) throw new Error(`Unknown strategy: ${strategyKey}`);
 
-    const results = [];
+    const results = includeResults ? [] : null;
     let currentBankroll = bankroll;
     let state = this._initState(strategyKey, strategy.params);
 
@@ -81,6 +81,7 @@ class StrategyEngine {
     let losses = 0;
     let peakBankroll = bankroll;
     let maxDrawdown = 0;
+    let totalRounds = 0;
 
     for (let i = 0; i < crashPoints.length; i++) {
       if (currentBankroll <= 0) break;
@@ -95,6 +96,7 @@ class StrategyEngine {
       const payout = won ? actualBet * cashOutTarget : 0;
       const profit = payout - actualBet;
       currentBankroll += profit;
+      totalRounds++;
 
       if (won) {
         wins++;
@@ -111,20 +113,20 @@ class StrategyEngine {
       }
 
       // BOLT OPTIMIZATION: Use Math.round instead of toFixed for 20x faster rounding
-      results.push({
-        round: i + 1,
-        crashPoint: Math.round(crashPoint * 100) / 100,
-        betAmount: Math.round(actualBet * 100) / 100,
-        cashOutTarget: Math.round(cashOutTarget * 100) / 100,
-        won,
-        profit: Math.round(profit * 100) / 100,
-        bankroll: Math.round(currentBankroll * 100) / 100
-      });
+      if (includeResults) {
+        results.push({
+          round: i + 1,
+          crashPoint: Math.round(crashPoint * 100) / 100,
+          betAmount: Math.round(actualBet * 100) / 100,
+          cashOutTarget: Math.round(cashOutTarget * 100) / 100,
+          won,
+          profit: Math.round(profit * 100) / 100,
+          bankroll: Math.round(currentBankroll * 100) / 100
+        });
+      }
 
-      this._updateState(strategyKey, state, won, crashPoint, results);
+      this._updateState(strategyKey, state, won, crashPoint);
     }
-
-    const totalRounds = results.length;
     const totalProfit = currentBankroll - bankroll;
 
     return {
@@ -226,7 +228,7 @@ class StrategyEngine {
     };
   }
 
-  _updateState(key, state, won, crashPoint, results) {
+  _updateState(key, state, won, crashPoint) {
     if (won) {
       state.consecutiveWins++;
       state.consecutiveLosses = 0;
@@ -285,11 +287,12 @@ class StrategyEngine {
 
   _aiAnalyze(state) {
     const crashes = state.recentCrashes;
+    const len = crashes.length;
     const bankroll = state.bankroll || 1000;
     const riskMultipliers = { low: 0.5, medium: 1.0, high: 1.5 };
     const riskMult = riskMultipliers[state.riskLevel] || 1.0;
 
-    if (crashes.length < 3) {
+    if (len < 3) {
       return {
         suggestedBet: state.baseBet * riskMult,
         suggestedCashOut: 2.0,
@@ -297,14 +300,31 @@ class StrategyEngine {
       };
     }
 
-    const avg = crashes.reduce((a, b) => a + b, 0) / crashes.length;
-    const variance = crashes.reduce((s, c) => s + Math.pow(c - avg, 2), 0) / crashes.length;
-    const volatility = Math.sqrt(variance);
+    // BOLT OPTIMIZATION: Consolidate multiple array passes into a single O(N) pass
+    let sum = 0;
+    let lowCrashCount = 0;
+    let recentSum = 0;
+    const recentLen = Math.min(len, 5);
 
-    const recentAvg = crashes.slice(-5).reduce((a, b) => a + b, 0) / Math.min(crashes.length, 5);
+    for (let i = 0; i < len; i++) {
+      const c = crashes[i];
+      sum += c;
+      if (c < 1.5) lowCrashCount++;
+      if (i >= len - recentLen) recentSum += c;
+    }
+
+    const avg = sum / len;
+    const recentAvg = recentSum / recentLen;
     const momentum = recentAvg - avg;
+    const lowCrashRatio = lowCrashCount / len;
 
-    const lowCrashRatio = crashes.filter(c => c < 1.5).length / crashes.length;
+    // Second pass for volatility (O(N))
+    let varianceSum = 0;
+    for (let i = 0; i < len; i++) {
+      const diff = crashes[i] - avg;
+      varianceSum += diff * diff;
+    }
+    const volatility = Math.sqrt(varianceSum / len);
 
     let suggestedCashOut;
     if (lowCrashRatio > 0.4) {
@@ -317,16 +337,17 @@ class StrategyEngine {
 
     suggestedCashOut = Math.max(1.1, Math.min(suggestedCashOut, 10.0));
 
-    const confidence = Math.min(0.95, 0.3 + (crashes.length / state.adaptiveWindow) * 0.5 - volatility * 0.05);
+    const confidence = Math.min(0.95, 0.3 + (len / state.adaptiveWindow) * 0.5 - volatility * 0.05);
     const betSizing = state.baseBet * (0.5 + confidence * riskMult);
 
     state.momentum = momentum;
     state.volatility = volatility;
 
+    // BOLT OPTIMIZATION: Use Math.round instead of toFixed for faster rounding
     return {
       suggestedBet: Math.max(1, Math.min(betSizing, bankroll * 0.1)),
-      suggestedCashOut: parseFloat(suggestedCashOut.toFixed(2)),
-      confidence: parseFloat(confidence.toFixed(3)),
+      suggestedCashOut: Math.round(suggestedCashOut * 100) / 100,
+      confidence: Math.round(confidence * 1000) / 1000,
       analysis: { avg, volatility, momentum, lowCrashRatio }
     };
   }
@@ -352,7 +373,7 @@ class StrategyEngine {
       this.strategies[strategyKey] = tempStrategy;
 
       try {
-        const result = this.backtest(strategyKey, crashPoints, bankroll);
+        const result = this.backtest(strategyKey, crashPoints, bankroll, false);
         const score = this._scoreResult(result, bankroll);
 
         if (!bestResult || score > bestResult.score) {
