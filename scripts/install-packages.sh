@@ -112,3 +112,27 @@ case "$PKG_MANAGER" in
 esac
 
 echo "✓ Essential packages installed successfully"
+
+# Install additional packages from config/packages.txt
+PACKAGES_FILE="${SCRIPT_DIR}/config/packages.txt"
+if [ -f "$PACKAGES_FILE" ]; then
+    echo "Installing additional packages from config/packages.txt..."
+    mapfile -t EXTRA_PACKAGES < <(grep -v '^#' "$PACKAGES_FILE" | grep -v '^[[:space:]]*$')
+    if [ ${#EXTRA_PACKAGES[@]} -gt 0 ]; then
+        case "$PKG_MANAGER" in
+            apt)
+                sudo apt-get install -y "${EXTRA_PACKAGES[@]}" || \
+                    echo "Note: some packages from packages.txt may not be available via apt"
+                ;;
+            dnf)
+                sudo dnf install -y "${EXTRA_PACKAGES[@]}" || \
+                    echo "Note: some packages from packages.txt may not be available via dnf"
+                ;;
+            pacman)
+                sudo pacman -S --noconfirm "${EXTRA_PACKAGES[@]}" || \
+                    echo "Note: some packages from packages.txt may not be available via pacman"
+                ;;
+        esac
+        echo "✓ Additional packages installed"
+    fi
+fi
