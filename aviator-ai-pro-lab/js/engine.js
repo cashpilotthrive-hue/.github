@@ -3,17 +3,26 @@
  * Provably fair crash point generation and game simulation
  */
 
+// BOLT OPTIMIZATION: Pre-compute hex lookup table outside the class to avoid re-creation
+const HEX_TABLE = Array.from({ length: 256 }, (_, i) => i.toString(16).padStart(2, '0'));
+
 class AviatorEngine {
   constructor(houseEdge = 0.03) {
     this.houseEdge = houseEdge;
     this.history = [];
+
+    // BOLT OPTIMIZATION: Pre-allocate buffer for seed generation to reduce garbage collection
+    this._seedBuffer = new Uint32Array(4);
+
     this.seed = this._generateSeed();
   }
 
   _generateSeed() {
-    const arr = new Uint32Array(4);
-    crypto.getRandomValues(arr);
-    return Array.from(arr, v => v.toString(16).padStart(8, '0')).join('');
+    crypto.getRandomValues(this._seedBuffer);
+    return this._toHex(this._seedBuffer[0]) +
+           this._toHex(this._seedBuffer[1]) +
+           this._toHex(this._seedBuffer[2]) +
+           this._toHex(this._seedBuffer[3]);
   }
 
   /**
@@ -46,8 +55,7 @@ class AviatorEngine {
     h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
     h3 = Math.imul(h3 ^ (h3 >>> 16), 2246822507) ^ Math.imul(h4 ^ (h4 >>> 13), 3266489909);
     h4 = Math.imul(h4 ^ (h4 >>> 16), 2246822507) ^ Math.imul(h3 ^ (h3 >>> 13), 3266489909);
-    const hex = (v) => (v >>> 0).toString(16).padStart(8, '0');
-    return hex(h1) + hex(h2) + hex(h3) + hex(h4);
+    return this._toHex(h1) + this._toHex(h2) + this._toHex(h3) + this._toHex(h4);
   }
 
   /**
@@ -162,6 +170,13 @@ class AviatorEngine {
       sharpeRatio: sharpe.toFixed(3),
       profitFactor: profitFactor
     };
+  }
+
+  _toHex(v) {
+    return HEX_TABLE[(v >>> 24) & 0xff] +
+           HEX_TABLE[(v >>> 16) & 0xff] +
+           HEX_TABLE[(v >>> 8) & 0xff] +
+           HEX_TABLE[v & 0xff];
   }
 
   _round(num, decimals = 2) {

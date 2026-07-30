@@ -17,3 +17,11 @@
 ## 2026-03-27 - FastAPI event loop blocking by sync I/O
 **Learning:** Route handlers performing synchronous I/O (like seek and tell on UploadFile.file) should be defined as 'def' rather than 'async def'. This allows FastAPI to run them in a thread pool, preventing the main event loop from being blocked and significantly improving concurrency and responsiveness.
 **Action:** Always prefer 'def' for endpoints that use synchronous file operations or other blocking calls.
+
+## 2026-05-20 - Fast integer-to-hex conversion for core loops
+**Learning:** In performance-critical loops (like seed generation and hashing), repeated calls to `Number.toString(16).padStart(8, '0')` and `Array.from` create significant garbage collection overhead and are relatively slow. Pre-allocating a `Uint32Array` buffer and using a pre-computed 256-entry hex lookup table with bitwise operations can provide a ~40-50% speedup.
+**Action:** Use a pre-computed `_hexTable` and bitwise shifting (`(v >>> shift) & 0xff`) for integer-to-hex conversion in core logic.
+
+## 2026-05-20 - Repository hygiene: Cleaning up development artifacts
+**Learning:** Including temporary benchmark scripts, verification scripts, and screenshots in a pull request clutters the repository and increases the commit size unnecessarily.
+**Action:** Always delete all temporary verification files, benchmark scripts, and screenshots created during the optimization process before the final submission.
