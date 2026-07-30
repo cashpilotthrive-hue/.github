@@ -62,6 +62,15 @@ gh --version
 docker run hello-world
 ```
 
+### 5. Complete Network Access (Twingate)
+
+After host setup, complete the Twingate connector deployment flow:
+
+- Follow [`TWINGATE_CONNECTOR_SETUP.md`](TWINGATE_CONNECTOR_SETUP.md)
+- Generate fresh connector tokens in the Admin Console
+- Run the pre-filled Linux install command immediately
+- Verify connector status is **Connected**
+
 ## Individual Scripts
 
 You can also run individual setup scripts:
