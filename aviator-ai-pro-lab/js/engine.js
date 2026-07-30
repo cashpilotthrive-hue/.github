@@ -96,13 +96,14 @@ class AviatorEngine {
     if (len === 0) return null;
 
     // BOLT OPTIMIZATION: Consolidate all metric calculations into a single O(N) loop
-    // to avoid redundant array iterations and multiple passes over the history.
+    // using Welford's algorithm for variance to avoid redundant array iterations.
     let sumCrash = 0, maxCrash = -Infinity, minCrash = Infinity;
     let sumProfit = 0, winCount = 0;
     let maxWinStreak = 0, currentWinStreak = 0;
     let maxLoseStreak = 0, currentLoseStreak = 0;
     let peak = 0, maxDD = 0, cumulativeProfit = 0;
     let grossWins = 0, grossLosses = 0;
+    let M2 = 0, mean = 0;
     const crashes = [];
 
     for (let i = 0; i < len; i++) {
@@ -117,6 +118,10 @@ class AviatorEngine {
       if (crash < minCrash) minCrash = crash;
 
       sumProfit += profit;
+      const delta = profit - mean;
+      mean += delta / (i + 1);
+      M2 += delta * (profit - mean);
+
       cumulativeProfit += profit;
       if (cumulativeProfit > peak) peak = cumulativeProfit;
       const dd = peak - cumulativeProfit;
@@ -137,11 +142,7 @@ class AviatorEngine {
     }
 
     const avgProfit = sumProfit / len;
-    let varianceSum = 0;
-    for (let i = 0; i < len; i++) {
-      varianceSum += Math.pow(this.history[i].profit - avgProfit, 2);
-    }
-    const variance = len < 2 ? 0 : varianceSum / (len - 1);
+    const variance = len < 2 ? 0 : M2 / (len - 1);
     const std = Math.sqrt(variance);
     const sharpe = std === 0 ? 0 : (avgProfit / std) * Math.sqrt(252);
 
@@ -150,15 +151,15 @@ class AviatorEngine {
     return {
       totalRounds: len,
       winRate: (winCount / len * 100).toFixed(1),
-      totalProfit: sumProfit.toFixed(2),
-      avgCrash: (sumCrash / len).toFixed(2),
-      maxCrash: maxCrash.toFixed(2),
-      minCrash: minCrash.toFixed(2),
-      medianCrash: this._median(crashes).toFixed(2),
+      totalProfit: this._round(sumProfit).toFixed(2),
+      avgCrash: this._round(sumCrash / len).toFixed(2),
+      maxCrash: this._round(maxCrash).toFixed(2),
+      minCrash: this._round(minCrash).toFixed(2),
+      medianCrash: this._round(this._median(crashes)).toFixed(2),
       longestWinStreak: maxWinStreak,
       longestLoseStreak: maxLoseStreak,
-      avgProfit: avgProfit.toFixed(2),
-      maxDrawdown: maxDD.toFixed(2),
+      avgProfit: this._round(avgProfit).toFixed(2),
+      maxDrawdown: this._round(maxDD).toFixed(2),
       sharpeRatio: sharpe.toFixed(3),
       profitFactor: profitFactor
     };
