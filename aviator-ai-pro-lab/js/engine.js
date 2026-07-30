@@ -96,9 +96,9 @@ class AviatorEngine {
     if (len === 0) return null;
 
     // BOLT OPTIMIZATION: Consolidate all metric calculations into a single O(N) loop
-    // to avoid redundant array iterations and multiple passes over the history.
+    // and use Welford's or sum of squares formula for variance to avoid multiple passes.
     let sumCrash = 0, maxCrash = -Infinity, minCrash = Infinity;
-    let sumProfit = 0, winCount = 0;
+    let sumProfit = 0, sumProfitSq = 0, winCount = 0;
     let maxWinStreak = 0, currentWinStreak = 0;
     let maxLoseStreak = 0, currentLoseStreak = 0;
     let peak = 0, maxDD = 0, cumulativeProfit = 0;
@@ -117,6 +117,7 @@ class AviatorEngine {
       if (crash < minCrash) minCrash = crash;
 
       sumProfit += profit;
+      sumProfitSq += profit * profit;
       cumulativeProfit += profit;
       if (cumulativeProfit > peak) peak = cumulativeProfit;
       const dd = peak - cumulativeProfit;
@@ -137,12 +138,9 @@ class AviatorEngine {
     }
 
     const avgProfit = sumProfit / len;
-    let varianceSum = 0;
-    for (let i = 0; i < len; i++) {
-      varianceSum += Math.pow(this.history[i].profit - avgProfit, 2);
-    }
-    const variance = len < 2 ? 0 : varianceSum / (len - 1);
-    const std = Math.sqrt(variance);
+    // Single-pass variance: (Sum(x^2) - (Sum(x)^2 / N)) / (N - 1)
+    const variance = len < 2 ? 0 : (sumProfitSq - (sumProfit * sumProfit) / len) / (len - 1);
+    const std = Math.sqrt(Math.max(0, variance));
     const sharpe = std === 0 ? 0 : (avgProfit / std) * Math.sqrt(252);
 
     const profitFactor = grossLosses === 0 ? (grossWins > 0 ? 'Infinity' : '0.00') : (grossWins / grossLosses).toFixed(2);
