@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Personal Linux System Setup - Automated scripts and configurations for setting up a personal Linux development environment">
+    <title>Personal Linux System Setup</title>
+    
+    <!-- Google Analytics 4 -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EGPG5BBDRS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-EGPG5BBDRS');
+    </script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 3rem;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        h1 {
+            color: #667eea;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .tagline {
+            color: #666;
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .feature {
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .feature h3 {
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+        
+        .feature p {
+            color: #666;
+            font-size: 0.95rem;
+        }
+        
+        .install-section {
+            background: #f8f9fa;
+            padding: 2rem;
+            border-radius: 8px;
+            margin: 2rem 0;
+        }
+        
+        .install-section h2 {
+            color: #333;
+            margin-bottom: 1rem;
+        }
+        
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 1.5rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'Consolas', 'Monaco', 'Menlo', 'Courier New', Courier, monospace;
+        }
+        
+        .code-block code {
+            font-size: 0.9rem;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 1rem 2rem;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: background 0.3s;
+            margin: 0.5rem;
+        }
+        
+        .btn:hover {
+            background: #5568d3;
+        }
+        
+        .btn-secondary {
+            background: #764ba2;
+        }
+        
+        .btn-secondary:hover {
+            background: #653a8b;
+        }
+        
+        .cta {
+            text-align: center;
+            margin: 3rem 0;
+        }
+        
+        .support-matrix {
+            margin: 2rem 0;
+        }
+        
+        .support-matrix table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .support-matrix th,
+        .support-matrix td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .support-matrix th {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+        
+        .checkmark {
+            color: #4caf50;
+            font-weight: bold;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid #e0e0e0;
+            color: #666;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+            
+            .container {
+                padding: 1.5rem;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .features {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 Personal Linux System Setup</h1>
+            <p class="tagline">Automated scripts and configurations for your Linux development environment</p>
+        </header>
+        
+        <section class="features">
+            <div class="feature">
+                <div class="feature-icon">🔧</div>
+                <h3>Automated Installation</h3>
+                <p>One-command setup for all essential packages and development tools</p>
+            </div>
+            
+            <div class="feature">
+                <div class="feature-icon">🛠️</div>
+                <h3>Development Tools</h3>
+                <p>Pre-configured Node.js, Python, Docker, and GitHub CLI</p>
+            </div>
+            
+            <div class="feature">
+                <div class="feature-icon">⚙️</div>
+                <h3>Custom Dotfiles</h3>
+                <p>Enhanced bash, git, vim, and tmux configurations</p>
+            </div>
+            
+            <div class="feature">
+                <div class="feature-icon">🔒</div>
+                <h3>Security Focused</h3>
+                <p>System hardening and security best practices included</p>
+            </div>
+            
+            <div class="feature">
+                <div class="feature-icon">🐧</div>
+                <h3>Multi-Distro Support</h3>
+                <p>Works with Ubuntu, Debian, Fedora, and Arch Linux</p>
+            </div>
+            
+            <div class="feature">
+                <div class="feature-icon">📦</div>
+                <h3>Customizable</h3>
+                <p>Easy to modify packages and configurations to your needs</p>
+            </div>
+        </section>
+        
+        <section class="install-section">
+            <h2>Quick Start</h2>
+            <p>Get your Linux development environment set up in minutes:</p>
+            
+            <div class="code-block">
+                <code># Clone the repository<br>
+git clone https://github.com/cashpilotthrive-hue/.github.git<br>
+cd .github<br>
+<br>
+# Run the setup script<br>
+chmod +x setup.sh<br>
+./setup.sh</code>
+            </div>
+        </section>
+        
+        <section class="support-matrix">
+            <h2>Supported Linux Distributions</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Distribution</th>
+                        <th>Package Manager</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Ubuntu 20.04+</td>
+                        <td>apt</td>
+                        <td><span class="checkmark">✓</span> Fully Supported</td>
+                    </tr>
+                    <tr>
+                        <td>Debian 11+</td>
+                        <td>apt</td>
+                        <td><span class="checkmark">✓</span> Fully Supported</td>
+                    </tr>
+                    <tr>
+                        <td>Fedora 35+</td>
+                        <td>dnf</td>
+                        <td><span class="checkmark">✓</span> Fully Supported</td>
+                    </tr>
+                    <tr>
+                        <td>Arch Linux</td>
+                        <td>pacman</td>
+                        <td><span class="checkmark">✓</span> Fully Supported</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+        
+        <div class="cta">
+            <h2>Get Started Now</h2>
+            <p>Choose your preferred installation method:</p>
+            <a href="https://github.com/cashpilotthrive-hue/.github" class="btn">View on GitHub</a>
+            <a href="https://github.com/cashpilotthrive-hue/.github#readme" class="btn btn-secondary">Read Documentation</a>
+        </div>
+        
+        <footer>
+            <p><strong>Personal Linux System Setup</strong></p>
+            <p>Open source under MIT License</p>
+            <p><a href="https://github.com/cashpilotthrive-hue/.github" style="color: #667eea;">GitHub Repository</a></p>
+        </footer>
+    </div>
+</body>
+</html>

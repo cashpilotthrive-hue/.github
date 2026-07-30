@@ -2,6 +2,8 @@
 
 This repository contains scripts and configurations for setting up a personal Linux development environment.
 
+📚 **[View Documentation Site](https://cashpilotthrive-hue.github.io/.github/)**
+
 ## Features
 
 - 🚀 Automated package installation
