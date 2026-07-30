@@ -1,0 +1,35 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model ExecutionRecord {
+  id          String   @id @default(uuid())
+  commandType String
+  payload     String   // JSON blob
+  status      String   @default("pending") // pending | success | failed
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model WealthSnapshot {
+  id          String   @id @default(uuid())
+  totalUsd    Float
+  breakdown   String   // JSON blob: { cash, investments, crypto, other }
+  recordedAt  DateTime @default(now())
+}
+
+model CreditEvent {
+  id          String   @id @default(uuid())
+  eventType   String   // alert | payment | limit_change
+  description String
+  amount      Float?
+  occurredAt  DateTime @default(now())
+}
