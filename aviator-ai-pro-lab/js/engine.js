@@ -83,7 +83,10 @@ class AviatorEngine {
     const points = [];
     for (let i = 0; i < count; i++) {
       points.push(this.generateCrashPoint());
-      this.seed = this._generateSeed();
+      // BOLT OPTIMIZATION: Propagate seed deterministically using fast simpleHash
+      // instead of repeatedly calling slow _generateSeed() which triggers synchronous,
+      // blocking calls to crypto.getRandomValues().
+      this.seed = this._simpleHash(this.seed);
     }
     return points;
   }
