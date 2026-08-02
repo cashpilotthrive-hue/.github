@@ -17,3 +17,7 @@
 ## 2026-03-27 - FastAPI event loop blocking by sync I/O
 **Learning:** Route handlers performing synchronous I/O (like seek and tell on UploadFile.file) should be defined as 'def' rather than 'async def'. This allows FastAPI to run them in a thread pool, preventing the main event loop from being blocked and significantly improving concurrency and responsiveness.
 **Action:** Always prefer 'def' for endpoints that use synchronous file operations or other blocking calls.
+
+## 2026-04-12 - Failed Loop Consolidation in AviatorEngine.getStats
+**Learning:** Attempting to consolidate sample standard deviation and variance calculations into a single loop pass inside `AviatorEngine.getStats` by tracking `sumSqProfit` actually degraded performance by ~10% (0.90x speedup). In modern V8 JIT compilers, split/simpler loops (one for general stats and a separate smaller loop dedicated to variance) are easier to JIT-optimize and vectorize than one highly complex loop containing conditional logic, streaks, and running totals.
+**Action:** Avoid micro-optimizations that merge distinct logical steps into one single complex loop in JS without benchmarking, as modern JIT engines optimize separate simple loops more effectively.
