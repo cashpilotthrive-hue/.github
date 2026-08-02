@@ -17,3 +17,7 @@
 ## 2026-03-27 - FastAPI event loop blocking by sync I/O
 **Learning:** Route handlers performing synchronous I/O (like seek and tell on UploadFile.file) should be defined as 'def' rather than 'async def'. This allows FastAPI to run them in a thread pool, preventing the main event loop from being blocked and significantly improving concurrency and responsiveness.
 **Action:** Always prefer 'def' for endpoints that use synchronous file operations or other blocking calls.
+
+## 2026-08-02 - Floating-point precision differences in single-pass variance calculation
+**Learning:** Replacing multi-pass variance calculations with the fast single-pass formula (E[X^2] - E[X]^2) can cause micro floating-point precision differences at the 15th decimal place due to IEEE 754 precision limits. This causes strict string/JSON equivalence checks to fail even when mathematically and functionally identical.
+**Action:** Use epsilon tolerance comparison (e.g., 1e-9) in correctness and parity tests instead of strict JSON/string equivalence checks when verifying mathematical/numerical optimizations.
