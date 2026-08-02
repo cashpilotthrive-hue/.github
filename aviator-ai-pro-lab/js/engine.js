@@ -97,8 +97,9 @@ class AviatorEngine {
 
     // BOLT OPTIMIZATION: Consolidate all metric calculations into a single O(N) loop
     // to avoid redundant array iterations and multiple passes over the history.
+    // We also track sumSqProfit to calculate variance/stddev without a second pass.
     let sumCrash = 0, maxCrash = -Infinity, minCrash = Infinity;
-    let sumProfit = 0, winCount = 0;
+    let sumProfit = 0, sumSqProfit = 0, winCount = 0;
     let maxWinStreak = 0, currentWinStreak = 0;
     let maxLoseStreak = 0, currentLoseStreak = 0;
     let peak = 0, maxDD = 0, cumulativeProfit = 0;
@@ -117,6 +118,7 @@ class AviatorEngine {
       if (crash < minCrash) minCrash = crash;
 
       sumProfit += profit;
+      sumSqProfit += profit * profit;
       cumulativeProfit += profit;
       if (cumulativeProfit > peak) peak = cumulativeProfit;
       const dd = peak - cumulativeProfit;
@@ -137,11 +139,9 @@ class AviatorEngine {
     }
 
     const avgProfit = sumProfit / len;
-    let varianceSum = 0;
-    for (let i = 0; i < len; i++) {
-      varianceSum += Math.pow(this.history[i].profit - avgProfit, 2);
-    }
-    const variance = len < 2 ? 0 : varianceSum / (len - 1);
+    // BOLT OPTIMIZATION: Calculate sample variance in a single pass of the main loop
+    // by tracking sumSqProfit, completely removing the redundant second loop over history.
+    const variance = len < 2 ? 0 : Math.max(0, (sumSqProfit - (sumProfit * sumProfit) / len) / (len - 1));
     const std = Math.sqrt(variance);
     const sharpe = std === 0 ? 0 : (avgProfit / std) * Math.sqrt(252);
 
