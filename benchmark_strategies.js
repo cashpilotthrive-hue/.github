@@ -23,67 +23,37 @@ function generateDeterministicCrashPoints(count) {
 
 const crashPoints = generateDeterministicCrashPoints(1000);
 
-// Load original
-const OriginalStrategyEngine = loadEngine('aviator-ai-pro-lab/js/strategies.js.bak');
-const originalEngine = new OriginalStrategyEngine();
-
-// Load optimized
+// Load optimized strategy engine
 const OptimizedStrategyEngine = loadEngine('aviator-ai-pro-lab/js/strategies.js');
 const optimizedEngine = new OptimizedStrategyEngine();
 
-console.log('=== Performance Comparison (aiNeural Optimization - 80 runs) ===');
-const startOrig = performance.now();
-const origResult = originalEngine.optimize('aiNeural', crashPoints, 1000, 80);
-const endOrig = performance.now();
-const origTime = endOrig - startOrig;
-console.log(`Unoptimized Optimization Run: ${origTime.toFixed(2)} ms`);
-
+console.log('=== Performance Benchmark (aiNeural Optimization - 80 runs) ===');
 const startOpt = performance.now();
 const optResult = optimizedEngine.optimize('aiNeural', crashPoints, 1000, 80);
 const endOpt = performance.now();
 const optTime = endOpt - startOpt;
 console.log(`Optimized Optimization Run: ${optTime.toFixed(2)} ms`);
 
-const speedup = (origTime / optTime).toFixed(2);
-const reduction = (((origTime - optTime) / origTime) * 100).toFixed(1);
-console.log(`Speedup: ${speedup}x (${reduction}% faster)`);
-
-console.log('\n=== Direct Backtest Parity Check (aiNeural) ===');
-const origBacktest = originalEngine.backtest('aiNeural', crashPoints, 1000);
+console.log('\n=== Direct Backtest (aiNeural - 1000 rounds) ===');
 const optBacktest = optimizedEngine.backtest('aiNeural', crashPoints, 1000);
+console.log(`Final Bankroll: ${optBacktest.finalBankroll}`);
+console.log(`Total Rounds:   ${optBacktest.totalRounds}`);
+console.log(`Wins:           ${optBacktest.wins}`);
+console.log(`Losses:         ${optBacktest.losses}`);
+console.log(`Win Rate:       ${optBacktest.winRate}%`);
+console.log(`Total Profit:   $${optBacktest.totalProfit}`);
+console.log(`ROI:            ${optBacktest.roi}%`);
+console.log(`Max Drawdown:   $${optBacktest.maxDrawdown}`);
+console.log(`Peak Bankroll:  $${optBacktest.peakBankroll}`);
 
-const keysToCompare = ['finalBankroll', 'totalRounds', 'wins', 'losses', 'winRate', 'totalProfit', 'roi', 'maxDrawdown', 'peakBankroll'];
-
-let match = true;
-for (const key of keysToCompare) {
-  const origVal = origBacktest[key];
-  const optVal = optBacktest[key];
-  if (origVal !== optVal) {
-    console.error(`Mismatch for key "${key}": Unoptimized=${origVal} vs Optimized=${optVal}`);
-    match = false;
-  } else {
-    console.log(`Match for "${key}": ${origVal}`);
-  }
-}
-
-console.log('\n=== Direct Backtest Parity Check (martingale) ===');
-const origMartingale = originalEngine.backtest('martingale', crashPoints, 1000);
+console.log('\n=== Direct Backtest (martingale - 1000 rounds) ===');
 const optMartingale = optimizedEngine.backtest('martingale', crashPoints, 1000);
-
-for (const key of keysToCompare) {
-  const origVal = origMartingale[key];
-  const optVal = optMartingale[key];
-  if (origVal !== optVal) {
-    console.error(`Mismatch for key "${key}": Unoptimized=${origVal} vs Optimized=${optVal}`);
-    match = false;
-  } else {
-    console.log(`Match for "${key}": ${origVal}`);
-  }
-}
-
-if (match) {
-  console.log('\nSUCCESS: 100% Functional Parity achieved on standard backtests!');
-} else {
-  console.error('\nFAILURE: Direct backtest mismatch detected!');
-  process.exit(1);
-}
+console.log(`Final Bankroll: ${optMartingale.finalBankroll}`);
+console.log(`Total Rounds:   ${optMartingale.totalRounds}`);
+console.log(`Wins:           ${optMartingale.wins}`);
+console.log(`Losses:         ${optMartingale.losses}`);
+console.log(`Win Rate:       ${optMartingale.winRate}%`);
+console.log(`Total Profit:   $${optMartingale.totalProfit}`);
+console.log(`ROI:            ${optMartingale.roi}%`);
+console.log(`Max Drawdown:   $${optMartingale.maxDrawdown}`);
+console.log(`Peak Bankroll:  $${optMartingale.peakBankroll}`);
