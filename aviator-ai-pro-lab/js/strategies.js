@@ -297,14 +297,37 @@ class StrategyEngine {
       };
     }
 
-    const avg = crashes.reduce((a, b) => a + b, 0) / crashes.length;
-    const variance = crashes.reduce((s, c) => s + Math.pow(c - avg, 2), 0) / crashes.length;
+    // BOLT OPTIMIZATION: Consolidate average, variance, recentAvg, and lowCrashRatio
+    // calculations into a single O(N) pass, avoiding multiple array allocations (slice/filter)
+    // and reduce iterations to optimize AI backtesting and iteration throughput.
+    const len = crashes.length;
+    let sum = 0;
+    let sumSq = 0;
+    let lowCrashCount = 0;
+    let recentSum = 0;
+    const recentLimit = len < 5 ? len : 5;
+    const recentStartIndex = len - recentLimit;
+
+    for (let i = 0; i < len; i++) {
+      const c = crashes[i];
+      sum += c;
+      sumSq += c * c;
+      if (c < 1.5) {
+        lowCrashCount++;
+      }
+      if (i >= recentStartIndex) {
+        recentSum += c;
+      }
+    }
+
+    const avg = sum / len;
+    const variance = Math.max(0, (sumSq / len) - (avg * avg));
     const volatility = Math.sqrt(variance);
 
-    const recentAvg = crashes.slice(-5).reduce((a, b) => a + b, 0) / Math.min(crashes.length, 5);
+    const recentAvg = recentSum / recentLimit;
     const momentum = recentAvg - avg;
 
-    const lowCrashRatio = crashes.filter(c => c < 1.5).length / crashes.length;
+    const lowCrashRatio = lowCrashCount / len;
 
     let suggestedCashOut;
     if (lowCrashRatio > 0.4) {
