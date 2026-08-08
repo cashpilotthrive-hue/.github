@@ -17,3 +17,7 @@
 ## 2026-03-27 - FastAPI event loop blocking by sync I/O
 **Learning:** Route handlers performing synchronous I/O (like seek and tell on UploadFile.file) should be defined as 'def' rather than 'async def'. This allows FastAPI to run them in a thread pool, preventing the main event loop from being blocked and significantly improving concurrency and responsiveness.
 **Action:** Always prefer 'def' for endpoints that use synchronous file operations or other blocking calls.
+
+## 2026-04-21 - Synchronous blocking crypto.getRandomValues bottleneck in history generation
+**Learning:** In the game simulator, generating batch crash history using repeatedly-called cryptographically secure random number generators (RNG) like `crypto.getRandomValues` introduces massive blocking overhead on every loop iteration. Propagating subsequent seeds deterministically via a fast, non-blocking internal hashing function (like `_simpleHash`) avoids this overhead entirely.
+**Action:** For bulk batch generation of simulation data where true cryptographic random entropy is not required on every iteration, prefer fast deterministic seed propagation using simple hashes.
