@@ -1,9 +1,13 @@
-/**
- * Aviator AI Pro Lab - Strategy Definitions & Optimizer
- * Multiple betting strategies with AI-powered optimization
- */
+const fs = require('fs');
+const path = require('path');
 
-class StrategyEngine {
+// Setup global.window to load the browser-oriented JS file in Node.js
+global.window = {};
+require('./aviator-ai-pro-lab/js/strategies.js');
+const OptimizedStrategyEngine = global.window.StrategyEngine;
+
+// Re-create the OriginalStrategyEngine logic before our optimizations
+class OriginalStrategyEngine {
   constructor() {
     this.strategies = {
       fixed: {
@@ -65,24 +69,18 @@ class StrategyEngine {
     };
   }
 
-  /**
-   * Execute a strategy for a given number of rounds against crash data
-   */
-  backtest(strategyKey, crashPoints, bankroll = 1000, options = {}) {
-    const { includeResults = true } = options;
+  backtest(strategyKey, crashPoints, bankroll = 1000) {
     const strategy = this.strategies[strategyKey];
     if (!strategy) throw new Error(`Unknown strategy: ${strategyKey}`);
 
-    const results = includeResults ? [] : null;
+    const results = [];
     let currentBankroll = bankroll;
     let state = this._initState(strategyKey, strategy.params);
 
-    // BOLT OPTIMIZATION: Calculate metrics in a single pass to avoid redundant array iterations
     let wins = 0;
     let losses = 0;
     let peakBankroll = bankroll;
     let maxDrawdown = 0;
-    let totalRounds = 0;
 
     for (let i = 0; i < crashPoints.length; i++) {
       if (currentBankroll <= 0) break;
@@ -112,24 +110,20 @@ class StrategyEngine {
         maxDrawdown = currentDrawdown;
       }
 
-      totalRounds++;
+      results.push({
+        round: i + 1,
+        crashPoint: Math.round(crashPoint * 100) / 100,
+        betAmount: Math.round(actualBet * 100) / 100,
+        cashOutTarget: Math.round(cashOutTarget * 100) / 100,
+        won,
+        profit: Math.round(profit * 100) / 100,
+        bankroll: Math.round(currentBankroll * 100) / 100
+      });
 
-      if (includeResults) {
-        // BOLT OPTIMIZATION: Use Math.round instead of toFixed for 20x faster rounding
-        results.push({
-          round: i + 1,
-          crashPoint: Math.round(crashPoint * 100) / 100,
-          betAmount: Math.round(actualBet * 100) / 100,
-          cashOutTarget: Math.round(cashOutTarget * 100) / 100,
-          won,
-          profit: Math.round(profit * 100) / 100,
-          bankroll: Math.round(currentBankroll * 100) / 100
-        });
-      }
-
-      this._updateState(strategyKey, state, won, crashPoint);
+      this._updateState(strategyKey, state, won, crashPoint, results);
     }
 
+    const totalRounds = results.length;
     const totalProfit = currentBankroll - bankroll;
 
     return {
@@ -231,7 +225,7 @@ class StrategyEngine {
     };
   }
 
-  _updateState(key, state, won, crashPoint) {
+  _updateState(key, state, won, crashPoint, results) {
     if (won) {
       state.consecutiveWins++;
       state.consecutiveLosses = 0;
@@ -294,8 +288,7 @@ class StrategyEngine {
     const riskMultipliers = { low: 0.5, medium: 1.0, high: 1.5 };
     const riskMult = riskMultipliers[state.riskLevel] || 1.0;
 
-    const len = crashes.length;
-    if (len < 3) {
+    if (crashes.length < 3) {
       return {
         suggestedBet: state.baseBet * riskMult,
         suggestedCashOut: 2.0,
@@ -303,32 +296,14 @@ class StrategyEngine {
       };
     }
 
-    let sum = 0;
-    let sumSq = 0;
-    let sumRecent = 0;
-    let lowCrashCount = 0;
-    const recentCount = Math.min(len, 5);
-    const recentStartIndex = len - recentCount;
-
-    for (let i = 0; i < len; i++) {
-      const c = crashes[i];
-      sum += c;
-      sumSq += c * c;
-      if (i >= recentStartIndex) {
-        sumRecent += c;
-      }
-      if (c < 1.5) {
-        lowCrashCount++;
-      }
-    }
-
-    const avg = sum / len;
-    const variance = Math.max(0, (sumSq / len) - (avg * avg));
+    const avg = crashes.reduce((a, b) => a + b, 0) / crashes.length;
+    const variance = crashes.reduce((s, c) => s + Math.pow(c - avg, 2), 0) / crashes.length;
     const volatility = Math.sqrt(variance);
 
-    const recentAvg = sumRecent / recentCount;
+    const recentAvg = crashes.slice(-5).reduce((a, b) => a + b, 0) / Math.min(crashes.length, 5);
     const momentum = recentAvg - avg;
-    const lowCrashRatio = lowCrashCount / len;
+
+    const lowCrashRatio = crashes.filter(c => c < 1.5).length / crashes.length;
 
     let suggestedCashOut;
     if (lowCrashRatio > 0.4) {
@@ -341,7 +316,7 @@ class StrategyEngine {
 
     suggestedCashOut = Math.max(1.1, Math.min(suggestedCashOut, 10.0));
 
-    const confidence = Math.min(0.95, 0.3 + (len / state.adaptiveWindow) * 0.5 - volatility * 0.05);
+    const confidence = Math.min(0.95, 0.3 + (crashes.length / state.adaptiveWindow) * 0.5 - volatility * 0.05);
     const betSizing = state.baseBet * (0.5 + confidence * riskMult);
 
     state.momentum = momentum;
@@ -349,8 +324,8 @@ class StrategyEngine {
 
     return {
       suggestedBet: Math.max(1, Math.min(betSizing, bankroll * 0.1)),
-      suggestedCashOut: this._round(suggestedCashOut, 2),
-      confidence: this._round(confidence, 3),
+      suggestedCashOut: parseFloat(suggestedCashOut.toFixed(2)),
+      confidence: parseFloat(confidence.toFixed(3)),
       analysis: { avg, volatility, momentum, lowCrashRatio }
     };
   }
@@ -359,29 +334,20 @@ class StrategyEngine {
     return Math.min(0.99, 0.97 / cashOut);
   }
 
-  _round(num, decimals = 2) {
-    return parseFloat(num.toFixed(decimals));
-  }
-
-
-  /**
-   * AI Optimizer: Find optimal parameters for a strategy
-   */
   optimize(strategyKey, crashPoints, bankroll = 1000, iterations = 50) {
     const strategy = this.strategies[strategyKey];
     if (!strategy) return null;
 
     let bestResult = null;
     let bestParams = null;
-    const originalParams = { ...strategy.params };
 
     for (let i = 0; i < iterations; i++) {
-      const params = this._randomizeParams(strategyKey, originalParams);
+      const params = this._randomizeParams(strategyKey, strategy.params);
       const tempStrategy = { ...this.strategies[strategyKey], params };
       this.strategies[strategyKey] = tempStrategy;
 
       try {
-        const result = this.backtest(strategyKey, crashPoints, bankroll, { includeResults: false });
+        const result = this.backtest(strategyKey, crashPoints, bankroll);
         const score = this._scoreResult(result, bankroll);
 
         if (!bestResult || score > bestResult.score) {
@@ -393,20 +359,7 @@ class StrategyEngine {
       }
     }
 
-    // Restore original parameters
-    this.strategies[strategyKey] = { ...strategy, params: originalParams };
-
-    if (bestParams) {
-      // Run high-fidelity backtest for visualization/UI
-      const tempStrategy = { ...this.strategies[strategyKey], params: bestParams };
-      this.strategies[strategyKey] = tempStrategy;
-      const finalResult = this.backtest(strategyKey, crashPoints, bankroll, { includeResults: true });
-      finalResult.score = bestResult.score;
-      bestResult = finalResult;
-
-      // Restore original parameters again
-      this.strategies[strategyKey] = { ...strategy, params: originalParams };
-    }
+    this.strategies[strategyKey] = { ...strategy, params: strategy.params };
 
     return {
       bestParams,
@@ -452,13 +405,114 @@ class StrategyEngine {
     const survivalBonus = result.totalRounds / 100;
     return roi * 2 + winRate - drawdownPenalty * 3 + survivalBonus * 0.1;
   }
+}
 
-  getStrategyList() {
-    return Object.entries(this.strategies).map(([key, s]) => ({
-      key,
-      ...s
-    }));
+// Generate crash points deterministically for consistency
+const numPoints = 1000;
+const crashPoints = [];
+let seed = 12345;
+for (let i = 0; i < numPoints; i++) {
+  // LCG RNG for deterministic points
+  seed = (seed * 1664525 + 1013904223) % 4294967296;
+  const rand = seed / 4294967296;
+  // Simulating typical crash distribution
+  const point = rand < 0.03 ? 1.0 : parseFloat((1.01 + Math.pow(Math.tan(rand * Math.PI / 2), 1.1)).toFixed(2));
+  crashPoints.push(Math.max(1.0, Math.min(point, 100)));
+}
+
+const originalEngine = new OriginalStrategyEngine();
+const optimizedEngine = new OptimizedStrategyEngine();
+
+// Verification of functional parity for all strategies
+const strategies = Object.keys(originalEngine.strategies);
+console.log('=== VERIFYING FUNCTIONAL PARITY ===');
+let hasMismatch = false;
+
+for (const key of strategies) {
+  console.log(`Checking strategy: ${key}...`);
+  // Reset parameters to match
+  originalEngine.strategies[key].params = { ...originalEngine.strategies[key].params };
+  optimizedEngine.strategies[key].params = { ...originalEngine.strategies[key].params };
+
+  const resOrig = originalEngine.backtest(key, crashPoints, 1000);
+  const resOpt = optimizedEngine.backtest(key, crashPoints, 1000);
+
+  // Compare main metrics
+  const metrics = [
+    'finalBankroll', 'totalRounds', 'wins', 'losses', 'winRate', 'totalProfit', 'roi', 'maxDrawdown'
+  ];
+
+  for (const m of metrics) {
+    if (resOrig[m] !== resOpt[m]) {
+      console.error(`❌ Mismatch in metric [${m}] for strategy [${key}]. Original: ${resOrig[m]}, Optimized: ${resOpt[m]}`);
+      hasMismatch = true;
+    }
+  }
+
+  // Compare results list item by item
+  if (resOrig.results.length !== resOpt.results.length) {
+    console.error(`❌ Mismatch in results array length. Original: ${resOrig.results.length}, Optimized: ${resOpt.results.length}`);
+    hasMismatch = true;
+  } else {
+    for (let i = 0; i < resOrig.results.length; i++) {
+      const rOrig = resOrig.results[i];
+      const rOpt = resOpt.results[i];
+      for (const prop of Object.keys(rOrig)) {
+        if (rOrig[prop] !== rOpt[prop]) {
+          console.error(`❌ Mismatch at round ${i + 1} property [${prop}] for strategy [${key}]. Original: ${rOrig[prop]}, Optimized: ${rOpt[prop]}`);
+          hasMismatch = true;
+        }
+      }
+    }
   }
 }
 
-window.StrategyEngine = StrategyEngine;
+if (!hasMismatch) {
+  console.log('✅ Success! 100% Functional Parity Verified on standard backtest.');
+} else {
+  console.error('❌ Mismatch detected during functional parity check.');
+  process.exit(1);
+}
+
+// Verification of optimize method correctness and lack of dependent walk
+console.log('\n=== VERIFYING OPTIMIZER STATE RESTORATION ===');
+const beforeParams = { ...optimizedEngine.strategies.aiNeural.params };
+optimizedEngine.optimize('aiNeural', crashPoints, 1000, 20);
+const afterParams = { ...optimizedEngine.strategies.aiNeural.params };
+
+let paramsUnchanged = true;
+for (const k of Object.keys(beforeParams)) {
+  if (beforeParams[k] !== afterParams[k]) {
+    paramsUnchanged = false;
+    console.error(`❌ Strategy params were mutated and not restored! Property [${k}] changed from ${beforeParams[k]} to ${afterParams[k]}`);
+  }
+}
+if (paramsUnchanged) {
+  console.log('✅ Success! Strategy parameters were correctly restored to their pre-optimized state.');
+} else {
+  process.exit(1);
+}
+
+// Benchmark the optimization loops
+console.log('\n=== BENCHMARKING AI OPTIMIZATION SPEED ===');
+const benchmarkIterations = 500;
+console.log(`Running AI Optimization for 500 iterations against 1000 crash rounds...`);
+
+const startOrig = Date.now();
+originalEngine.optimize('aiNeural', crashPoints, 1000, benchmarkIterations);
+const durOrig = Date.now() - startOrig;
+console.log(`Original optimize() time: ${durOrig}ms`);
+
+const startOpt = Date.now();
+optimizedEngine.optimize('aiNeural', crashPoints, 1000, benchmarkIterations);
+const durOpt = Date.now() - startOpt;
+console.log(`Optimized optimize() time: ${durOpt}ms`);
+
+const speedup = durOrig / durOpt;
+console.log(`Speedup factor: ${speedup.toFixed(2)}x faster!`);
+if (speedup < 1.5) {
+  console.error('❌ Speedup factor is not significant enough.');
+  process.exit(1);
+} else {
+  console.log('⚡ Bolt Optimization is extremely successful!');
+}

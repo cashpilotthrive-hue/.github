@@ -17,3 +17,7 @@
 ## 2026-03-27 - FastAPI event loop blocking by sync I/O
 **Learning:** Route handlers performing synchronous I/O (like seek and tell on UploadFile.file) should be defined as 'def' rather than 'async def'. This allows FastAPI to run them in a thread pool, preventing the main event loop from being blocked and significantly improving concurrency and responsiveness.
 **Action:** Always prefer 'def' for endpoints that use synchronous file operations or other blocking calls.
+
+## 2026-08-11 - Math.round() vs toFixed() precision mismatch in simulation rounding
+**Learning:** Replacing `parseFloat(n.toFixed(decimals))` with mathematical multiplication and `Math.round` can introduce small floating-point discrepancies. For example, `2.695.toFixed(2)` yields `"2.69"` in V8/JavaScript (due to internal representation of `2.695` being slightly less than `2.695`), whereas `Math.round(269.5)` rounds up to `270` (yielding `2.70`). This discrepancy breaks functional parity for game simulators that demand exact reproducibility.
+**Action:** Use `parseFloat(n.toFixed(decimals))` for core simulation calculations that require exact 100% parity with browser/historical floating-point quirks, and focus performance optimization on skipping O(N) allocations/passes instead.
