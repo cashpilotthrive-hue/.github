@@ -3,17 +3,28 @@
  * Provably fair crash point generation and game simulation
  */
 
+// BOLT OPTIMIZATION: Pre-computed constant and static hex formatter to avoid redundant
+// Math.pow calls and closure function instantiations on hot RNG paths.
+const E_2_52 = 4503599627370496;
+const _hex8 = (v) => (v >>> 0).toString(16).padStart(8, '0');
+
 class AviatorEngine {
   constructor(houseEdge = 0.03) {
     this.houseEdge = houseEdge;
     this.history = [];
+    // BOLT OPTIMIZATION: Reusable buffer for seed generation to avoid memory allocations per round.
+    this._seedBuf = new Uint32Array(4);
     this.seed = this._generateSeed();
   }
 
   _generateSeed() {
-    const arr = new Uint32Array(4);
-    crypto.getRandomValues(arr);
-    return Array.from(arr, v => v.toString(16).padStart(8, '0')).join('');
+    crypto.getRandomValues(this._seedBuf);
+    return (
+      _hex8(this._seedBuf[0]) +
+      _hex8(this._seedBuf[1]) +
+      _hex8(this._seedBuf[2]) +
+      _hex8(this._seedBuf[3])
+    );
   }
 
   /**
@@ -24,8 +35,7 @@ class AviatorEngine {
     const hashInput = this.seed + ':' + this.history.length;
     const hash = this._simpleHash(hashInput);
     const h = parseInt(hash.slice(0, 13), 16);
-    const e = Math.pow(2, 52);
-    const result = (100 * e - h) / (e - h);
+    const result = (100 * E_2_52 - h) / (E_2_52 - h);
     const crashPoint = Math.max(1.0, Math.floor(result) / 100);
     return crashPoint;
   }
@@ -46,8 +56,7 @@ class AviatorEngine {
     h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
     h3 = Math.imul(h3 ^ (h3 >>> 16), 2246822507) ^ Math.imul(h4 ^ (h4 >>> 13), 3266489909);
     h4 = Math.imul(h4 ^ (h4 >>> 16), 2246822507) ^ Math.imul(h3 ^ (h3 >>> 13), 3266489909);
-    const hex = (v) => (v >>> 0).toString(16).padStart(8, '0');
-    return hex(h1) + hex(h2) + hex(h3) + hex(h4);
+    return _hex8(h1) + _hex8(h2) + _hex8(h3) + _hex8(h4);
   }
 
   /**
@@ -80,9 +89,10 @@ class AviatorEngine {
    * Generate batch of crash points for backtesting
    */
   generateCrashHistory(count) {
-    const points = [];
+    // BOLT OPTIMIZATION: Pre-allocate array capacity to prevent array growth re-allocations.
+    const points = new Array(count);
     for (let i = 0; i < count; i++) {
-      points.push(this.generateCrashPoint());
+      points[i] = this.generateCrashPoint();
       this.seed = this._generateSeed();
     }
     return points;
