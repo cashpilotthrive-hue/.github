@@ -103,7 +103,8 @@ class AviatorEngine {
     let maxLoseStreak = 0, currentLoseStreak = 0;
     let peak = 0, maxDD = 0, cumulativeProfit = 0;
     let grossWins = 0, grossLosses = 0;
-    const crashes = [];
+    // BOLT OPTIMIZATION: Pre-allocate Float64Array to eliminate array resizing and push overhead.
+    const crashes = new Float64Array(len);
 
     for (let i = 0; i < len; i++) {
       const r = this.history[i];
@@ -111,7 +112,7 @@ class AviatorEngine {
       const profit = r.profit;
       const won = r.won;
 
-      crashes.push(crash);
+      crashes[i] = crash;
       sumCrash += crash;
       if (crash > maxCrash) maxCrash = crash;
       if (crash < minCrash) minCrash = crash;
@@ -170,6 +171,12 @@ class AviatorEngine {
   }
 
   _median(arr) {
+    // BOLT OPTIMIZATION: Use Float64Array native sorting to avoid callback overhead and array copying.
+    if (arr instanceof Float64Array) {
+      const sorted = arr.slice().sort();
+      const mid = Math.floor(sorted.length / 2);
+      return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+    }
     const sorted = [...arr].sort((a, b) => a - b);
     const mid = Math.floor(sorted.length / 2);
     return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
