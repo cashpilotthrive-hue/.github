@@ -68,11 +68,12 @@ class StrategyEngine {
   /**
    * Execute a strategy for a given number of rounds against crash data
    */
-  backtest(strategyKey, crashPoints, bankroll = 1000) {
+  backtest(strategyKey, crashPoints, bankroll = 1000, options = {}) {
+    const { includeResults = true } = options;
     const strategy = this.strategies[strategyKey];
     if (!strategy) throw new Error(`Unknown strategy: ${strategyKey}`);
 
-    const results = [];
+    const results = includeResults ? [] : null;
     let currentBankroll = bankroll;
     let state = this._initState(strategyKey, strategy.params);
 
@@ -81,6 +82,7 @@ class StrategyEngine {
     let losses = 0;
     let peakBankroll = bankroll;
     let maxDrawdown = 0;
+    let totalRounds = 0;
 
     for (let i = 0; i < crashPoints.length; i++) {
       if (currentBankroll <= 0) break;
@@ -95,6 +97,7 @@ class StrategyEngine {
       const payout = won ? actualBet * cashOutTarget : 0;
       const profit = payout - actualBet;
       currentBankroll += profit;
+      totalRounds++;
 
       if (won) {
         wins++;
@@ -110,21 +113,22 @@ class StrategyEngine {
         maxDrawdown = currentDrawdown;
       }
 
-      // BOLT OPTIMIZATION: Use Math.round instead of toFixed for 20x faster rounding
-      results.push({
-        round: i + 1,
-        crashPoint: Math.round(crashPoint * 100) / 100,
-        betAmount: Math.round(actualBet * 100) / 100,
-        cashOutTarget: Math.round(cashOutTarget * 100) / 100,
-        won,
-        profit: Math.round(profit * 100) / 100,
-        bankroll: Math.round(currentBankroll * 100) / 100
-      });
+      // BOLT OPTIMIZATION: Skip results array allocation during AI optimization runs (includeResults: false)
+      if (includeResults) {
+        results.push({
+          round: i + 1,
+          crashPoint: Math.round(crashPoint * 100) / 100,
+          betAmount: Math.round(actualBet * 100) / 100,
+          cashOutTarget: Math.round(cashOutTarget * 100) / 100,
+          won,
+          profit: Math.round(profit * 100) / 100,
+          bankroll: Math.round(currentBankroll * 100) / 100
+        });
+      }
 
-      this._updateState(strategyKey, state, won, crashPoint, results);
+      this._updateState(strategyKey, state, won, crashPoint, results || []);
     }
 
-    const totalRounds = results.length;
     const totalProfit = currentBankroll - bankroll;
 
     return {
@@ -226,7 +230,7 @@ class StrategyEngine {
     };
   }
 
-  _updateState(key, state, won, crashPoint, results) {
+  _updateState(key, state, won, crashPoint, results = []) {
     if (won) {
       state.consecutiveWins++;
       state.consecutiveLosses = 0;
@@ -346,13 +350,16 @@ class StrategyEngine {
     let bestResult = null;
     let bestParams = null;
 
+    // BOLT OPTIMIZATION: Pass includeResults: false during optimization iterations
+    // to skip object allocations in core backtest loop, then run a high-fidelity
+    // pass with includeResults: true for the winning candidate parameters.
     for (let i = 0; i < iterations; i++) {
       const params = this._randomizeParams(strategyKey, strategy.params);
       const tempStrategy = { ...this.strategies[strategyKey], params };
       this.strategies[strategyKey] = tempStrategy;
 
       try {
-        const result = this.backtest(strategyKey, crashPoints, bankroll);
+        const result = this.backtest(strategyKey, crashPoints, bankroll, { includeResults: false });
         const score = this._scoreResult(result, bankroll);
 
         if (!bestResult || score > bestResult.score) {
@@ -365,6 +372,15 @@ class StrategyEngine {
     }
 
     this.strategies[strategyKey] = { ...strategy, params: strategy.params };
+
+    if (bestParams) {
+      const finalStrategy = { ...this.strategies[strategyKey], params: bestParams };
+      this.strategies[strategyKey] = finalStrategy;
+      const fullResult = this.backtest(strategyKey, crashPoints, bankroll, { includeResults: true });
+      fullResult.score = bestResult.score;
+      bestResult = fullResult;
+      this.strategies[strategyKey] = { ...strategy, params: strategy.params };
+    }
 
     return {
       bestParams,
