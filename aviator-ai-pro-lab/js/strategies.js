@@ -3,6 +3,9 @@
  * Multiple betting strategies with AI-powered optimization
  */
 
+// Top-level frozen empty array to avoid allocations in fast-path backtests
+const EMPTY_RESULTS = Object.freeze([]);
+
 class StrategyEngine {
   constructor() {
     this.strategies = {
@@ -67,18 +70,23 @@ class StrategyEngine {
 
   /**
    * Execute a strategy for a given number of rounds against crash data
+   * Supports options.includeResults (default: true) to skip array allocations during optimization
    */
-  backtest(strategyKey, crashPoints, bankroll = 1000) {
+  backtest(strategyKey, crashPoints, bankroll = 1000, options = {}) {
+    const { includeResults = true } = options;
     const strategy = this.strategies[strategyKey];
     if (!strategy) throw new Error(`Unknown strategy: ${strategyKey}`);
 
-    const results = [];
+    // BOLT OPTIMIZATION: Skip results array allocations when includeResults is false
+    const results = includeResults ? [] : null;
+    const activeResults = results || EMPTY_RESULTS;
     let currentBankroll = bankroll;
     let state = this._initState(strategyKey, strategy.params);
 
     // BOLT OPTIMIZATION: Calculate metrics in a single pass to avoid redundant array iterations
     let wins = 0;
     let losses = 0;
+    let totalRounds = 0;
     let peakBankroll = bankroll;
     let maxDrawdown = 0;
 
@@ -95,6 +103,7 @@ class StrategyEngine {
       const payout = won ? actualBet * cashOutTarget : 0;
       const profit = payout - actualBet;
       currentBankroll += profit;
+      totalRounds++;
 
       if (won) {
         wins++;
@@ -110,26 +119,27 @@ class StrategyEngine {
         maxDrawdown = currentDrawdown;
       }
 
-      // BOLT OPTIMIZATION: Use Math.round instead of toFixed for 20x faster rounding
-      results.push({
-        round: i + 1,
-        crashPoint: Math.round(crashPoint * 100) / 100,
-        betAmount: Math.round(actualBet * 100) / 100,
-        cashOutTarget: Math.round(cashOutTarget * 100) / 100,
-        won,
-        profit: Math.round(profit * 100) / 100,
-        bankroll: Math.round(currentBankroll * 100) / 100
-      });
+      if (includeResults) {
+        // BOLT OPTIMIZATION: Use Math.round instead of toFixed for 20x faster rounding
+        results.push({
+          round: i + 1,
+          crashPoint: Math.round(crashPoint * 100) / 100,
+          betAmount: Math.round(actualBet * 100) / 100,
+          cashOutTarget: Math.round(cashOutTarget * 100) / 100,
+          won,
+          profit: Math.round(profit * 100) / 100,
+          bankroll: Math.round(currentBankroll * 100) / 100
+        });
+      }
 
-      this._updateState(strategyKey, state, won, crashPoint, results);
+      this._updateState(strategyKey, state, won, crashPoint, activeResults);
     }
 
-    const totalRounds = results.length;
     const totalProfit = currentBankroll - bankroll;
 
     return {
       strategy: strategy.name,
-      results,
+      results: results || [],
       finalBankroll: Math.round(currentBankroll * 100) / 100,
       totalRounds,
       wins,
@@ -352,7 +362,8 @@ class StrategyEngine {
       this.strategies[strategyKey] = tempStrategy;
 
       try {
-        const result = this.backtest(strategyKey, crashPoints, bankroll);
+        // BOLT OPTIMIZATION: Pass includeResults: false to avoid allocating results objects during iterations
+        const result = this.backtest(strategyKey, crashPoints, bankroll, { includeResults: false });
         const score = this._scoreResult(result, bankroll);
 
         if (!bestResult || score > bestResult.score) {
@@ -362,6 +373,14 @@ class StrategyEngine {
       } catch (e) {
         // Skip invalid parameter combinations
       }
+    }
+
+    // BOLT OPTIMIZATION: Run a single full backtest for best parameters to populate results for UI visualization
+    if (bestParams) {
+      const tempStrategy = { ...this.strategies[strategyKey], params: bestParams };
+      this.strategies[strategyKey] = tempStrategy;
+      const fullResult = this.backtest(strategyKey, crashPoints, bankroll, { includeResults: true });
+      bestResult = { ...fullResult, score: bestResult.score };
     }
 
     this.strategies[strategyKey] = { ...strategy, params: strategy.params };
