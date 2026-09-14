@@ -299,8 +299,7 @@ class StrategyEngine {
     }
 
     // BOLT OPTIMIZATION: Consolidate average, recentAverage, and lowCrashRatio calculations
-    // into a single O(N) loop to eliminate slice(-5) and filter() array allocations,
-    // and use direct Math.round calculations to eliminate parseFloat(toFixed()) string conversions.
+    // into a single O(N) loop to eliminate slice(-5) and filter() array allocations.
     let sum = 0;
     let lowCrashCount = 0;
     let recentSum = 0;
@@ -346,8 +345,8 @@ class StrategyEngine {
 
     return {
       suggestedBet: Math.max(1, Math.min(betSizing, bankroll * 0.1)),
-      suggestedCashOut: Math.round(suggestedCashOut * 100) / 100,
-      confidence: Math.round(confidence * 1000) / 1000,
+      suggestedCashOut: parseFloat(suggestedCashOut.toFixed(2)),
+      confidence: parseFloat(confidence.toFixed(3)),
       analysis: { avg, volatility, momentum, lowCrashRatio }
     };
   }
