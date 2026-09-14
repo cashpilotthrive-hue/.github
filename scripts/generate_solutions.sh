@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-DOMAIN="$(tr -d '\r\n' < CNAME)"
+# BOLT OPTIMIZATION: Read CNAME using Bash built-in read and parameter expansion
+# to eliminate subshell forking of external 'tr' command.
+DOMAIN="$(< CNAME)"
+DOMAIN="${DOMAIN//[$'\r\n']}"
 TARGET="${GITHUB_PAGES_TARGET:-<org-or-user>.github.io}"
 OUT_DIR="generated"
 mkdir -p "$OUT_DIR"
