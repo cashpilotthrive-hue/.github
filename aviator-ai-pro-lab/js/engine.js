@@ -3,6 +3,14 @@
  * Provably fair crash point generation and game simulation
  */
 
+// BOLT OPTIMIZATION: Hoist constant exponential power and helper function
+// to avoid recreating functions and recalculating constants in hot paths.
+const E_2_52 = Math.pow(2, 52);
+
+function _hex8(v) {
+  return (v >>> 0).toString(16).padStart(8, '0');
+}
+
 class AviatorEngine {
   constructor(houseEdge = 0.03) {
     this.houseEdge = houseEdge;
@@ -10,10 +18,17 @@ class AviatorEngine {
     this.seed = this._generateSeed();
   }
 
+  // BOLT OPTIMIZATION: Reuse instance Uint32Array buffer with lazy initialization
+  // to avoid allocating typed arrays and JS objects on every seed generation.
   _generateSeed() {
-    const arr = new Uint32Array(4);
-    crypto.getRandomValues(arr);
-    return Array.from(arr, v => v.toString(16).padStart(8, '0')).join('');
+    if (!this._seedBuffer) this._seedBuffer = new Uint32Array(4);
+    crypto.getRandomValues(this._seedBuffer);
+    return (
+      _hex8(this._seedBuffer[0]) +
+      _hex8(this._seedBuffer[1]) +
+      _hex8(this._seedBuffer[2]) +
+      _hex8(this._seedBuffer[3])
+    );
   }
 
   /**
@@ -24,8 +39,7 @@ class AviatorEngine {
     const hashInput = this.seed + ':' + this.history.length;
     const hash = this._simpleHash(hashInput);
     const h = parseInt(hash.slice(0, 13), 16);
-    const e = Math.pow(2, 52);
-    const result = (100 * e - h) / (e - h);
+    const result = (100 * E_2_52 - h) / (E_2_52 - h);
     const crashPoint = Math.max(1.0, Math.floor(result) / 100);
     return crashPoint;
   }
@@ -46,8 +60,7 @@ class AviatorEngine {
     h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
     h3 = Math.imul(h3 ^ (h3 >>> 16), 2246822507) ^ Math.imul(h4 ^ (h4 >>> 13), 3266489909);
     h4 = Math.imul(h4 ^ (h4 >>> 16), 2246822507) ^ Math.imul(h3 ^ (h3 >>> 13), 3266489909);
-    const hex = (v) => (v >>> 0).toString(16).padStart(8, '0');
-    return hex(h1) + hex(h2) + hex(h3) + hex(h4);
+    return _hex8(h1) + _hex8(h2) + _hex8(h3) + _hex8(h4);
   }
 
   /**
@@ -80,9 +93,10 @@ class AviatorEngine {
    * Generate batch of crash points for backtesting
    */
   generateCrashHistory(count) {
-    const points = [];
+    // BOLT OPTIMIZATION: Pre-allocate array capacity to prevent dynamic resizing overhead.
+    const points = new Array(count);
     for (let i = 0; i < count; i++) {
-      points.push(this.generateCrashPoint());
+      points[i] = this.generateCrashPoint();
       this.seed = this._generateSeed();
     }
     return points;
@@ -96,14 +110,14 @@ class AviatorEngine {
     if (len === 0) return null;
 
     // BOLT OPTIMIZATION: Consolidate all metric calculations into a single O(N) loop
-    // to avoid redundant array iterations and multiple passes over the history.
+    // and use a Float64Array for memory-dense crash storage to avoid array allocations.
     let sumCrash = 0, maxCrash = -Infinity, minCrash = Infinity;
     let sumProfit = 0, winCount = 0;
     let maxWinStreak = 0, currentWinStreak = 0;
     let maxLoseStreak = 0, currentLoseStreak = 0;
     let peak = 0, maxDD = 0, cumulativeProfit = 0;
     let grossWins = 0, grossLosses = 0;
-    const crashes = [];
+    const crashes = new Float64Array(len);
 
     for (let i = 0; i < len; i++) {
       const r = this.history[i];
@@ -111,7 +125,7 @@ class AviatorEngine {
       const profit = r.profit;
       const won = r.won;
 
-      crashes.push(crash);
+      crashes[i] = crash;
       sumCrash += crash;
       if (crash > maxCrash) maxCrash = crash;
       if (crash < minCrash) minCrash = crash;
@@ -169,10 +183,11 @@ class AviatorEngine {
     return Math.round(num * p) / p;
   }
 
+  // BOLT OPTIMIZATION: Use Float64Array native sorting to eliminate JS comparison function overhead.
   _median(arr) {
-    const sorted = [...arr].sort((a, b) => a - b);
+    const sorted = arr instanceof Float64Array ? arr.slice().sort() : Float64Array.from(arr).sort();
     const mid = Math.floor(sorted.length / 2);
-    return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+    return sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
   }
 
   reset() {
