@@ -210,7 +210,7 @@ class AviatorApp {
 
   _generateInitialCrashData() {
     this.crashPoints = this.engine.generateCrashHistory(100);
-    this._updateCrashChart();
+    this._updateCharts();
 
     // BOLT OPTIMIZATION: Initialize distribution buckets once
     this.distributionBuckets = [0, 0, 0, 0, 0, 0];
