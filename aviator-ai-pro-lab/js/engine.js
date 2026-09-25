@@ -3,6 +3,9 @@
  * Provably fair crash point generation and game simulation
  */
 
+// BOLT OPTIMIZATION: Hoist 2^52 constant for crash point multiplier calculations
+const E_2_52 = Math.pow(2, 52); // 4503599627370496
+
 class AviatorEngine {
   constructor(houseEdge = 0.03) {
     this.houseEdge = houseEdge;
@@ -11,9 +14,18 @@ class AviatorEngine {
   }
 
   _generateSeed() {
-    const arr = new Uint32Array(4);
-    crypto.getRandomValues(arr);
-    return Array.from(arr, v => v.toString(16).padStart(8, '0')).join('');
+    // BOLT OPTIMIZATION: Lazily initialize and reuse instance Uint32Array buffer to avoid GC allocations
+    if (!this._seedBuffer) {
+      this._seedBuffer = new Uint32Array(4);
+    }
+    crypto.getRandomValues(this._seedBuffer);
+    const b = this._seedBuffer;
+    return (
+      (b[0] >>> 0).toString(16).padStart(8, '0') +
+      (b[1] >>> 0).toString(16).padStart(8, '0') +
+      (b[2] >>> 0).toString(16).padStart(8, '0') +
+      (b[3] >>> 0).toString(16).padStart(8, '0')
+    );
   }
 
   /**
@@ -21,13 +33,31 @@ class AviatorEngine {
    * Returns multiplier >= 1.00
    */
   generateCrashPoint() {
+    // BOLT OPTIMIZATION: Compute 52-bit integer directly via bitwise operations (_hash52)
+    // bypassing string formatting, slicing, and parseInt overhead.
     const hashInput = this.seed + ':' + this.history.length;
-    const hash = this._simpleHash(hashInput);
-    const h = parseInt(hash.slice(0, 13), 16);
-    const e = Math.pow(2, 52);
-    const result = (100 * e - h) / (e - h);
+    const h = this._hash52(hashInput);
+    const result = (100 * E_2_52 - h) / (E_2_52 - h);
     const crashPoint = Math.max(1.0, Math.floor(result) / 100);
     return crashPoint;
+  }
+
+  _hash52(str) {
+    let h1 = 0xdeadbeef;
+    let h2 = 0x41c6ce57;
+    let h3 = 0x9e3779b9;
+    let h4 = 0x12345678;
+    for (let i = 0; i < str.length; i++) {
+      const ch = str.charCodeAt(i);
+      h1 = Math.imul(h1 ^ ch, 2654435761);
+      h2 = Math.imul(h2 ^ ch, 1597334677);
+      h3 = Math.imul(h3 ^ ch, 2246822519);
+      h4 = Math.imul(h4 ^ ch, 3266489917);
+    }
+    h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+    h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+    // h1 is top 32 bits (8 hex chars). Top 20 bits of h2 (h2 >>> 12) form the remaining 20 bits (5 hex chars).
+    return (h1 >>> 0) * 1048576 + (h2 >>> 12);
   }
 
   _simpleHash(str) {
@@ -80,9 +110,10 @@ class AviatorEngine {
    * Generate batch of crash points for backtesting
    */
   generateCrashHistory(count) {
-    const points = [];
+    // BOLT OPTIMIZATION: Pre-allocate result array to avoid dynamic resizing
+    const points = new Array(count);
     for (let i = 0; i < count; i++) {
-      points.push(this.generateCrashPoint());
+      points[i] = this.generateCrashPoint();
       this.seed = this._generateSeed();
     }
     return points;
