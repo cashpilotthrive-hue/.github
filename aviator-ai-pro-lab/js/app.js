@@ -21,6 +21,7 @@ class AviatorApp {
     this.comparisonChart = null;
     this.selectedStrategy = 'fixed';
     this.backtestRounds = 500;
+    this.winCount = 0;
 
     this.init();
   }
@@ -210,7 +211,7 @@ class AviatorApp {
 
   _generateInitialCrashData() {
     this.crashPoints = this.engine.generateCrashHistory(100);
-    this._updateCrashChart();
+    this._updateCharts();
 
     // BOLT OPTIMIZATION: Initialize distribution buckets once
     this.distributionBuckets = [0, 0, 0, 0, 0, 0];
@@ -252,6 +253,7 @@ class AviatorApp {
     }
 
     const round = this.engine.simulateRound(betAmount, cashOut);
+    if (round.won) this.winCount++;
     this.bankroll += round.profit;
     this.bankrollHistory.push(parseFloat(this.bankroll.toFixed(2)));
 
@@ -290,6 +292,7 @@ class AviatorApp {
   resetSimulation() {
     this.stopSimulation();
     this.engine.reset();
+    this.winCount = 0;
     this.bankroll = this.initialBankroll;
     this.bankrollHistory = [this.initialBankroll];
     this.crashPoints = [];
@@ -516,8 +519,9 @@ class AviatorApp {
     profitEl.textContent = (profit >= 0 ? '+$' : '-$') + Math.abs(profit).toFixed(2);
     profitEl.className = 'stat-value ' + (profit >= 0 ? 'positive' : 'negative');
 
+    // BOLT OPTIMIZATION: Use incrementally tracked winCount instead of allocating array with .filter() on every tick
     const winRate = this.engine.history.length > 0
-      ? (this.engine.history.filter(r => r.won).length / this.engine.history.length * 100).toFixed(1)
+      ? (this.winCount / this.engine.history.length * 100).toFixed(1)
       : '0.0';
     document.getElementById('winRate').textContent = winRate + '%';
   }
