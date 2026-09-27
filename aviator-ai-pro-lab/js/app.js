@@ -14,7 +14,6 @@ class AviatorApp {
     this.currentMultiplier = 1.0;
     this.crashPoints = [];
     this.bankrollHistory = [1000];
-    this.winCount = 0;
     this.profitChart = null;
     this.crashChart = null;
     this.distributionChart = null;
@@ -253,7 +252,6 @@ class AviatorApp {
     }
 
     const round = this.engine.simulateRound(betAmount, cashOut);
-    if (round.won) this.winCount++;
     this.bankroll += round.profit;
     this.bankrollHistory.push(parseFloat(this.bankroll.toFixed(2)));
 
@@ -294,7 +292,6 @@ class AviatorApp {
     this.engine.reset();
     this.bankroll = this.initialBankroll;
     this.bankrollHistory = [this.initialBankroll];
-    this.winCount = 0;
     this.crashPoints = [];
     this.distributionBuckets = [0, 0, 0, 0, 0, 0];
     this._generateInitialCrashData();
@@ -519,9 +516,9 @@ class AviatorApp {
     profitEl.textContent = (profit >= 0 ? '+$' : '-$') + Math.abs(profit).toFixed(2);
     profitEl.className = 'stat-value ' + (profit >= 0 ? 'positive' : 'negative');
 
-    // BOLT OPTIMIZATION: Use pre-tracked winCount for O(1) win rate calculation instead of O(N) array filtering.
+    // BOLT OPTIMIZATION: Use pre-tracked engine.winCount for O(1) win rate calculation instead of O(N) array filtering.
     const winRate = this.engine.history.length > 0
-      ? (this.winCount / this.engine.history.length * 100).toFixed(1)
+      ? (this.engine.winCount / this.engine.history.length * 100).toFixed(1)
       : '0.0';
     document.getElementById('winRate').textContent = winRate + '%';
   }
