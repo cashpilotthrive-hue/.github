@@ -7,6 +7,7 @@ class AviatorEngine {
   constructor(houseEdge = 0.03) {
     this.houseEdge = houseEdge;
     this.history = [];
+    this.winCount = 0;
     this.seed = this._generateSeed();
   }
 
@@ -56,6 +57,7 @@ class AviatorEngine {
   simulateRound(betAmount, cashOutAt) {
     const crashPoint = this.generateCrashPoint();
     const won = cashOutAt <= crashPoint;
+    if (won) this.winCount++;
     const payout = won ? betAmount * cashOutAt : 0;
     const profit = payout - betAmount;
 
@@ -177,6 +179,7 @@ class AviatorEngine {
 
   reset() {
     this.history = [];
+    this.winCount = 0;
     this.seed = this._generateSeed();
   }
 }
