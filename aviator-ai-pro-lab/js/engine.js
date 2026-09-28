@@ -8,6 +8,7 @@ class AviatorEngine {
     this.houseEdge = houseEdge;
     this.history = [];
     this.seed = this._generateSeed();
+    this.winCount = 0;
   }
 
   _generateSeed() {
@@ -58,6 +59,10 @@ class AviatorEngine {
     const won = cashOutAt <= crashPoint;
     const payout = won ? betAmount * cashOutAt : 0;
     const profit = payout - betAmount;
+
+    if (won) {
+      this.winCount++;
+    }
 
     // BOLT OPTIMIZATION: Use a faster mathematical rounding helper instead of toFixed().
     const round = {
@@ -178,6 +183,7 @@ class AviatorEngine {
   reset() {
     this.history = [];
     this.seed = this._generateSeed();
+    this.winCount = 0;
   }
 }
 
