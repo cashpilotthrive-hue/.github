@@ -1,0 +1,9 @@
+{
+  "domain": "aime.io",
+  "target": "<org-or-user>.github.io",
+  "solutions": [
+    {"id": "apex-pages", "name": "Apex GitHub Pages A-records"},
+    {"id": "www-redirect", "name": "www subdomain + apex redirect"},
+    {"id": "cloudflare-flat", "name": "Cloudflare CNAME flattening"}
+  ]
+}
