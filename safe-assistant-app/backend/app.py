@@ -23,6 +23,41 @@ CHAT_HISTORY: list[dict[str, Any]] = []
 MEMORIES: dict[str, list[str]] = {}
 FILES: dict[str, dict[str, Any]] = {}
 AUDIT_LOG: list[dict[str, Any]] = []
+BANK_ACCOUNTS: dict[str, float] = {"ACC-1001": 10000.00}
+
+
+class IdempotencyMatrix:
+    """Algorithmic structure guaranteeing singular, non-destructive end state across redundant triggers."""
+
+    def __init__(self) -> None:
+        self._matrix: dict[str, dict[str, Any]] = {}
+
+    def get(self, key: str) -> dict[str, Any] | None:
+        return self._matrix.get(key)
+
+    def record(self, key: str, payload: dict[str, Any]) -> None:
+        self._matrix[key] = payload
+
+
+IDEMPOTENCY_MATRIX = IdempotencyMatrix()
+
+
+class BankTransactionRequest(BaseModel):
+    idempotency_key: str
+    account_id: str
+    amount: float
+    type: Literal["debit", "credit"] = "debit"
+
+
+class BankTransactionResponse(BaseModel):
+    transaction_id: str
+    idempotency_key: str
+    account_id: str
+    amount: float
+    new_balance: float
+    status: str
+    idempotent_replayed: bool
+    timestamp: datetime
 
 
 class ChatMessage(BaseModel):
@@ -90,6 +125,57 @@ def append_audit(event: str, detail: dict[str, Any]) -> None:
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.post("/bank/transaction", response_model=BankTransactionResponse)
+def bank_transaction(payload: BankTransactionRequest) -> BankTransactionResponse:
+    # Check Idempotency Matrix to ensure redundant triggers yield singular end state
+    cached = IDEMPOTENCY_MATRIX.get(payload.idempotency_key)
+    if cached is not None:
+        append_audit("bank.transaction.idempotent_replay", {"idempotency_key": payload.idempotency_key})
+        return BankTransactionResponse(**cached)
+
+    if payload.account_id not in BANK_ACCOUNTS:
+        raise HTTPException(status_code=404, detail="Account not found.")
+
+    current_balance = BANK_ACCOUNTS[payload.account_id]
+
+    if payload.type == "debit":
+        if current_balance < payload.amount:
+            raise HTTPException(status_code=400, detail="Insufficient funds.")
+        new_balance = current_balance - payload.amount
+    else:
+        new_balance = current_balance + payload.amount
+
+    BANK_ACCOUNTS[payload.account_id] = new_balance
+    tx_id = str(uuid.uuid4())
+
+    response_data = {
+        "transaction_id": tx_id,
+        "idempotency_key": payload.idempotency_key,
+        "account_id": payload.account_id,
+        "amount": payload.amount,
+        "new_balance": new_balance,
+        "status": "COMPLETED",
+        "idempotent_replayed": True,
+        "timestamp": datetime.now(timezone.utc),
+    }
+
+    # Record first-time response in idempotency matrix
+    IDEMPOTENCY_MATRIX.record(payload.idempotency_key, response_data)
+
+    append_audit("bank.transaction.completed", {"transaction_id": tx_id, "idempotency_key": payload.idempotency_key})
+
+    return BankTransactionResponse(
+        transaction_id=tx_id,
+        idempotency_key=payload.idempotency_key,
+        account_id=payload.account_id,
+        amount=payload.amount,
+        new_balance=new_balance,
+        status="COMPLETED",
+        idempotent_replayed=False,
+        timestamp=response_data["timestamp"],
+    )
 
 
 def _moderate_content(lowered_content: str) -> ModerationResponse:
