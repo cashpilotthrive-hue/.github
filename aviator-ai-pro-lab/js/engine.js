@@ -7,6 +7,7 @@ class AviatorEngine {
   constructor(houseEdge = 0.03) {
     this.houseEdge = houseEdge;
     this.history = [];
+    this.winCount = 0;
     this.seed = this._generateSeed();
   }
 
@@ -71,6 +72,9 @@ class AviatorEngine {
       timestamp: Date.now()
     };
 
+    if (won) {
+      this.winCount++;
+    }
     this.history.push(round);
     this.seed = this._generateSeed();
     return round;
@@ -177,6 +181,7 @@ class AviatorEngine {
 
   reset() {
     this.history = [];
+    this.winCount = 0;
     this.seed = this._generateSeed();
   }
 }
