@@ -3,6 +3,8 @@
  * Multiple betting strategies with AI-powered optimization
  */
 
+const RISK_MULTIPLIERS = { low: 0.5, medium: 1.0, high: 1.5 };
+
 class StrategyEngine {
   constructor() {
     this.strategies = {
@@ -285,11 +287,11 @@ class StrategyEngine {
 
   _aiAnalyze(state) {
     const crashes = state.recentCrashes;
+    const len = crashes.length;
     const bankroll = state.bankroll || 1000;
-    const riskMultipliers = { low: 0.5, medium: 1.0, high: 1.5 };
-    const riskMult = riskMultipliers[state.riskLevel] || 1.0;
+    const riskMult = RISK_MULTIPLIERS[state.riskLevel] || 1.0;
 
-    if (crashes.length < 3) {
+    if (len < 3) {
       return {
         suggestedBet: state.baseBet * riskMult,
         suggestedCashOut: 2.0,
@@ -297,14 +299,36 @@ class StrategyEngine {
       };
     }
 
-    const avg = crashes.reduce((a, b) => a + b, 0) / crashes.length;
-    const variance = crashes.reduce((s, c) => s + Math.pow(c - avg, 2), 0) / crashes.length;
-    const volatility = Math.sqrt(variance);
+    // BOLT OPTIMIZATION: Consolidate sum, recentSum, and lowCrashCount into a single O(N) pass
+    // to eliminate temporary array allocations (slice, filter) and multiple passes over recentCrashes.
+    let sum = 0;
+    let recentSum = 0;
+    let lowCrashCount = 0;
+    const recentStart = Math.max(0, len - 5);
 
-    const recentAvg = crashes.slice(-5).reduce((a, b) => a + b, 0) / Math.min(crashes.length, 5);
+    for (let i = 0; i < len; i++) {
+      const c = crashes[i];
+      sum += c;
+      if (i >= recentStart) {
+        recentSum += c;
+      }
+      if (c < 1.5) {
+        lowCrashCount++;
+      }
+    }
+
+    const avg = sum / len;
+    let varianceSum = 0;
+    for (let i = 0; i < len; i++) {
+      const diff = crashes[i] - avg;
+      varianceSum += diff * diff;
+    }
+    const volatility = Math.sqrt(varianceSum / len);
+
+    const recentCount = len - recentStart;
+    const recentAvg = recentSum / recentCount;
     const momentum = recentAvg - avg;
-
-    const lowCrashRatio = crashes.filter(c => c < 1.5).length / crashes.length;
+    const lowCrashRatio = lowCrashCount / len;
 
     let suggestedCashOut;
     if (lowCrashRatio > 0.4) {
@@ -317,16 +341,17 @@ class StrategyEngine {
 
     suggestedCashOut = Math.max(1.1, Math.min(suggestedCashOut, 10.0));
 
-    const confidence = Math.min(0.95, 0.3 + (crashes.length / state.adaptiveWindow) * 0.5 - volatility * 0.05);
+    const confidence = Math.min(0.95, 0.3 + (len / state.adaptiveWindow) * 0.5 - volatility * 0.05);
     const betSizing = state.baseBet * (0.5 + confidence * riskMult);
 
     state.momentum = momentum;
     state.volatility = volatility;
 
+    // BOLT OPTIMIZATION: Replace parseFloat(toFixed(...)) string conversions with Math.round arithmetic
     return {
       suggestedBet: Math.max(1, Math.min(betSizing, bankroll * 0.1)),
-      suggestedCashOut: parseFloat(suggestedCashOut.toFixed(2)),
-      confidence: parseFloat(confidence.toFixed(3)),
+      suggestedCashOut: Math.round(suggestedCashOut * 100) / 100,
+      confidence: Math.round(confidence * 1000) / 1000,
       analysis: { avg, volatility, momentum, lowCrashRatio }
     };
   }
