@@ -3,6 +3,8 @@
  * Multiple betting strategies with AI-powered optimization
  */
 
+const EMPTY_RESULTS = Object.freeze([]);
+
 class StrategyEngine {
   constructor() {
     this.strategies = {
@@ -65,14 +67,21 @@ class StrategyEngine {
     };
   }
 
+  _round(num, decimals = 2) {
+    const p = Math.pow(10, decimals);
+    return Math.round(num * p) / p;
+  }
+
   /**
    * Execute a strategy for a given number of rounds against crash data
    */
-  backtest(strategyKey, crashPoints, bankroll = 1000) {
+  backtest(strategyKey, crashPoints, bankroll = 1000, options = {}) {
+    const { includeResults = true } = options || {};
     const strategy = this.strategies[strategyKey];
     if (!strategy) throw new Error(`Unknown strategy: ${strategyKey}`);
 
-    const results = [];
+    const results = includeResults ? [] : null;
+    const activeResults = results || EMPTY_RESULTS;
     let currentBankroll = bankroll;
     let state = this._initState(strategyKey, strategy.params);
 
@@ -81,6 +90,7 @@ class StrategyEngine {
     let losses = 0;
     let peakBankroll = bankroll;
     let maxDrawdown = 0;
+    let totalRounds = 0;
 
     for (let i = 0; i < crashPoints.length; i++) {
       if (currentBankroll <= 0) break;
@@ -95,6 +105,7 @@ class StrategyEngine {
       const payout = won ? actualBet * cashOutTarget : 0;
       const profit = payout - actualBet;
       currentBankroll += profit;
+      totalRounds++;
 
       if (won) {
         wins++;
@@ -110,34 +121,35 @@ class StrategyEngine {
         maxDrawdown = currentDrawdown;
       }
 
-      // BOLT OPTIMIZATION: Use Math.round instead of toFixed for 20x faster rounding
-      results.push({
-        round: i + 1,
-        crashPoint: Math.round(crashPoint * 100) / 100,
-        betAmount: Math.round(actualBet * 100) / 100,
-        cashOutTarget: Math.round(cashOutTarget * 100) / 100,
-        won,
-        profit: Math.round(profit * 100) / 100,
-        bankroll: Math.round(currentBankroll * 100) / 100
-      });
+      // BOLT OPTIMIZATION: Use Math.round via _round helper and skip array allocation if includeResults is false
+      if (includeResults) {
+        results.push({
+          round: i + 1,
+          crashPoint: this._round(crashPoint, 2),
+          betAmount: this._round(actualBet, 2),
+          cashOutTarget: this._round(cashOutTarget, 2),
+          won,
+          profit: this._round(profit, 2),
+          bankroll: this._round(currentBankroll, 2)
+        });
+      }
 
-      this._updateState(strategyKey, state, won, crashPoint, results);
+      this._updateState(strategyKey, state, won, crashPoint, activeResults);
     }
 
-    const totalRounds = results.length;
     const totalProfit = currentBankroll - bankroll;
 
     return {
       strategy: strategy.name,
-      results,
-      finalBankroll: Math.round(currentBankroll * 100) / 100,
+      results: results || [],
+      finalBankroll: this._round(currentBankroll, 2),
       totalRounds,
       wins,
       losses,
       winRate: totalRounds > 0 ? (wins / totalRounds * 100).toFixed(1) : '0.0',
-      totalProfit: Math.round(totalProfit * 100) / 100,
-      roi: Math.round((totalProfit / bankroll * 100) * 100) / 100,
-      maxDrawdown: Math.round(maxDrawdown * 100) / 100,
+      totalProfit: this._round(totalProfit, 2),
+      roi: this._round((totalProfit / bankroll * 100), 2),
+      maxDrawdown: this._round(maxDrawdown, 2),
       peakBankroll: peakBankroll.toFixed(2)
     };
   }
@@ -283,13 +295,16 @@ class StrategyEngine {
     }
   }
 
+  // BOLT OPTIMIZATION: Single O(N) pass for avg, volatility, momentum, and lowCrashRatio
+  // without allocating temporary arrays or using string conversion rounding.
   _aiAnalyze(state) {
     const crashes = state.recentCrashes;
+    const len = crashes.length;
     const bankroll = state.bankroll || 1000;
     const riskMultipliers = { low: 0.5, medium: 1.0, high: 1.5 };
     const riskMult = riskMultipliers[state.riskLevel] || 1.0;
 
-    if (crashes.length < 3) {
+    if (len < 3) {
       return {
         suggestedBet: state.baseBet * riskMult,
         suggestedCashOut: 2.0,
@@ -297,14 +312,30 @@ class StrategyEngine {
       };
     }
 
-    const avg = crashes.reduce((a, b) => a + b, 0) / crashes.length;
-    const variance = crashes.reduce((s, c) => s + Math.pow(c - avg, 2), 0) / crashes.length;
-    const volatility = Math.sqrt(variance);
+    let sum = 0;
+    let recentSum = 0;
+    let lowCrashCount = 0;
+    const recentStart = Math.max(0, len - 5);
 
-    const recentAvg = crashes.slice(-5).reduce((a, b) => a + b, 0) / Math.min(crashes.length, 5);
+    for (let i = 0; i < len; i++) {
+      const c = crashes[i];
+      sum += c;
+      if (i >= recentStart) recentSum += c;
+      if (c < 1.5) lowCrashCount++;
+    }
+
+    const avg = sum / len;
+
+    let varianceSum = 0;
+    for (let i = 0; i < len; i++) {
+      const diff = crashes[i] - avg;
+      varianceSum += diff * diff;
+    }
+    const volatility = Math.sqrt(varianceSum / len);
+
+    const recentAvg = recentSum / (len - recentStart);
     const momentum = recentAvg - avg;
-
-    const lowCrashRatio = crashes.filter(c => c < 1.5).length / crashes.length;
+    const lowCrashRatio = lowCrashCount / len;
 
     let suggestedCashOut;
     if (lowCrashRatio > 0.4) {
@@ -317,7 +348,7 @@ class StrategyEngine {
 
     suggestedCashOut = Math.max(1.1, Math.min(suggestedCashOut, 10.0));
 
-    const confidence = Math.min(0.95, 0.3 + (crashes.length / state.adaptiveWindow) * 0.5 - volatility * 0.05);
+    const confidence = Math.min(0.95, 0.3 + (len / state.adaptiveWindow) * 0.5 - volatility * 0.05);
     const betSizing = state.baseBet * (0.5 + confidence * riskMult);
 
     state.momentum = momentum;
@@ -325,8 +356,8 @@ class StrategyEngine {
 
     return {
       suggestedBet: Math.max(1, Math.min(betSizing, bankroll * 0.1)),
-      suggestedCashOut: parseFloat(suggestedCashOut.toFixed(2)),
-      confidence: parseFloat(confidence.toFixed(3)),
+      suggestedCashOut: this._round(suggestedCashOut, 2),
+      confidence: this._round(confidence, 3),
       analysis: { avg, volatility, momentum, lowCrashRatio }
     };
   }
@@ -352,7 +383,7 @@ class StrategyEngine {
       this.strategies[strategyKey] = tempStrategy;
 
       try {
-        const result = this.backtest(strategyKey, crashPoints, bankroll);
+        const result = this.backtest(strategyKey, crashPoints, bankroll, { includeResults: false });
         const score = this._scoreResult(result, bankroll);
 
         if (!bestResult || score > bestResult.score) {
@@ -366,6 +397,19 @@ class StrategyEngine {
 
     this.strategies[strategyKey] = { ...strategy, params: strategy.params };
 
+    if (bestParams) {
+      const fullStrategy = { ...this.strategies[strategyKey], params: bestParams };
+      this.strategies[strategyKey] = fullStrategy;
+      const finalResult = this.backtest(strategyKey, crashPoints, bankroll, { includeResults: true });
+      finalResult.score = bestResult ? bestResult.score : 0;
+      this.strategies[strategyKey] = { ...strategy, params: strategy.params };
+      return {
+        bestParams,
+        bestResult: finalResult,
+        optimizationRuns: iterations
+      };
+    }
+
     return {
       bestParams,
       bestResult,
@@ -373,27 +417,28 @@ class StrategyEngine {
     };
   }
 
+  // BOLT OPTIMIZATION: Fast math rounding instead of parseFloat(toFixed()) string conversions
   _randomizeParams(key, baseParams) {
     const params = { ...baseParams };
     const rand = (min, max) => min + Math.random() * (max - min);
 
-    params.cashOut = parseFloat(rand(1.1, 5.0).toFixed(2));
-    params.baseBet = parseFloat(rand(1, 50).toFixed(0));
+    params.cashOut = this._round(rand(1.1, 5.0), 2);
+    params.baseBet = this._round(rand(1, 50), 0);
 
     switch (key) {
       case 'martingale':
-        params.multiplier = parseFloat(rand(1.5, 3.0).toFixed(1));
-        params.maxBet = parseFloat(rand(200, 2000).toFixed(0));
+        params.multiplier = this._round(rand(1.5, 3.0), 1);
+        params.maxBet = this._round(rand(200, 2000), 0);
         break;
       case 'antiMartingale':
-        params.multiplier = parseFloat(rand(1.5, 3.0).toFixed(1));
+        params.multiplier = this._round(rand(1.5, 3.0), 1);
         params.maxWins = Math.floor(rand(2, 6));
         break;
       case 'dalembert':
-        params.unitSize = parseFloat(rand(1, 20).toFixed(0));
+        params.unitSize = this._round(rand(1, 20), 0);
         break;
       case 'kelly':
-        params.fraction = parseFloat(rand(0.05, 0.5).toFixed(2));
+        params.fraction = this._round(rand(0.05, 0.5), 2);
         break;
       case 'aiNeural':
         params.riskLevel = ['low', 'medium', 'high'][Math.floor(Math.random() * 3)];
