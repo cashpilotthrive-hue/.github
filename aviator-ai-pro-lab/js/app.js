@@ -509,15 +509,17 @@ class AviatorApp {
 
   _updateDisplay() {
     document.getElementById('currentBankroll').textContent = '$' + this.bankroll.toFixed(2);
-    document.getElementById('totalRounds').textContent = this.engine.history.length;
+    const totalRounds = this.engine.history.length;
+    document.getElementById('totalRounds').textContent = totalRounds;
 
     const profit = this.bankroll - this.initialBankroll;
     const profitEl = document.getElementById('totalProfit');
     profitEl.textContent = (profit >= 0 ? '+$' : '-$') + Math.abs(profit).toFixed(2);
     profitEl.className = 'stat-value ' + (profit >= 0 ? 'positive' : 'negative');
 
-    const winRate = this.engine.history.length > 0
-      ? (this.engine.history.filter(r => r.won).length / this.engine.history.length * 100).toFixed(1)
+    // BOLT OPTIMIZATION: Use incrementally tracked winCount for O(1) win rate calculation
+    const winRate = totalRounds > 0
+      ? (this.engine.winCount / totalRounds * 100).toFixed(1)
       : '0.0';
     document.getElementById('winRate').textContent = winRate + '%';
   }
