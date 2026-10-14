@@ -7,8 +7,6 @@ class AviatorEngine {
   constructor(houseEdge = 0.03) {
     this.houseEdge = houseEdge;
     this.history = [];
-    // BOLT OPTIMIZATION: Maintain winCount incrementally to avoid O(N) history filtering on every tick
-    this.winCount = 0;
     this.seed = this._generateSeed();
   }
 
@@ -72,10 +70,6 @@ class AviatorEngine {
       profit: this._round(profit),
       timestamp: Date.now()
     };
-
-    if (won) {
-      this.winCount++;
-    }
 
     this.history.push(round);
     this.seed = this._generateSeed();
@@ -183,7 +177,6 @@ class AviatorEngine {
 
   reset() {
     this.history = [];
-    this.winCount = 0;
     this.seed = this._generateSeed();
   }
 }
