@@ -1,6 +1,5 @@
 [build]
   publish = "public"
-  command = "echo 'Building static site'"
 
 [[headers]]
   for = "/*"
