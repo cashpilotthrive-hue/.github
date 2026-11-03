@@ -3,6 +3,10 @@
  * Provably fair crash point generation and game simulation
  */
 
+// BOLT OPTIMIZATION: Hoisted constants and helpers for high-frequency crash point generation
+const E_2_52 = 4503599627370496; // Math.pow(2, 52)
+const _hex8 = (v) => (v >>> 0).toString(16).padStart(8, '0');
+
 class AviatorEngine {
   constructor(houseEdge = 0.03) {
     this.houseEdge = houseEdge;
@@ -11,9 +15,30 @@ class AviatorEngine {
   }
 
   _generateSeed() {
-    const arr = new Uint32Array(4);
-    crypto.getRandomValues(arr);
-    return Array.from(arr, v => v.toString(16).padStart(8, '0')).join('');
+    // BOLT OPTIMIZATION: Reuse Uint32Array buffer to avoid garbage collection pressure
+    if (!this._seedBuffer) {
+      this._seedBuffer = new Uint32Array(4);
+    }
+    crypto.getRandomValues(this._seedBuffer);
+    return _hex8(this._seedBuffer[0]) + _hex8(this._seedBuffer[1]) + _hex8(this._seedBuffer[2]) + _hex8(this._seedBuffer[3]);
+  }
+
+  /**
+   * BOLT OPTIMIZATION: Direct 52-bit integer hash extraction.
+   * Computing the 13-hex-char prefix of the hash only requires h1 and h2 (52 bits),
+   * bypassing h3/h4 calculation, hex string formatting, slicing, and parseInt().
+   */
+  _hash52(str) {
+    let h1 = 0xdeadbeef;
+    let h2 = 0x41c6ce57;
+    for (let i = 0; i < str.length; i++) {
+      const ch = str.charCodeAt(i);
+      h1 = Math.imul(h1 ^ ch, 2654435761);
+      h2 = Math.imul(h2 ^ ch, 1597334677);
+    }
+    h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+    h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+    return (h1 >>> 0) * 0x100000 + ((h2 >>> 0) >>> 12);
   }
 
   /**
@@ -22,10 +47,8 @@ class AviatorEngine {
    */
   generateCrashPoint() {
     const hashInput = this.seed + ':' + this.history.length;
-    const hash = this._simpleHash(hashInput);
-    const h = parseInt(hash.slice(0, 13), 16);
-    const e = Math.pow(2, 52);
-    const result = (100 * e - h) / (e - h);
+    const h = this._hash52(hashInput);
+    const result = (100 * E_2_52 - h) / (E_2_52 - h);
     const crashPoint = Math.max(1.0, Math.floor(result) / 100);
     return crashPoint;
   }
@@ -80,9 +103,10 @@ class AviatorEngine {
    * Generate batch of crash points for backtesting
    */
   generateCrashHistory(count) {
-    const points = [];
+    // BOLT OPTIMIZATION: Pre-allocate array size for count elements
+    const points = new Array(count);
     for (let i = 0; i < count; i++) {
-      points.push(this.generateCrashPoint());
+      points[i] = this.generateCrashPoint();
       this.seed = this._generateSeed();
     }
     return points;
