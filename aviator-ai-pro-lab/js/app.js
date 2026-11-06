@@ -516,8 +516,10 @@ class AviatorApp {
     profitEl.textContent = (profit >= 0 ? '+$' : '-$') + Math.abs(profit).toFixed(2);
     profitEl.className = 'stat-value ' + (profit >= 0 ? 'positive' : 'negative');
 
+    // BOLT OPTIMIZATION: Use engine.winCount instead of O(N) array filtering (this.engine.history.filter(r => r.won).length)
+    // on every simulation tick to eliminate temporary array allocations and linear scans.
     const winRate = this.engine.history.length > 0
-      ? (this.engine.history.filter(r => r.won).length / this.engine.history.length * 100).toFixed(1)
+      ? (this.engine.winCount / this.engine.history.length * 100).toFixed(1)
       : '0.0';
     document.getElementById('winRate').textContent = winRate + '%';
   }
