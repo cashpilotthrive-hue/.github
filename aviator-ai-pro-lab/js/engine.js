@@ -170,7 +170,9 @@ class AviatorEngine {
   }
 
   _median(arr) {
-    const sorted = [...arr].sort((a, b) => a - b);
+    if (arr.length === 0) return 0;
+    // BOLT OPTIMIZATION: Use Float64Array for native fast numerical sorting without callback overhead.
+    const sorted = new Float64Array(arr).sort();
     const mid = Math.floor(sorted.length / 2);
     return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
   }
