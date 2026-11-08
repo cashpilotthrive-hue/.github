@@ -7,6 +7,7 @@ class AviatorEngine {
   constructor(houseEdge = 0.03) {
     this.houseEdge = houseEdge;
     this.history = [];
+    this.winCount = 0;
     this.seed = this._generateSeed();
   }
 
@@ -58,6 +59,11 @@ class AviatorEngine {
     const won = cashOutAt <= crashPoint;
     const payout = won ? betAmount * cashOutAt : 0;
     const profit = payout - betAmount;
+
+    // BOLT OPTIMIZATION: Increment winCount directly to enable O(1) winRate calculation in UI updates
+    if (won) {
+      this.winCount++;
+    }
 
     // BOLT OPTIMIZATION: Use a faster mathematical rounding helper instead of toFixed().
     const round = {
@@ -177,6 +183,7 @@ class AviatorEngine {
 
   reset() {
     this.history = [];
+    this.winCount = 0;
     this.seed = this._generateSeed();
   }
 }
